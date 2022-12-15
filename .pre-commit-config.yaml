@@ -5,11 +5,11 @@ repos:
     hooks:
       - id: system
         name: mypy
-        entry: poetry run mypy .
-        pass_filenames: false
+        entry: poetry run mypy
         language: system
+        types: [file, python]
       - id: system
         name: black
-        entry: poetry run black --check .
-        pass_filenames: false
+        entry: poetry run black --check
         language: system
+        types: [file, python]
