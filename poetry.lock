@@ -226,6 +226,14 @@ testing = ["pytest-benchmark", "pytest"]
 dev = ["tox", "pre-commit"]
 
 [[package]]
+name = "psycopg2"
+version = "2.9.5"
+description = "psycopg2 - Python-PostgreSQL Database Adapter"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "pytest"
 version = "7.2.0"
 description = "pytest: simple powerful testing with Python"
@@ -296,7 +304,7 @@ python-versions = ">=2"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "4c11ab97f30df221d798b31987126b055388cb21f7a66c24c5634d3bec84e56c"
+content-hash = "8c619e1707f2b4a6d797a820e5a3e33e3da87039b1adb05c41871dceab484218"
 
 [metadata.files]
 asgiref = []
@@ -343,6 +351,7 @@ packaging = []
 pathspec = []
 platformdirs = []
 pluggy = []
+psycopg2 = []
 pytest = []
 sqlparse = []
 tomli = []
