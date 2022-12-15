@@ -10,6 +10,11 @@ repos:
         types: [file, python]
       - id: system
         name: black
-        entry: poetry run black --check
+        entry: poetry run black
+        language: system
+        types: [file, python]
+      - id: system
+        name: isort
+        entry: poetry run isort
         language: system
         types: [file, python]

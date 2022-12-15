@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List, Tuple, NewType
-from datetime import datetime
+from datetime import date, timedelta
+from typing import List, NewType, Tuple
 
-Measurement = NewType("Measurement", Tuple[datetime, int])
+Measurement = NewType("Measurement", Tuple[date, int])
 
 
 class Integration(ABC):
@@ -11,10 +11,10 @@ class Integration(ABC):
         self.secrets = secrets
 
     def collect_latest(self) -> Measurement:
-        return self.collect_past(datetime.now())
+        return self.collect_past(date.today() - timedelta(days=1))
 
-    def collect_past(self, datetime: datetime) -> Measurement:
+    def collect_past(self, date: date) -> Measurement:
         raise NotImplementedError()
 
-    def collect_past_multi(self, datetimes: List[datetime]) -> List[Measurement]:
-        return [self.collect_past(dt) for dt in datetimes]
+    def collect_past_multi(self, dates: List[date]) -> List[Measurement]:
+        return [self.collect_past(dt) for dt in dates]
