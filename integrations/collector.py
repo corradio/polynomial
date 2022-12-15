@@ -25,7 +25,11 @@ INTEGRATION_CLASSES = {
 
 
 def collect(integration_name: str) -> int:
-    config: Dict[str, str] = {}
+    config: Dict = {
+        "site_id": "app.electricitymaps.com",
+        "metric": "visitors",
+        "filters": [],
+    }
     secrets = {"PLAUSIBLE_API_KEY": os.environ["PLAUSIBLE_API_KEY"]}
     integration_class = INTEGRATION_CLASSES[integration_name]
     inst = integration_class(config, secrets)

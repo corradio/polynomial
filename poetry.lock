@@ -113,6 +113,17 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-jsonform"
+version = "2.15.0"
+description = "A user-friendly JSON editing form for Django admin."
+category = "main"
+optional = false
+python-versions = ">=3.4"
+
+[package.dependencies]
+django = ">=2.0"
+
+[[package]]
 name = "django-stubs"
 version = "1.13.1"
 description = "Mypy stubs for Django"
@@ -381,7 +392,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "335263f9ecee913ffa9638f8ff97bff427a15097aa3cc850666bde890f7c1c8b"
+content-hash = "c0db54b308b672e1621357e7532bfdde754d9d328082e3398308a627be51b93b"
 
 [metadata.files]
 asgiref = []
@@ -413,6 +424,7 @@ click = [
 ]
 colorama = []
 django = []
+django-jsonform = []
 django-stubs = []
 django-stubs-ext = []
 exceptiongroup = []

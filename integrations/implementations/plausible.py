@@ -8,10 +8,10 @@ from integrations.integration import Integration, Measurement
 
 class Plausible(Integration):
     def collect_past(self, date: date) -> Measurement:
-        site_id = "app.electricitymaps.com"
+        site_id = self.config["site_id"]
         period = "day"
-        metric = "visitors"
-        filters: List[str] = []
+        metric = self.config["metric"]
+        filters: List[str] = self.config["filters"]
 
         r = requests.Session()
         r.headers.update(
@@ -30,3 +30,23 @@ class Plausible(Integration):
         response.raise_for_status()
         visitor_count = int(response.json()["results"]["visitors"]["value"])
         return Measurement((date, visitor_count))
+
+    @classmethod
+    def get_config_schema(self):
+        return {
+            "type": "dict",
+            "keys": {
+                "site_id": {
+                    "type": "string",
+                    "required": True,
+                    "helpText": "This is a help text",
+                },
+                "metric": {
+                    "type": "string",
+                    "choices": ["visitors"],
+                    "default": "visitors",
+                    "required": True,
+                },
+                "filters": {"type": "array", "items": {"type": "string"}},
+            },
+        }
