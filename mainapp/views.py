@@ -21,6 +21,7 @@ def index(request):
 
     template = Template(
         """
+{% extends "base.html" %}
 {% block content %}
   <form action="" method="post">
     {% csrf_token %}
