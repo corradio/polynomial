@@ -1,9 +1,11 @@
+from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
-from integrations.collector import collect
-from mainapp.models import IntegrationConfig
+from mainapp.models import IntegrationConfig, IntegrationInstance, User
+
+from .integrations.collector import collect
 
 
 class IntegrationConfigForm(ModelForm):
@@ -39,3 +41,16 @@ def index(request):
     )
 
     return HttpResponse(template.render(context))
+
+
+@login_required
+def integration_instance(request, integration_instance_id):
+    user = request.user
+    integration_instance = get_object_or_404(
+        IntegrationInstance, pk=integration_instance_id
+    )
+    assert integration_instance.metric.user == user  # TODO: AUTH instead
+    measurement = collect(integration_instance.name)
+    measurement.metric = integration_instance.metric
+    measurement.save()
+    return HttpResponse(measurement)

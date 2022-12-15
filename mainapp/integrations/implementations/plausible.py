@@ -3,7 +3,7 @@ from typing import List
 
 import requests
 
-from integrations.integration import Integration, Measurement
+from mainapp.models import Integration, Measurement
 
 
 class Plausible(Integration):
@@ -23,13 +23,12 @@ class Plausible(Integration):
         # TODO: timezone?
         url += f"&date={date.strftime('%Y-%m-%d')}"
         url += f"&metrics={metric}"
-        print(url)
         if filters:
             url += f"&filters={filters}"
         response = r.get(url)
         response.raise_for_status()
         visitor_count = int(response.json()["results"]["visitors"]["value"])
-        return Measurement((date, visitor_count))
+        return Measurement(date=date, value=visitor_count)
 
     @classmethod
     def get_config_schema(self):
