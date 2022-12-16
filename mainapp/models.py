@@ -75,7 +75,7 @@ class IntegrationInstance(models.Model):
 class Measurement(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     date = models.DateField()
-    value = models.IntegerField()
+    value = models.PositiveIntegerField()
 
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
 
