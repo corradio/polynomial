@@ -1,23 +1,34 @@
 from django.contrib.auth.decorators import login_required
-from django.forms import ModelForm
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 
-from mainapp.models import IntegrationConfig, IntegrationInstance, Measurement, User
+from integrations.collector import collect
 
-from .integrations.collector import collect
-
-
-class IntegrationConfigForm(ModelForm):
-    class Meta:
-        model = IntegrationConfig
-        fields = ["items"]
+from .forms import IntegrationInstanceForm
+from .models import IntegrationInstance, Measurement, User
 
 
 def index(request):
-    # return HttpResponse(collect("plausible"))
+    return HttpResponse("ok")
 
-    form = IntegrationConfigForm()
+
+@login_required
+def integration_instance(request, integration_instance_id):
+    integration_instance = get_object_or_404(
+        IntegrationInstance, pk=integration_instance_id, metric__user=request.user
+    )
+
+    # # collect
+    # measurement = collect(integration_instance.name)
+    # Measurement.objects.update_or_create(
+    #     metric=integration_instance.metric,
+    #     date=measurement.date,
+    #     defaults={"value": measurement.value},
+    # )
+    # return HttpResponse(measurement)
+
+    # show edit page
+    form = IntegrationInstanceForm(instance=integration_instance)
 
     from django.template import Context, Template
 
@@ -41,18 +52,3 @@ def index(request):
     )
 
     return HttpResponse(template.render(context))
-
-
-@login_required
-def integration_instance(request, integration_instance_id):
-    user = request.user
-    integration_instance = get_object_or_404(
-        IntegrationInstance, pk=integration_instance_id, metric__user=user
-    )
-    measurement = collect(integration_instance.name)
-    Measurement.objects.update_or_create(
-        metric=integration_instance.metric,
-        date=measurement.date,
-        defaults={"value": measurement.value},
-    )
-    return HttpResponse(measurement)

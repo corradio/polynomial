@@ -3,11 +3,30 @@ from typing import List
 
 import requests
 
-from mainapp.models import Integration, Measurement
+from ..models import Integration, MeasurementTuple
 
 
 class Plausible(Integration):
-    def collect_past(self, date: date) -> Measurement:
+    # Use https://bhch.github.io/react-json-form/playground
+    config_schema = {
+        "type": "dict",
+        "keys": {
+            "site_id": {
+                "type": "string",
+                "required": True,
+                "helpText": "This is a help text",
+            },
+            "metric": {
+                "type": "string",
+                "choices": ["visitors"],
+                "default": "visitors",
+                "required": True,
+            },
+            "filters": {"type": "array", "items": {"type": "string"}},
+        },
+    }
+
+    def collect_past(self, date: date) -> MeasurementTuple:
         site_id = self.config["site_id"]
         period = "day"
         metric = self.config["metric"]
@@ -28,24 +47,4 @@ class Plausible(Integration):
         response = r.get(url)
         response.raise_for_status()
         visitor_count = int(response.json()["results"]["visitors"]["value"])
-        return Measurement(date=date, value=visitor_count)
-
-    @classmethod
-    def get_config_schema(self):
-        return {
-            "type": "dict",
-            "keys": {
-                "site_id": {
-                    "type": "string",
-                    "required": True,
-                    "helpText": "This is a help text",
-                },
-                "metric": {
-                    "type": "string",
-                    "choices": ["visitors"],
-                    "default": "visitors",
-                    "required": True,
-                },
-                "filters": {"type": "array", "items": {"type": "string"}},
-            },
-        }
+        return MeasurementTuple(date=date, value=visitor_count)

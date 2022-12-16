@@ -1,43 +1,11 @@
-import pkgutil
 from datetime import date, timedelta
-from typing import List
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django_jsonform.models.fields import JSONField
 
-# ** Non-database models
-
-
-class Integration:
-    def __init__(self, config, secrets):
-        self.config = config
-        self.secrets = secrets
-
-    def collect_latest(self) -> "Measurement":
-        return self.collect_past(date.today() - timedelta(days=1))
-
-    def collect_past(self, date: date) -> "Measurement":
-        raise NotImplementedError()
-
-    def collect_past_multi(self, dates: List[date]) -> List["Measurement"]:
-        return [self.collect_past(dt) for dt in dates]
-
-    @classmethod
-    def get_config_schema(self):
-        """Use https://bhch.github.io/react-json-form/playground"""
-        return {}
-
-
-INTEGRATION_NAMES = [
-    integration_name
-    for (_, integration_name, _) in pkgutil.iter_modules(
-        ["mainapp/integrations/implementations"]
-    )
-]
-
-
-# ** Database models
+from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
+from integrations.models import EMPTY_CONFIG_SCHEMA
 
 
 class User(AbstractUser):
@@ -65,9 +33,20 @@ class IntegrationInstance(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_collected_at = models.DateTimeField(blank=True, null=True)
-    name = models.CharField(max_length=128, choices=[(k, k) for k in INTEGRATION_NAMES])
-    config = models.JSONField(blank=True, null=True)
+    integration_id = models.CharField(
+        max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
+    )
     secrets = models.JSONField(blank=True, null=True)  # TODO: Encrypt
+
+    def callable_config_schema(model_instance=None):
+        # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
+        # `model_instance` will be None while creating new object
+        if model_instance and model_instance.pk:
+            return INTEGRATION_CLASSES[model_instance.integration_id].config_schema
+        # Empty schema
+        return EMPTY_CONFIG_SCHEMA
+
+    config = JSONField(blank=True, null=True, schema=callable_config_schema)
 
     metric = models.OneToOneField(Metric, on_delete=models.CASCADE)
 
@@ -91,8 +70,8 @@ class Measurement(models.Model):
 
 
 # TODO: Remove so it doesn't end up in Database(!)
-class IntegrationConfig(models.Model):
-    from .integrations.implementations.plausible import Plausible
+# class IntegrationConfig(models.Model):
+#     from .integrations.implementations.plausible import Plausible
 
-    items = JSONField(schema=Plausible.get_config_schema())
-    date_created = models.DateTimeField(auto_now_add=True)
+#     items = JSONField(schema=Plausible.get_config_schema())
+#     date_created = models.DateTimeField(auto_now_add=True)

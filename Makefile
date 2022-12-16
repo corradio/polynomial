@@ -5,8 +5,8 @@ seed:
 	DJANGO_SUPERUSER_PASSWORD=test \
 	DJANGO_SUPERUSER_EMAIL="admin@admin.com" \
 	$(MANAGE) createsuperuser --noinput || true
-	$(MANAGE) shell -c "from mainapp.models import Metric,User; Metric(name='test_metric', user_id=User.objects.get(username='admin').id).save()"
-	$(MANAGE) shell -c "from mainapp.models import IntegrationInstance,Metric; IntegrationInstance(name='plausible', metric_id=Metric.objects.get(name='test_metric').id).save()"
+	$(MANAGE) shell -c "from mainapp.models import Metric,User; Metric(name='test_metric', user=User.objects.get(username='admin')).save()"
+	$(MANAGE) shell -c "from mainapp.models import IntegrationInstance,Metric; IntegrationInstance(integration_id='plausible', metric=Metric.objects.get(name='test_metric')).save()"
 
 cleardb:
 	docker-compose stop pgdb
