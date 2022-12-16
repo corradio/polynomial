@@ -8,11 +8,11 @@ EMPTY_CONFIG_SCHEMA = {"type": "object", "keys": {}}
 
 
 class Integration:
-    config_schema: Dict[
-        str, Any
-    ] = EMPTY_CONFIG_SCHEMA  # Use https://bhch.github.io/react-json-form/playground
+    config_schema: Dict = (
+        EMPTY_CONFIG_SCHEMA  # Use https://bhch.github.io/react-json-form/playground
+    )
 
-    def __init__(self, config, secrets):
+    def __init__(self, config: Dict, secrets: Dict):
         self.config = config
         self.secrets = secrets
 

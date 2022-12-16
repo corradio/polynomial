@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -26,7 +28,14 @@ def integration_instance_collect(request, integration_instance_id):
     integration_instance = get_object_or_404(
         IntegrationInstance, pk=integration_instance_id, metric__user=request.user
     )
-    measurement = collect(integration_instance.integration_id)
+    # TODO: Read secrets from store
+    import os
+
+    secrets = {"PLAUSIBLE_API_KEY": os.environ["PLAUSIBLE_API_KEY"]}
+    config = json.loads(integration_instance.config)
+    measurement = collect(
+        integration_instance.integration_id, config=config, secrets=secrets
+    )
     Measurement.objects.update_or_create(
         metric=integration_instance.metric,
         date=measurement.date,
@@ -41,10 +50,24 @@ def integration_instance(request, integration_instance_id):
         IntegrationInstance, pk=integration_instance_id, metric__user=request.user
     )
 
+    if request.POST:
+        # TODO: use generic views instead
+        # from django.views import generic
+        # https://docs.djangoproject.com/en/4.1/intro/tutorial04/#use-generic-views-less-code-is-better
+        integration_instance.config = request.POST["config"]
+        integration_instance.secrets = request.POST["secrets"]
+        # Hack. TODO: Fix
+        if (integration_instance.config or "null") == "null":
+            integration_instance.config = None
+        if (integration_instance.secrets or "null") == "null":
+            integration_instance.secrets = None
+        integration_instance.save()
+        return HttpResponse("ok")
+
     # show edit page
     form = IntegrationInstanceForm(instance=integration_instance)
 
-    from django.template import Context, Template
+    from django.template import RequestContext, Template
 
     template = Template(
         """
@@ -59,10 +82,10 @@ def integration_instance(request, integration_instance_id):
 {% endblock %}
         """
     )
-    context = Context(
+    context = RequestContext(
+        request,
         {
             "form": form,
-        }
+        },
     )
-
     return HttpResponse(template.render(context))
