@@ -25,15 +25,87 @@ def integration_implementation(integration_instance):
 
 @login_required
 def index(request):
-    data = {
-        m: Measurement.objects.all().filter(metric=m)
-        for m in Metric.objects.all().filter(user=request.user)
+    data = [
+        {
+            "metric": measurement.metric.name,
+            "value": measurement.value,
+            "date": measurement.date.isoformat(),
+        }
+        for measurement in Measurement.objects.all().filter(metric__user=request.user)
+    ]
+    from django.template import RequestContext, Template
+
+    template = Template(
+        """
+{% extends "base.html" %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5.6.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
+<h1>Dashboard</h1>
+<div id="vis"></div>
+<script>
+  var values = {{ json_data|safe }};
+  var json_unique_metrics = {{ json_unique_metrics|safe }};
+  console.log(values);
+  // Assign the specification to a local variable vlSpec.
+  var vlSpec = {
+    $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+    data: {
+      values: values/*[
+        {metric: 'C', x:2, value: 2},
+        {metric: 'C', x:7, value: 7},
+        {metric: 'C', x:4, value: 4},
+        {metric: 'D', x:1, value: 1},
+        {metric: 'D', x:2, value: 2},
+        {metric: 'D', x:6, value: 6},
+        {metric: 'E', x:8, value: 2},
+        {metric: 'E', x:4, value: 2},
+        {metric: 'E', x:7, value: 2},
+      ]*/
+    },
+    "params": [{
+      "name": "metric",
+      "select": {"type": "point", "fields": ["metric"]},
+      "bind": {"input": "select", "options": json_unique_metrics},
+      "value": json_unique_metrics[0],
+    }],
+    "transform": [
+        { "filter": {"param": "metric"} }
+    ],
+    mark: {
+        "type": "line",
+        "point": true,
+        //"interpolate": "step-after"
+    },
+    encoding: {
+      x: {
+        field: 'date',
+        type: 'ordinal',
+        timeUnit: 'dayofyear',
+        // https://github.com/d3/d3-time-format#locale_format
+        axis: { title: null, labelFontSize: 6, format: '%b %d', labelAngle: -90 },
+      },
+      y: {
+        field: 'value', type: 'quantitative',
+      }
     }
-    return HttpResponse(
-        "<br />".join(
-            [f"{k}: [{','.join([str(v) for v in v])}]" for k, v in data.items()]
-        )
+  };
+
+  // Embed the visualization in the container with id `vis`
+  vegaEmbed('#vis', vlSpec);
+</script>
+{% endblock %}
+        """
     )
+    context = RequestContext(
+        request,
+        {
+            "json_data": json.dumps(data),
+            "json_unique_metrics": json.dumps(sorted(set([d["metric"] for d in data]))),
+        },
+    )
+    return HttpResponse(template.render(context))
 
 
 @login_required
