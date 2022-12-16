@@ -3,7 +3,7 @@ from django.forms import ModelForm
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 
-from mainapp.models import IntegrationConfig, IntegrationInstance, User
+from mainapp.models import IntegrationConfig, IntegrationInstance, Measurement, User
 
 from .integrations.collector import collect
 
@@ -51,6 +51,9 @@ def integration_instance(request, integration_instance_id):
     )
     assert integration_instance.metric.user == user  # TODO: AUTH instead
     measurement = collect(integration_instance.name)
-    measurement.metric = integration_instance.metric
-    measurement.save()
+    Measurement.objects.update_or_create(
+        metric=integration_instance.metric,
+        date=measurement.date,
+        defaults={"value": measurement.value},
+    )
     return HttpResponse(measurement)

@@ -53,6 +53,13 @@ class Metric(models.Model):
     def __str__(self):
         return f'Metric("{self.name}")'
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("name", "user_id"), name="unique_name_user_id"
+            )
+        ]
+
 
 class IntegrationInstance(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -69,16 +76,21 @@ class Measurement(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     date = models.DateField()
     value = models.IntegerField()
-    # TODO: Enforce uniqueness of (metric, date)
-    # and enforce upsert
 
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.date} = {self.value}"
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("metric", "date"), name="unique_metric_date"
+            )
+        ]
 
-# # TODO: Remove
+
+# TODO: Remove so it doesn't end up in Database(!)
 class IntegrationConfig(models.Model):
     from .integrations.implementations.plausible import Plausible
 
