@@ -47,9 +47,8 @@ def index(request):
 def integration_instance(request, integration_instance_id):
     user = request.user
     integration_instance = get_object_or_404(
-        IntegrationInstance, pk=integration_instance_id
+        IntegrationInstance, pk=integration_instance_id, metric__user=user
     )
-    assert integration_instance.metric.user == user  # TODO: AUTH instead
     measurement = collect(integration_instance.name)
     Measurement.objects.update_or_create(
         metric=integration_instance.metric,
