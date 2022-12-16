@@ -326,6 +326,14 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "types-psycopg2"
+version = "2.9.21.2"
+description = "Typing stubs for psycopg2"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-pytz"
 version = "2022.6.0.1"
 description = "Typing stubs for pytz"
@@ -392,7 +400,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "c0db54b308b672e1621357e7532bfdde754d9d328082e3398308a627be51b93b"
+content-hash = "586becc1633378639a24d18755dfd495af6299a7b677876e4c607aaf48679e4f"
 
 [metadata.files]
 asgiref = []
@@ -448,6 +456,7 @@ pytest = []
 requests = []
 sqlparse = []
 tomli = []
+types-psycopg2 = []
 types-pytz = []
 types-pyyaml = []
 types-requests = []

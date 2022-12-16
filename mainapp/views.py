@@ -1,13 +1,24 @@
 import json
+import sys
+import traceback
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 
 from integrations.collector import collect
 
 from .forms import IntegrationInstanceForm
 from .models import IntegrationInstance, Measurement, Metric, User
+
+
+def collect_integration(integration_instance):
+    # TODO: Read secrets from store
+    import os
+
+    secrets = {"PLAUSIBLE_API_KEY": os.environ["PLAUSIBLE_API_KEY"]}
+    config = json.loads(integration_instance.config)
+    return collect(integration_instance.integration_id, config=config, secrets=secrets)
 
 
 @login_required
@@ -28,20 +39,33 @@ def integration_instance_collect(request, integration_instance_id):
     integration_instance = get_object_or_404(
         IntegrationInstance, pk=integration_instance_id, metric__user=request.user
     )
-    # TODO: Read secrets from store
-    import os
+    try:
+        measurement = collect_integration(integration_instance)
+        # TODO: Should this route change the DB?
+        # Should it be another VERB?
+        # Measurement.objects.update_or_create(
+        #     metric=integration_instance.metric,
+        #     date=measurement.date,
+        #     defaults={"value": measurement.value},
+        # )
+    except Exception as e:
+        import sys
+        import traceback
 
-    secrets = {"PLAUSIBLE_API_KEY": os.environ["PLAUSIBLE_API_KEY"]}
-    config = json.loads(integration_instance.config)
-    measurement = collect(
-        integration_instance.integration_id, config=config, secrets=secrets
+        exc_info = sys.exc_info()
+        return JsonResponse(
+            {
+                "error": "\n".join(traceback.format_exception(*exc_info)),
+                "status": "error",
+            },
+            status=500,
+        )
+    return JsonResponse(
+        {
+            "measurement": measurement,
+            "status": "ok",
+        }
     )
-    Measurement.objects.update_or_create(
-        metric=integration_instance.metric,
-        date=measurement.date,
-        defaults={"value": measurement.value},
-    )
-    return HttpResponse(measurement)
 
 
 @login_required
@@ -50,6 +74,8 @@ def integration_instance(request, integration_instance_id):
         IntegrationInstance, pk=integration_instance_id, metric__user=request.user
     )
 
+    integration_error = None
+    measurement = None
     if request.POST:
         # TODO: use generic views instead
         # from django.views import generic
@@ -61,8 +87,15 @@ def integration_instance(request, integration_instance_id):
             integration_instance.config = None
         if (integration_instance.secrets or "null") == "null":
             integration_instance.secrets = None
-        integration_instance.save()
-        return HttpResponse("ok")
+        # Test the integration before saving it
+        try:
+            measurement = collect_integration(integration_instance)
+        except Exception as e:
+            exc_info = sys.exc_info()
+            integration_error = "\n".join(traceback.format_exception(*exc_info))
+        # If the test is conclusive, save
+        if measurement:
+            integration_instance.save()
 
     # show edit page
     form = IntegrationInstanceForm(instance=integration_instance)
@@ -77,7 +110,14 @@ def integration_instance(request, integration_instance_id):
     {% csrf_token %}
     {{ form.media }}
     {{ form }}
-    <input type="submit" value="Submit">
+    <input type="submit" value="Test and save">
+    <p>
+        {% if integration_error %}
+        <div style="color: red">Error while collecting integration. Settings have not been saved.<br/><pre>{{ integration_error }}</pre></div>
+        {% else %}
+        <div style="color: green">Integration returned {{ measurement }}. Settings have been saved.</div>
+        {% endif %}
+    </p>
   </form>
 {% endblock %}
         """
@@ -86,6 +126,8 @@ def integration_instance(request, integration_instance_id):
         request,
         {
             "form": form,
+            "integration_error": integration_error,
+            "measurement": measurement,
         },
     )
     return HttpResponse(template.render(context))
