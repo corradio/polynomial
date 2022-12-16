@@ -13,22 +13,6 @@ class User(AbstractUser):
     pass
 
 
-class Metric(models.Model):
-    name = models.CharField(max_length=128)
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f'Metric("{self.name}")'
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=("name", "user_id"), name="unique_name_user_id"
-            )
-        ]
-
-
 class IntegrationInstance(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -36,6 +20,7 @@ class IntegrationInstance(models.Model):
     integration_id = models.CharField(
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )
+    metric_name = models.CharField(max_length=128)
     secrets = models.JSONField(blank=True, null=True)  # TODO: Encrypt
 
     def callable_config_schema(model_instance=None):
@@ -48,15 +33,25 @@ class IntegrationInstance(models.Model):
 
     config = JSONField(blank=True, null=True, schema=callable_config_schema)
 
-    metric = models.OneToOneField(Metric, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "metric_name"), name="unique_integration_instance"
+            )
+        ]
 
 
 class Measurement(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     date = models.DateField()
-    value = models.PositiveIntegerField()
+    value = models.FloatField()
+    metric_name = models.CharField(max_length=128)
 
-    metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
+    integration_instance = models.ForeignKey(
+        IntegrationInstance, on_delete=models.CASCADE, blank=True, null=True
+    )
 
     def __str__(self):
         return f"{self.date} = {self.value}"
@@ -64,14 +59,6 @@ class Measurement(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=("metric", "date"), name="unique_metric_date"
+                fields=("integration_instance", "date"), name="unique_measurement"
             )
         ]
-
-
-# TODO: Remove so it doesn't end up in Database(!)
-# class IntegrationConfig(models.Model):
-#     from .integrations.implementations.plausible import Plausible
-
-#     items = JSONField(schema=Plausible.get_config_schema())
-#     date_created = models.DateTimeField(auto_now_add=True)

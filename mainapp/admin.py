@@ -26,5 +26,4 @@ class IntegrationInstanceAdmin(admin.ModelAdmin):
 
 admin.site.register(models.User)
 admin.site.register(models.IntegrationInstance, IntegrationInstanceAdmin)
-admin.site.register(models.Metric)
 admin.site.register(models.Measurement)

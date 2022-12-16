@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404, render
 from integrations import INTEGRATION_CLASSES
 
 from .forms import IntegrationInstanceForm
-from .models import IntegrationInstance, Measurement, Metric, User
+from .models import IntegrationInstance, Measurement, User
 
 
 def integration_implementation(integration_instance):
@@ -27,11 +27,13 @@ def integration_implementation(integration_instance):
 def index(request):
     data = [
         {
-            "metric": measurement.metric.name,
+            "metric": measurement.metric_name,
             "value": measurement.value,
             "date": measurement.date.isoformat(),
         }
-        for measurement in Measurement.objects.all().filter(metric__user=request.user)
+        for measurement in Measurement.objects.all().filter(
+            integration_instance__user=request.user
+        )
     ]
     from django.template import RequestContext, Template
 
@@ -47,22 +49,11 @@ def index(request):
 <script>
   var values = {{ json_data|safe }};
   var json_unique_metrics = {{ json_unique_metrics|safe }};
-  console.log(values);
   // Assign the specification to a local variable vlSpec.
   var vlSpec = {
     $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
     data: {
-      values: values/*[
-        {metric: 'C', x:2, value: 2},
-        {metric: 'C', x:7, value: 7},
-        {metric: 'C', x:4, value: 4},
-        {metric: 'D', x:1, value: 1},
-        {metric: 'D', x:2, value: 2},
-        {metric: 'D', x:6, value: 6},
-        {metric: 'E', x:8, value: 2},
-        {metric: 'E', x:4, value: 2},
-        {metric: 'E', x:7, value: 2},
-      ]*/
+      values: values
     },
     "params": [{
       "name": "metric",
@@ -111,7 +102,7 @@ def index(request):
 @login_required
 def integration_instance_collect(request, integration_instance_id):
     integration_instance = get_object_or_404(
-        IntegrationInstance, pk=integration_instance_id, metric__user=request.user
+        IntegrationInstance, pk=integration_instance_id, user=request.user
     )
     try:
         if request.GET.get("since"):
@@ -134,16 +125,19 @@ def integration_instance_collect(request, integration_instance_id):
             # Save in this case
             for measurement in data:
                 Measurement.objects.update_or_create(
-                    metric=integration_instance.metric,
+                    metric_name=integration_instance.metric_name,
                     date=measurement.date,
-                    defaults={"value": measurement.value},
+                    defaults={
+                        "value": measurement.value,
+                        "integration_instance": integration_instance,
+                    },
                 )
         else:
             data = integration_implementation(integration_instance).collect_latest()
             # TODO: Should this route change the DB?
             # Should it be another VERB?
             # Measurement.objects.update_or_create(
-            #     metric=integration_instance.metric,
+            #     metric_name=integration_instance.metric_name,
             #     date=measurement.date,
             #     defaults={"value": measurement.value},
             # )
@@ -170,7 +164,7 @@ def integration_instance_collect(request, integration_instance_id):
 @login_required
 def integration_instance(request, integration_instance_id):
     integration_instance = get_object_or_404(
-        IntegrationInstance, pk=integration_instance_id, metric__user=request.user
+        IntegrationInstance, pk=integration_instance_id, user=request.user
     )
 
     integration_error = None

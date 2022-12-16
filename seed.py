@@ -1,10 +1,9 @@
-from mainapp.models import IntegrationInstance, Metric, User
+from mainapp.models import IntegrationInstance, User
 
-Metric(name="test_metric", user=User.objects.get(username="admin")).save()
-Metric(name="test_metric_sql", user=User.objects.get(username="admin")).save()
+admin_user = User.objects.get(username="admin")
 IntegrationInstance(
-    integration_id="plausible", metric=Metric.objects.get(name="test_metric")
+    integration_id="plausible", metric_name="test_metric", user=admin_user
 ).save()
 IntegrationInstance(
-    integration_id="postgresql", metric=Metric.objects.get(name="test_metric_sql")
+    integration_id="postgresql", metric_name="test_metric_sql", user=admin_user
 ).save()

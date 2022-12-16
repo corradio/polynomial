@@ -12,4 +12,4 @@ class IntegrationInstanceForm(ModelForm):
 
     class Meta:
         model = IntegrationInstance
-        fields = ["config", "secrets"]
+        fields = ["metric_name", "config", "secrets"]
