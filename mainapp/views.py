@@ -45,42 +45,83 @@ def index(request):
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.6.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
 <h1>Dashboard</h1>
-<div id="vis"></div>
+<div id="vis" style="width: 80%"></div>
 <script>
   var values = {{ json_data|safe }};
   var json_unique_metrics = {{ json_unique_metrics|safe }};
   // Assign the specification to a local variable vlSpec.
   var vlSpec = {
     $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+    width: "container",
     data: {
       values: values
     },
-    "params": [{
-      "name": "metric",
-      "select": {"type": "point", "fields": ["metric"]},
-      "bind": {"input": "select", "options": json_unique_metrics},
-      "value": json_unique_metrics[0],
-    }],
-    "transform": [
-        { "filter": {"param": "metric"} }
+    "params": [
+        {
+          "name": "selected_metric",
+          "bind": {"input": "select", "options": json_unique_metrics},
+          "value": json_unique_metrics[0],
+        },
+        {
+          "name": "highlight",
+          "select": {
+            "type": "point",
+            "nearest": true,
+            "on": "mouseover",
+            "encodings": ["x"],
+          },
+          "views": ["points"]
+        }
     ],
-    mark: {
-        "type": "line",
-        "point": true,
-        //"interpolate": "step-after"
-    },
+    "transform": [
+        { "filter": { "field": "metric", "equal": { "expr": "selected_metric"} } },
+        {
+          "window": [
+            {
+              "field": "value",
+              "op": "mean",
+              "as": "rolling_mean"
+            }
+          ],
+          "frame": [-15, 15]
+        }
+    ],
     encoding: {
       x: {
         field: 'date',
         type: 'ordinal',
         timeUnit: 'dayofyear',
         // https://github.com/d3/d3-time-format#locale_format
-        axis: { title: null, labelFontSize: 6, format: '%b %d', labelAngle: -90 },
+        axis: { title: null, format: '%b %d', labelAngle: -45 },
       },
       y: {
         field: 'value', type: 'quantitative',
-      }
-    }
+      },
+      "tooltip":  {"field": "value", "type": "quantitative"}
+    },
+    "layer": [
+        {
+          "name": "line",
+          "mark": {"type": "line", "opacity": 1.0}
+        },
+        {
+          "name": "points",
+          "mark": {"type": "circle"},
+          "encoding": {
+            "size": {
+              "condition": {"param": "highlight", "empty": false, "value": 200},
+              "value": 50
+            }
+          }
+        },
+        {
+          "name": "moving_average",
+          "mark": {"type": "line", "color": "red", "opacity": 0.5},
+          "encoding": {
+            "y": {"field": "rolling_mean", "title": "Value"}
+          }
+        },
+      ],
   };
 
   // Embed the visualization in the container with id `vis`
