@@ -22,5 +22,6 @@ class Integration:
     def collect_past(self, date: date) -> MeasurementTuple:
         raise NotImplementedError()
 
+    # TODO: maybe the API should use ranges instead of date lists..
     def collect_past_multi(self, dates: List[date]) -> List[MeasurementTuple]:
         return [self.collect_past(dt) for dt in dates]

@@ -6,19 +6,21 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 
-from integrations.collector import collect
+from integrations import INTEGRATION_CLASSES
 
 from .forms import IntegrationInstanceForm
 from .models import IntegrationInstance, Measurement, Metric, User
 
 
-def collect_integration(integration_instance):
+def integration_implementation(integration_instance):
     # TODO: Read secrets from store
     import os
 
     secrets = {"PLAUSIBLE_API_KEY": os.environ["PLAUSIBLE_API_KEY"]}
-    config = json.loads(integration_instance.config)
-    return collect(integration_instance.integration_id, config=config, secrets=secrets)
+    config = integration_instance.config and json.loads(integration_instance.config)
+    integration_class = INTEGRATION_CLASSES[integration_instance.integration_id]
+    inst = integration_class(config, secrets)
+    return inst
 
 
 @login_required
@@ -40,14 +42,39 @@ def integration_instance_collect(request, integration_instance_id):
         IntegrationInstance, pk=integration_instance_id, metric__user=request.user
     )
     try:
-        measurement = collect_integration(integration_instance)
-        # TODO: Should this route change the DB?
-        # Should it be another VERB?
-        # Measurement.objects.update_or_create(
-        #     metric=integration_instance.metric,
-        #     date=measurement.date,
-        #     defaults={"value": measurement.value},
-        # )
+        if request.GET.get("since"):
+            from django.utils.dateparse import parse_date
+
+            since = parse_date(request.GET.get("since"))
+            # Note: we could also use parse_duration() and pass e.g. "3 days"
+            from datetime import date, timedelta
+
+            dates = [date.today() - timedelta(days=1)]  # start with yesterday
+            while True:
+                new_date = dates[-1] - timedelta(days=1)
+                if new_date < since:
+                    break
+                else:
+                    dates.append(new_date)
+            data = integration_implementation(integration_instance).collect_past_multi(
+                dates
+            )
+            # Save in this case
+            for measurement in data:
+                Measurement.objects.update_or_create(
+                    metric=integration_instance.metric,
+                    date=measurement.date,
+                    defaults={"value": measurement.value},
+                )
+        else:
+            data = integration_implementation(integration_instance).collect_latest()
+            # TODO: Should this route change the DB?
+            # Should it be another VERB?
+            # Measurement.objects.update_or_create(
+            #     metric=integration_instance.metric,
+            #     date=measurement.date,
+            #     defaults={"value": measurement.value},
+            # )
     except Exception as e:
         import sys
         import traceback
@@ -62,7 +89,7 @@ def integration_instance_collect(request, integration_instance_id):
         )
     return JsonResponse(
         {
-            "measurement": measurement,
+            "data": data,
             "status": "ok",
         }
     )
@@ -89,7 +116,9 @@ def integration_instance(request, integration_instance_id):
             integration_instance.secrets = None
         # Test the integration before saving it
         try:
-            measurement = collect_integration(integration_instance)
+            measurement = integration_implementation(
+                integration_instance
+            ).collect_latest()
         except Exception as e:
             exc_info = sys.exc_info()
             integration_error = "\n".join(traceback.format_exception(*exc_info))
