@@ -14,6 +14,16 @@ pre-commit install
 docker-compose up pgdb
 ```
 
+## Initiate db with migrations
+```sh
+make initdb
+```
+
+### Seed some data
+```sh
+make seed
+```
+
 ### Run migrations
 ```sh
 poetry run python manage.py migrate
@@ -24,27 +34,21 @@ poetry run python manage.py migrate
 poetry run python manage.py makemigrations
 ```
 
-### Create a new admin user
+### Reset db (if something goes wrong with migrations)
 ```sh
-poetry run python manage.py createsuperuser
-```
-
-### Restart from scratch
-```sh
-docker-compose stop pgdb
-docker-compose rm -v -f pgdb
+make resetdb
 ```
 
 
 ## Run server
 ```sh
-poetry run python manage.py runserver
+make runserver
 ```
 
 
 ## Debug stuff
 ```sh
-poetry run python manage.py shell
+make shell
 ```
 
 
@@ -52,10 +56,10 @@ poetry run python manage.py shell
 
 ### Type check
 ```sh
-poetry run mypy .
+make typecheck
 ```
 
 ### Format code
 ```sh
-poetry run black .
+make format
 ```
