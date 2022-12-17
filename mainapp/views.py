@@ -5,6 +5,7 @@ import traceback
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.views.generic import ListView
 
 from integrations import INTEGRATION_CLASSES
 
@@ -31,7 +32,7 @@ def index(request):
             "value": measurement.value,
             "date": measurement.date.isoformat(),
         }
-        for measurement in Measurement.objects.all().filter(metric__user=request.user)
+        for measurement in Measurement.objects.filter(metric__user=request.user)
     ]
     from django.template import RequestContext, Template
 
@@ -197,7 +198,7 @@ def metric_collect(request, metric_id):
 
 
 @login_required
-def metric(request, metric_id):
+def metric_details(request, metric_id):
     metric = get_object_or_404(Metric, pk=metric_id, user=request.user)
 
     integration_error = None
@@ -257,3 +258,8 @@ def metric(request, metric_id):
         },
     )
     return HttpResponse(template.render(context))
+
+
+class MetricListView(ListView):
+    def get_queryset(self):
+        return Metric.objects.filter(user=self.request.user).order_by("name")

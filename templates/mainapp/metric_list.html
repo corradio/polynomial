@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Metrics</h2>
+    <ul>
+        {% for metric in object_list %}
+            <li><a href="{% url 'metric-details' metric.id %}">{{ metric.name }}</a></li>
+        {% endfor %}
+    </ul>
+    {% url 'metrics' %}
+{% endblock %}

@@ -4,13 +4,14 @@ from . import views
 
 urlpatterns = [
     path("", views.index, name="index"),
+    path("metrics/", views.MetricListView.as_view(), name="metrics"),
     path(
-        "metric/<int:metric_id>/",
-        views.metric,
-        name="metric",
+        "metrics/<int:metric_id>/",
+        views.metric_details,
+        name="metric-details",
     ),
     path(
-        "metric/<int:metric_id>/collect",
+        "metrics/<int:metric_id>/collect",
         views.metric_collect,
         name="metric_collect",
     ),
