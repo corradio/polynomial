@@ -3,11 +3,12 @@ import sys
 import traceback
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.views.generic import ListView
+from django.views.generic import CreateView, FormView, ListView, UpdateView
 
-from integrations import INTEGRATION_CLASSES
+from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 
 from .forms import MetricForm
 from .models import Measurement, Metric, User
@@ -34,109 +35,11 @@ def index(request):
         }
         for measurement in Measurement.objects.filter(metric__user=request.user)
     ]
-    from django.template import RequestContext, Template
-
-    template = Template(
-        """
-{% extends "base.html" %}
-{% block content %}
-<script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-lite@5.6.0"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
-<h1>Dashboard</h1>
-<div id="vis" style="width: 80%"></div>
-<script>
-  var values = {{ json_data|safe }};
-  var json_unique_metrics = {{ json_unique_metrics|safe }};
-  // Assign the specification to a local variable vlSpec.
-  var vlSpec = {
-    $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-    width: "container",
-    data: {
-      values: values
-    },
-    "params": [
-        {
-          "name": "selected_metric",
-          "bind": {"input": "select", "options": json_unique_metrics},
-          "value": json_unique_metrics[0],
-        },
-        {
-          "name": "highlight",
-          "select": {
-            "type": "point",
-            "nearest": true,
-            "on": "mouseover",
-            "encodings": ["x"],
-          },
-          "views": ["points"]
-        }
-    ],
-    "transform": [
-        { "filter": { "field": "metric", "equal": { "expr": "selected_metric"} } },
-        {
-          "window": [
-            {
-              "field": "value",
-              "op": "mean",
-              "as": "rolling_mean"
-            }
-          ],
-          "frame": [-15, 15]
-        }
-    ],
-    encoding: {
-      x: {
-        field: 'date',
-        type: 'ordinal',
-        timeUnit: 'dayofyear',
-        // https://github.com/d3/d3-time-format#locale_format
-        axis: { title: null, format: '%b %d', labelAngle: -45 },
-      },
-      y: {
-        field: 'value', type: 'quantitative',
-      },
-      "tooltip":  {"field": "value", "type": "quantitative"}
-    },
-    "layer": [
-        {
-          "name": "line",
-          "mark": {"type": "line", "opacity": 1.0}
-        },
-        {
-          "name": "points",
-          "mark": {"type": "circle"},
-          "encoding": {
-            "size": {
-              "condition": {"param": "highlight", "empty": false, "value": 200},
-              "value": 50
-            }
-          }
-        },
-        {
-          "name": "moving_average",
-          "mark": {"type": "line", "color": "red", "opacity": 0.5},
-          "encoding": {
-            "y": {"field": "rolling_mean", "title": "Value"}
-          }
-        },
-      ],
-  };
-
-  // Embed the visualization in the container with id `vis`
-  vegaEmbed('#vis', vlSpec);
-</script>
-{% endblock %}
-        """
-    )
-    context = RequestContext(
-        request,
-        {
-            "json_data": json.dumps(data),
-            "json_unique_metrics": json.dumps(sorted(set([d["metric"] for d in data]))),
-        },
-    )
-    return HttpResponse(template.render(context))
+    context = {
+        "json_data": json.dumps(data),
+        "json_unique_metrics": json.dumps(sorted(set([d["metric"] for d in data]))),
+    }
+    return render(request, "mainapp/index.html", context)
 
 
 @login_required
@@ -199,33 +102,36 @@ def metric_collect(request, metric_id):
 
 @login_required
 def metric_details(request, metric_id):
-    metric = get_object_or_404(Metric, pk=metric_id, user=request.user)
+    if metric_id:
+        metric = get_object_or_404(Metric, pk=metric_id, user=request.user)
 
-    integration_error = None
-    measurement = None
-    if request.POST:
-        # TODO: use generic views instead
-        # from django.views import generic
-        # https://docs.djangoproject.com/en/4.1/intro/tutorial04/#use-generic-views-less-code-is-better
-        metric.integration_config = request.POST["integration_config"]
-        metric.integration_secrets = request.POST["integration_secrets"]
-        # Hack. TODO: Fix
-        if (metric.integration_config or "null") == "null":
-            metric.integration_config = None
-        if (metric.integration_secrets or "null") == "null":
-            metric.integration_secrets = None
-        # Test the integration before saving it
-        try:
-            measurement = get_integration_implementation(metric).collect_latest()
-        except Exception as e:
-            exc_info = sys.exc_info()
-            integration_error = "\n".join(traceback.format_exception(*exc_info))
-        # If the test is conclusive, save
-        if measurement:
-            metric.save()
+        integration_error = None
+        measurement = None
+        if request.POST:
+            # TODO: use generic views instead
+            # from django.views import generic
+            # https://docs.djangoproject.com/en/4.1/intro/tutorial04/#use-generic-views-less-code-is-better
+            metric.integration_config = request.POST["integration_config"]
+            metric.integration_secrets = request.POST["integration_secrets"]
+            # Hack. TODO: Fix
+            if (metric.integration_config or "null") == "null":
+                metric.integration_config = None
+            if (metric.integration_secrets or "null") == "null":
+                metric.integration_secrets = None
+            # Test the integration before saving it
+            try:
+                measurement = get_integration_implementation(metric).collect_latest()
+            except Exception as e:
+                exc_info = sys.exc_info()
+                integration_error = "\n".join(traceback.format_exception(*exc_info))
+            # If the test is conclusive, save
+            if measurement:
+                metric.save()
 
-    # show edit page
-    form = MetricForm(instance=metric)
+        # show edit page
+        form = MetricForm(instance=metric)
+    else:
+        form = MetricForm()
 
     from django.template import RequestContext, Template
 
@@ -260,6 +166,37 @@ def metric_details(request, metric_id):
     return HttpResponse(template.render(context))
 
 
-class MetricListView(ListView):
+class IntegrationListView(ListView):
+    # this page should be unprotected for SEO purposes
+    template_name = "mainapp/integration_list.html"
+
+    def get_queryset(self):
+        return INTEGRATION_IDS
+
+
+class MetricListView(ListView, LoginRequiredMixin):
     def get_queryset(self):
         return Metric.objects.filter(user=self.request.user).order_by("name")
+
+
+class MetricCreateView(CreateView, LoginRequiredMixin):
+    model = Metric
+    form_class = MetricForm
+    success_url = "/metrics"
+
+    def get_initial(self):
+        return {"integration_id": self.kwargs["integration_id"]}
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.integration_id = self.kwargs["integration_id"]
+        return super().form_valid(form)
+
+
+class MetricUpdateView(UpdateView, LoginRequiredMixin):
+    model = Metric
+    form_class = MetricForm
+
+    def get_queryset(self, *args, **kwargs):
+        # Only show metric if user can access it
+        return super().get_queryset(*args, **kwargs).filter(user=self.request.user)

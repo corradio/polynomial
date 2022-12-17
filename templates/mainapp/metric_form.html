@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+  <form action="" method="post">
+    {% csrf_token %}
+    {{ form.media }}
+    {{ form }}
+    <input type="button" value="Test">
+    <input type="submit" value="Save">
+    <p>
+        {% if integration_error %}
+        <div style="color: red">Error while collecting integration. Settings have not been saved.<br/><pre>{{ integration_error }}</pre></div>
+        {% else %}
+        <div style="color: green">Integration returned {{ measurement }}. Settings have been saved.</div>
+        {% endif %}
+    </p>
+  </form>
+{% endblock %}

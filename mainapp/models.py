@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.urls import reverse
 from django_jsonform.models.fields import JSONField
 
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
@@ -33,6 +34,9 @@ class Metric(models.Model):
     integration_config = JSONField(blank=True, null=True, schema=callable_config_schema)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def get_absolute_url(self):
+        return reverse("metric-details", args=[self.pk])
 
     class Meta:
         constraints = [

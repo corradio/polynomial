@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Integrations</h2>
+    <ul>
+        {% for integration_id in object_list %}
+            <li>{{ integration_id }} <a href="{% url 'metric-add' integration_id %}">[add as new metric]</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}

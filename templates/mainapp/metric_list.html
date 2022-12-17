@@ -2,10 +2,16 @@
 
 {% block content %}
     <h2>Metrics</h2>
-    <ul>
+    <div>
         {% for metric in object_list %}
-            <li><a href="{% url 'metric-details' metric.id %}">{{ metric.name }}</a></li>
+            <p>
+              <a href="{% url 'metric-details' metric.id %}">
+                {{ metric.name }}
+              </a>
+              [using {{ metric.integration_id }}, created {{ metric.created_at }}]
+            </p>
         {% endfor %}
-    </ul>
-    {% url 'metrics' %}
+    </div>
+    <hr />
+    <a href="{% url 'integrations' %}">Browse integrations</a>
 {% endblock %}
