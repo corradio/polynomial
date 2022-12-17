@@ -4,7 +4,7 @@ import traceback
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.generic import CreateView, FormView, ListView, UpdateView
 
@@ -14,6 +14,7 @@ from .forms import MetricForm
 from .models import Measurement, Metric, User
 
 
+# TODO: Refactor
 def get_integration_implementation(metric):
     # TODO: Read secrets from store
     import os
@@ -42,6 +43,7 @@ def index(request):
     return render(request, "mainapp/index.html", context)
 
 
+# TODO: Refactor this route
 @login_required
 def metric_collect(request, metric_id):
     metric = get_object_or_404(Metric, pk=metric_id, user=request.user)
@@ -101,69 +103,25 @@ def metric_collect(request, metric_id):
 
 
 @login_required
-def metric_details(request, metric_id):
-    if metric_id:
-        metric = get_object_or_404(Metric, pk=metric_id, user=request.user)
+def integration_collect_latest(request, integration_id):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        config = data.get("integration_config")
+        config = config and json.loads(config)
+        # TODO: Read secrets from POST
+        import os
 
-        integration_error = None
-        measurement = None
-        if request.POST:
-            # TODO: use generic views instead
-            # from django.views import generic
-            # https://docs.djangoproject.com/en/4.1/intro/tutorial04/#use-generic-views-less-code-is-better
-            metric.integration_config = request.POST["integration_config"]
-            metric.integration_secrets = request.POST["integration_secrets"]
-            # Hack. TODO: Fix
-            if (metric.integration_config or "null") == "null":
-                metric.integration_config = None
-            if (metric.integration_secrets or "null") == "null":
-                metric.integration_secrets = None
-            # Test the integration before saving it
-            try:
-                measurement = get_integration_implementation(metric).collect_latest()
-            except Exception as e:
-                exc_info = sys.exc_info()
-                integration_error = "\n".join(traceback.format_exception(*exc_info))
-            # If the test is conclusive, save
-            if measurement:
-                metric.save()
-
-        # show edit page
-        form = MetricForm(instance=metric)
-    else:
-        form = MetricForm()
-
-    from django.template import RequestContext, Template
-
-    template = Template(
-        """
-{% extends "base.html" %}
-{% block content %}
-  <form action="" method="post">
-    {% csrf_token %}
-    {{ form.media }}
-    {{ form }}
-    <input type="submit" value="Test and save">
-    <p>
-        {% if integration_error %}
-        <div style="color: red">Error while collecting integration. Settings have not been saved.<br/><pre>{{ integration_error }}</pre></div>
-        {% else %}
-        <div style="color: green">Integration returned {{ measurement }}. Settings have been saved.</div>
-        {% endif %}
-    </p>
-  </form>
-{% endblock %}
-        """
-    )
-    context = RequestContext(
-        request,
-        {
-            "form": form,
-            "integration_error": integration_error,
-            "measurement": measurement,
-        },
-    )
-    return HttpResponse(template.render(context))
+        secrets = {"PLAUSIBLE_API_KEY": os.environ["PLAUSIBLE_API_KEY"]}
+        integration_class = INTEGRATION_CLASSES[integration_id]
+        inst = integration_class(config, secrets)
+        try:
+            measurement = inst.collect_latest()
+            return JsonResponse({"measurement": measurement, "status": "ok"})
+        except Exception as e:
+            exc_info = sys.exc_info()
+            error_str = "\n".join(traceback.format_exception(*exc_info))
+            return JsonResponse({"error": error_str, "status": "error"})
+    return HttpResponseNotAllowed(["POST"])
 
 
 class IntegrationListView(ListView):

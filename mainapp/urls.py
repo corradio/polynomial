@@ -20,10 +20,9 @@ urlpatterns = [
         views.IntegrationListView.as_view(),
         name="integrations",
     ),
-    # TODO: Cleanup after this mark
     path(
-        "metrics/<int:metric_id>/collect",
-        views.metric_collect,
-        name="metric_collect",
+        "integrations/<integration_id>/collect_latest",
+        views.integration_collect_latest,
+        name="integration_collect_latest",
     ),
 ]

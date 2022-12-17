@@ -4,14 +4,41 @@
     {% csrf_token %}
     {{ form.media }}
     {{ form }}
-    <input type="button" value="Test">
+    <input type="button" id="button-test" value="Test">
     <input type="submit" value="Save">
+    <script>
+      var button = document.getElementById("button-test");
+      button.onclick = function() {
+        var csrftoken = document.querySelector('input[name=csrfmiddlewaretoken]').value;
+        var data = JSON.stringify({
+          integration_config: document.getElementById('id_integration_config').value,
+          integration_secrets: document.getElementById('id_integration_secrets').value,
+        });
+        fetch('/integrations/plausible/collect_latest', {
+          method: 'POST', headers: {
+            'X-CSRFToken': csrftoken,
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: data,
+        }).then(response => {
+          if (response.ok) {
+            return response.json();
+          }
+        })
+        .then(data => {
+          console.log(data.error)
+          var isError = data.status !== 'ok';
+          document.querySelector('#integration-test-success pre').innerText = JSON.stringify(data.measurement);
+          document.querySelector('#integration-test-error pre').innerText = data.error;
+          document.getElementById('integration-test-success').style.display = isError ? 'none' : null;
+          document.getElementById('integration-test-error').style.display = isError ? null : 'none';
+        });
+      };
+    </script>
     <p>
-        {% if integration_error %}
-        <div style="color: red">Error while collecting integration. Settings have not been saved.<br/><pre>{{ integration_error }}</pre></div>
-        {% else %}
-        <div style="color: green">Integration returned {{ measurement }}. Settings have been saved.</div>
-        {% endif %}
+        <div id="integration-test-error" style="color: red; display: none">Error while collecting integration.<p><pre></pre></p></div>
+        <div id="integration-test-success" style="color: green; display: none">Integration successfully returned data:<p><pre></pre></p></div>
     </p>
   </form>
 {% endblock %}
