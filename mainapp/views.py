@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.views.generic import CreateView, FormView, ListView, UpdateView
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 
@@ -149,6 +150,15 @@ class MetricCreateView(CreateView, LoginRequiredMixin):
         form.instance.user = self.request.user
         form.instance.integration_id = self.kwargs["integration_id"]
         return super().form_valid(form)
+
+
+class MetricDeleteView(DeleteView, LoginRequiredMixin):  # type: ignore[misc]
+    model = Metric
+    success_url = reverse_lazy("metrics")
+
+    def get_queryset(self, *args, **kwargs):
+        # Only show metric if user can access it
+        return super().get_queryset(*args, **kwargs).filter(user=self.request.user)
 
 
 class MetricUpdateView(UpdateView, LoginRequiredMixin):

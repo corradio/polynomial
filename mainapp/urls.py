@@ -11,6 +11,11 @@ urlpatterns = [
         name="metric-details",
     ),
     path(
+        "metrics/<int:pk>/delete",
+        views.MetricDeleteView.as_view(),
+        name="metric-delete",
+    ),
+    path(
         "metrics/add/<integration_id>/",
         views.MetricCreateView.as_view(),
         name="metric-add",

@@ -41,4 +41,7 @@
         <div id="integration-test-success" style="color: green; display: none">Integration successfully returned data:<p><pre></pre></p></div>
     </p>
   </form>
+  {% if metric.id %}
+  <a href="{% url 'metric-delete' metric.id %}">Delete</a>
+  {% endif %}
 {% endblock %}
