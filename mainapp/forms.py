@@ -1,15 +1,15 @@
 from django.forms import ModelForm
 
-from mainapp.models import IntegrationInstance
+from mainapp.models import Metric
 
 
-class IntegrationInstanceForm(ModelForm):
+class MetricForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # manually set the current instance on the widget
         # see https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
-        self.fields["config"].widget.instance = self.instance
+        self.fields["integration_config"].widget.instance = self.instance
 
     class Meta:
-        model = IntegrationInstance
-        fields = ["metric_name", "config", "secrets"]
+        model = Metric
+        fields = ["name", "integration_config", "integration_secrets"]

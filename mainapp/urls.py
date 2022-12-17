@@ -5,13 +5,13 @@ from . import views
 urlpatterns = [
     path("", views.index, name="index"),
     path(
-        "integrationinstance/<int:integration_instance_id>/",
-        views.integration_instance,
-        name="integration_instance",
+        "metric/<int:metric_id>/",
+        views.metric,
+        name="metric",
     ),
     path(
-        "integrationinstance/<int:integration_instance_id>/collect",
-        views.integration_instance_collect,
-        name="integration_instance_collect",
+        "metric/<int:metric_id>/collect",
+        views.metric_collect,
+        name="metric_collect",
     ),
 ]

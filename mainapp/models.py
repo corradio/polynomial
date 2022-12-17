@@ -13,33 +13,30 @@ class User(AbstractUser):
     pass
 
 
-class IntegrationInstance(models.Model):
+class Metric(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    last_collected_at = models.DateTimeField(blank=True, null=True)
+
+    name = models.CharField(max_length=128)
     integration_id = models.CharField(
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )
-    metric_name = models.CharField(max_length=128)
-    secrets = models.JSONField(blank=True, null=True)  # TODO: Encrypt
+    integration_secrets = models.JSONField(blank=True, null=True)  # TODO: Encrypt
 
     def callable_config_schema(model_instance=None):
         # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         # `model_instance` will be None while creating new object
-        if model_instance and model_instance.pk:
+        if model_instance and model_instance.integration_id:
             return INTEGRATION_CLASSES[model_instance.integration_id].config_schema
         # Empty schema
         return EMPTY_CONFIG_SCHEMA
 
-    config = JSONField(blank=True, null=True, schema=callable_config_schema)
+    integration_config = JSONField(blank=True, null=True, schema=callable_config_schema)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=("user", "metric_name"), name="unique_integration_instance"
-            )
+            models.UniqueConstraint(fields=("user", "name"), name="unique_metric")
         ]
 
 
@@ -47,11 +44,8 @@ class Measurement(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     date = models.DateField()
     value = models.FloatField()
-    metric_name = models.CharField(max_length=128)
 
-    integration_instance = models.ForeignKey(
-        IntegrationInstance, on_delete=models.CASCADE, blank=True, null=True
-    )
+    metric = models.ForeignKey(Metric, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return f"{self.date} = {self.value}"
@@ -59,6 +53,6 @@ class Measurement(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=("integration_instance", "date"), name="unique_measurement"
+                fields=("metric", "date"), name="unique_measurement"
             )
         ]
