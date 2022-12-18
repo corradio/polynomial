@@ -28,21 +28,33 @@
           }
         })
         .then(data => {
-          console.log(data.error)
           var isError = data.status !== 'ok';
-          document.querySelector('#integration-test-success pre').innerText = JSON.stringify(data.measurement);
-          document.querySelector('#integration-test-error pre').innerText = data.error;
-          document.getElementById('integration-test-success').style.display = isError ? 'none' : null;
-          document.getElementById('integration-test-error').style.display = isError ? null : 'none';
+          document.querySelector('#integration-test-container').style.color = isError
+            ? 'red'
+            : 'green';
+          var label = document.querySelector('#integration-test-container span.label');
+          label.innerText = '[' + data.datetime + ']';
+          if (isError) {
+             label.innerText += ' Integration failed:';
+          } else {
+            label.innerText += ' Integration successfully ran:';
+          }
+          document.querySelector('#integration-test-container pre').innerText = isError
+            ? data.error
+            : JSON.stringify(data.measurement);
         });
       };
     </script>
     <p>
-        <div id="integration-test-error" style="color: red; display: none">Error while collecting integration.<p><pre></pre></p></div>
-        <div id="integration-test-success" style="color: green; display: none">Integration successfully returned data:<p><pre></pre></p></div>
+        <div id="integration-test-container">
+          <span class="label"></span>
+          <p>
+            <pre></pre>
+          </p>
+        </div>
     </p>
   </form>
   {% if metric.id %}
-  <a href="{% url 'metric-delete' metric.id %}">Delete</a>
+  <a href="{% url 'metric-delete' metric.id %}">Delete metric</a>
   {% endif %}
 {% endblock %}

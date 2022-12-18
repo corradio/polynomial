@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from datetime import date, timedelta
 from typing import Any, Dict, List, NamedTuple
 
@@ -16,7 +17,14 @@ class Integration:
         self.config = config
         self.secrets = secrets
 
+    @abstractmethod
+    def can_backfill(self) -> bool:
+        pass
+
     def collect_latest(self) -> MeasurementTuple:
+        # Default implementation uses `collect_past`,
+        # and thus assumes integration can backfill
+        assert self.can_backfill()
         return self.collect_past(date.today() - timedelta(days=1))
 
     def collect_past(self, date: date) -> MeasurementTuple:
@@ -25,7 +33,9 @@ class Integration:
     def collect_past_range(
         self, date_start: date, date_end: date
     ) -> List[MeasurementTuple]:
-        # Default implementation uses `collect_past` for each date
+        # Default implementation uses `collect_past` for each date,
+        # and thus assumes integration can backfill
+        assert self.can_backfill()
         dates = [date_end]
         while True:
             new_date = dates[-1] - timedelta(days=1)

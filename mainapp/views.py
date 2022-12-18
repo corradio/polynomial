@@ -1,6 +1,7 @@
 import json
 import sys
 import traceback
+from datetime import date, datetime, timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -13,18 +14,6 @@ from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 
 from .forms import MetricForm
 from .models import Measurement, Metric, User
-
-
-# TODO: Refactor
-def get_integration_implementation(metric):
-    # TODO: Read secrets from store
-    import os
-
-    secrets = {"PLAUSIBLE_API_KEY": os.environ["PLAUSIBLE_API_KEY"]}
-    config = metric.integration_config and json.loads(metric.integration_config)
-    integration_class = INTEGRATION_CLASSES[metric.integration_id]
-    inst = integration_class(config, secrets)
-    return inst
 
 
 @login_required
@@ -54,9 +43,7 @@ def metric_collect(request, metric_id):
 
             since = parse_date(request.GET.get("since"))
             # Note: we could also use parse_duration() and pass e.g. "3 days"
-            from datetime import date, timedelta
-
-            data = get_integration_implementation(metric).collect_past_multi(
+            data = metric.get_integration_instance().collect_past_multi(
                 date_start=since, date_end=date.today() - timedelta(days=1)
             )
             # Save in this case
@@ -70,7 +57,7 @@ def metric_collect(request, metric_id):
                     },
                 )
         else:
-            data = get_integration_implementation(metric).collect_latest()
+            data = metric.get_integration_instance().collect_latest()
             # TODO: Should this route change the DB?
             # Should it be another VERB?
             # Measurement.objects.update_or_create(
@@ -104,19 +91,33 @@ def integration_collect_latest(request, integration_id):
         data = json.loads(request.body)
         config = data.get("integration_config")
         config = config and json.loads(config)
-        # TODO: Read secrets from POST
+        secrets = data.get("integration_secrets")
+        secrets = secrets and json.loads(secrets)
+        # TODO: Remove this
         import os
 
-        secrets = {"PLAUSIBLE_API_KEY": os.environ["PLAUSIBLE_API_KEY"]}
+        secrets = {
+            **(secrets or {}),
+            "PLAUSIBLE_API_KEY": os.environ["PLAUSIBLE_API_KEY"],
+        }
         integration_class = INTEGRATION_CLASSES[integration_id]
-        inst = integration_class(config, secrets)
         try:
-            measurement = inst.collect_latest()
-            return JsonResponse({"measurement": measurement, "status": "ok"})
+            with integration_class(config, secrets) as inst:
+                measurement = inst.collect_latest()
+                return JsonResponse(
+                    {
+                        "measurement": measurement,
+                        "datetime": datetime.now(),
+                        "can_backfill": inst.can_backfill(),
+                        "status": "ok",
+                    }
+                )
         except Exception as e:
             exc_info = sys.exc_info()
             error_str = "\n".join(traceback.format_exception(*exc_info))
-            return JsonResponse({"error": error_str, "status": "error"})
+            return JsonResponse(
+                {"error": error_str, "datetime": datetime.now(), "status": "error"}
+            )
     return HttpResponseNotAllowed(["POST"])
 
 
@@ -131,6 +132,11 @@ class IntegrationListView(ListView):
 class MetricListView(ListView, LoginRequiredMixin):
     def get_queryset(self):
         return Metric.objects.filter(user=self.request.user).order_by("name")
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["INTEGRATION_CLASSES"] = INTEGRATION_CLASSES
+        return context
 
 
 class MetricCreateView(CreateView, LoginRequiredMixin):

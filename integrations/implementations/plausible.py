@@ -1,11 +1,12 @@
 from datetime import date
-from typing import List
+from typing import List, final
 
 import requests
 
 from ..models import Integration, MeasurementTuple
 
 
+@final
 class Plausible(Integration):
     # Use https://bhch.github.io/react-json-form/playground
     config_schema = {
@@ -25,6 +26,9 @@ class Plausible(Integration):
             "filters": {"type": "array", "items": {"type": "string"}},
         },
     }
+
+    def can_backfill(self):
+        return True
 
     def collect_past(self, date: date) -> MeasurementTuple:
         site_id = self.config["site_id"]

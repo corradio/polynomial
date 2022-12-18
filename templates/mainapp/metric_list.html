@@ -8,7 +8,7 @@
               <a href="{% url 'metric-details' metric.id %}">
                 {{ metric.name }}
               </a>
-              [using {{ metric.integration_id }}, created {{ metric.created_at }}]
+              [using {{ metric.integration_id }}, can_backfill={{ metric.can_backfill }}, created {{ metric.created_at }}]
             </p>
         {% endfor %}
     </div>

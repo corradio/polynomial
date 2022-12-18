@@ -1,3 +1,4 @@
+import json
 from datetime import date, timedelta
 
 from django.contrib.auth.models import AbstractUser
@@ -37,6 +38,13 @@ class Metric(models.Model):
 
     def get_absolute_url(self):
         return reverse("metric-details", args=[self.pk])
+
+    def get_integration_instance(self):
+        integration_class = INTEGRATION_CLASSES[self.integration_id]
+        return integration_class(self.integration_config, self.integration_secrets)
+
+    def can_backfill(self):
+        return self.get_integration_instance().can_backfill()
 
     class Meta:
         constraints = [
