@@ -29,7 +29,7 @@ class Postgresql(Integration):
                 "type": "string",
                 "widget": "textarea",
                 "required": True,
-                "helpText": "Use %(date)s to insert requested date",
+                "helpText": "Use %(date_start)s and %(date_end)s to insert requested start and end dates",
             },
         },
     }
@@ -47,9 +47,11 @@ class Postgresql(Integration):
             self.conn.close()
 
     def collect_past(self, date: date) -> MeasurementTuple:
-        return self.collect_past_multi([date])[0]
+        return self.collect_past_range(date_start=date, date_end=date)[0]
 
-    def collect_past_multi(self, dates: List[date]) -> List[MeasurementTuple]:
+    def collect_past_range(
+        self, date_start: date, date_end: date
+    ) -> List[MeasurementTuple]:
         sql_template = self.config["sql_template"]
         self.cur.execute(sql_template, vars={"date": date})
         return [

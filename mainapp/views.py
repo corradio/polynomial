@@ -56,14 +56,9 @@ def metric_collect(request, metric_id):
             # Note: we could also use parse_duration() and pass e.g. "3 days"
             from datetime import date, timedelta
 
-            dates = [date.today() - timedelta(days=1)]  # start with yesterday
-            while True:
-                new_date = dates[-1] - timedelta(days=1)
-                if new_date < since:
-                    break
-                else:
-                    dates.append(new_date)
-            data = get_integration_implementation(metric).collect_past_multi(dates)
+            data = get_integration_implementation(metric).collect_past_multi(
+                date_start=since, date_end=date.today() - timedelta(days=1)
+            )
             # Save in this case
             for measurement in data:
                 Measurement.objects.update_or_create(
