@@ -17,6 +17,14 @@ class Integration:
         self.config = config
         self.secrets = secrets
 
+    def __enter__(self):
+        # Database connections can be done here
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Cleanup should be done here (e.g. database connection cleanup)
+        pass
+
     @abstractmethod
     def can_backfill(self) -> bool:
         pass

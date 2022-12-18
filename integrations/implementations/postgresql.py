@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from typing import List, final
 
 import psycopg2
+from psycopg2.extras import RealDictCursor
 
 from ..models import Integration, MeasurementTuple
 
@@ -39,7 +40,7 @@ class Postgresql(Integration):
     def __enter__(self):
         self.conn = psycopg2.connect(**self.config["database_connection"])
         self.conn.set_session(readonly=True)
-        self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        self.cur = self.conn.cursor(cursor_factory=RealDictCursor)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

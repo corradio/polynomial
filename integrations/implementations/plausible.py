@@ -27,6 +27,13 @@ class Plausible(Integration):
         },
     }
 
+    def __enter__(self):
+        self.r = requests.Session()
+        self.r.headers.update(
+            {"Authorization": f"Bearer {self.secrets['PLAUSIBLE_API_KEY']}"}
+        )
+        return self
+
     def can_backfill(self):
         return True
 
@@ -36,10 +43,6 @@ class Plausible(Integration):
         metric = self.config["metric"]
         filters: List[str] = self.config["filters"]
 
-        r = requests.Session()
-        r.headers.update(
-            {"Authorization": f"Bearer {self.secrets['PLAUSIBLE_API_KEY']}"}
-        )
         url = f"https://plausible.io/api/v1/stats/aggregate"
         url += f"?site_id={site_id}"
         url += "&period=day"
@@ -48,7 +51,7 @@ class Plausible(Integration):
         url += f"&metrics={metric}"
         if filters:
             url += f"&filters={filters}"
-        response = r.get(url)
+        response = self.r.get(url)
         response.raise_for_status()
         visitor_count = int(response.json()["results"]["visitors"]["value"])
         return MeasurementTuple(date=date, value=visitor_count)

@@ -2,10 +2,16 @@ import json
 import sys
 import traceback
 from datetime import date, datetime, timedelta
+from typing import Dict, List, Union
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseNotAllowed,
+    JsonResponse,
+)
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
@@ -18,7 +24,7 @@ from .models import Measurement, Metric, User
 
 @login_required
 def index(request):
-    measurements = [
+    measurements: List[Dict[str, Union[float, str]]] = [
         {
             "metric": measurement.metric.name,
             "value": measurement.value,
@@ -41,13 +47,15 @@ def metric_collect(request, metric_id):
         if request.GET.get("since"):
             from django.utils.dateparse import parse_date
 
-            since = parse_date(request.GET.get("since"))
+            since = parse_date(request.GET["since"])
+            if not since:
+                return HttpResponseBadRequest(f"Invalid argument `since`")
             # Note: we could also use parse_duration() and pass e.g. "3 days"
-            data = metric.get_integration_instance().collect_past_multi(
+            measurements = metric.get_integration_instance().collect_past_range(
                 date_start=since, date_end=date.today() - timedelta(days=1)
             )
             # Save in this case
-            for measurement in data:
+            for measurement in measurements:
                 Measurement.objects.update_or_create(
                     metric=metric,
                     date=measurement.date,
@@ -57,7 +65,7 @@ def metric_collect(request, metric_id):
                     },
                 )
         else:
-            data = metric.get_integration_instance().collect_latest()
+            measurements = [metric.get_integration_instance().collect_latest()]
             # TODO: Should this route change the DB?
             # Should it be another VERB?
             # Measurement.objects.update_or_create(
@@ -79,7 +87,7 @@ def metric_collect(request, metric_id):
         )
     return JsonResponse(
         {
-            "data": data,
+            "measurements": measurements,
             "status": "ok",
         }
     )
@@ -131,7 +139,7 @@ class IntegrationListView(ListView):
 
 class MetricListView(ListView, LoginRequiredMixin):
     def get_queryset(self):
-        return Metric.objects.filter(user=self.request.user).order_by("name")
+        return Metric.objects.all().filter(user=self.request.user).order_by("name")
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

@@ -1,17 +1,18 @@
 import importlib
 import inspect
 import pkgutil
+from typing import Dict, List, Type
 
 from .models import Integration
 
-INTEGRATION_IDS = [
+INTEGRATION_IDS: List[str] = [
     integration_name
     for (_, integration_name, _) in pkgutil.iter_modules(
         ["integrations/implementations"]
     )
 ]
 
-INTEGRATION_CLASSES = {
+INTEGRATION_CLASSES: Dict[str, Type[Integration]] = {
     integration_name: inspect.getmembers(
         importlib.import_module(f"integrations.implementations.{integration_name}"),
         lambda member: inspect.isclass(member)

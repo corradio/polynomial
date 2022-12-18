@@ -1,12 +1,13 @@
 import json
 from datetime import date, timedelta
+from typing import Optional
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.urls import reverse
 from django_jsonform.models.fields import JSONField
 
-from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
+from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS, Integration
 from integrations.models import EMPTY_CONFIG_SCHEMA
 
 
@@ -17,14 +18,13 @@ class User(AbstractUser):
 
 class Metric(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-
     name = models.CharField(max_length=128)
     integration_id = models.CharField(
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )
     integration_secrets = models.JSONField(blank=True, null=True)  # TODO: Encrypt
 
-    def callable_config_schema(model_instance=None):
+    def callable_config_schema(model_instance: Optional["Metric"] = None):
         # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         # `model_instance` will be None while creating new object
         if model_instance and model_instance.integration_id:
@@ -39,7 +39,7 @@ class Metric(models.Model):
     def get_absolute_url(self):
         return reverse("metric-details", args=[self.pk])
 
-    def get_integration_instance(self):
+    def get_integration_instance(self) -> Integration:
         integration_class = INTEGRATION_CLASSES[self.integration_id]
         return integration_class(self.integration_config, self.integration_secrets)
 
@@ -57,7 +57,7 @@ class Measurement(models.Model):
     date = models.DateField()
     value = models.FloatField()
 
-    metric = models.ForeignKey(Metric, on_delete=models.CASCADE, blank=True, null=True)
+    metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.date} = {self.value}"
