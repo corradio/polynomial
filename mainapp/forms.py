@@ -1,4 +1,4 @@
-from django.forms import ModelForm
+from django.forms import HiddenInput, ModelForm
 
 from mainapp.models import Metric
 
@@ -19,4 +19,8 @@ class MetricForm(ModelForm):
 
     class Meta:
         model = Metric
-        fields = ["name", "integration_config", "integration_secrets"]
+        fields = ["name", "integration_config", "integration_secrets", "integration_id"]
+        widgets = {
+            # Make this field available to the form but invisible to user
+            "integration_id": HiddenInput()
+        }

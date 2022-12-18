@@ -14,7 +14,8 @@
           integration_config: document.getElementById('id_integration_config').value,
           integration_secrets: document.getElementById('id_integration_secrets').value,
         });
-        fetch('/integrations/plausible/collect_latest', {
+        var integrationId = document.getElementById('id_integration_id').value;
+        fetch('/integrations/' + integrationId + '/collect_latest', {
           method: 'POST', headers: {
             'X-CSRFToken': csrftoken,
             'Accept': 'application/json',
