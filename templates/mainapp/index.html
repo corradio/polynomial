@@ -5,83 +5,85 @@
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
 <h1>Dashboard</h1>
 <div id="vis" style="width: 80%"></div>
+{{ measurements|json_script:"measurements" }}
+{{ unique_metrics|json_script:"unique_metrics" }}
 <script>
-var values = {{ json_data | safe }};
-var json_unique_metrics = {{ json_unique_metrics | safe }};
-// Assign the specification to a local variable vlSpec.
-var vlSpec = {
-  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-  width: "container",
-  data: {
-    values: values
-  },
-  "params": [{
-      "name": "selected_metric",
-      "bind": { "input": "select", "options": json_unique_metrics },
-      "value": json_unique_metrics[0],
+  const measurements = JSON.parse(document.getElementById('measurements').textContent);
+  const unique_metrics = JSON.parse(document.getElementById('unique_metrics').textContent);
+  // Assign the specification to a local variable vlSpec.
+  var vlSpec = {
+    $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+    width: "container",
+    data: {
+      values: measurements
     },
-    {
-      "name": "highlight",
-      "select": {
-        "type": "point",
-        "nearest": true,
-        "on": "mouseover",
-        "encodings": ["x"],
+    "params": [{
+        "name": "selected_metric",
+        "bind": { "input": "select", "options": unique_metrics },
+        "value": unique_metrics[0],
       },
-      "views": ["points"]
-    }
-  ],
-  "transform": [
-    { "filter": { "field": "metric", "equal": { "expr": "selected_metric" } } },
-    {
-      "window": [{
-        "field": "value",
-        "op": "mean",
-        "as": "rolling_mean"
-      }],
-      "frame": [-15, 15]
-    }
-  ],
-  encoding: {
-    x: {
-      field: 'date',
-      type: 'ordinal',
-      timeUnit: 'dayofyear',
-      // https://github.com/d3/d3-time-format#locale_format
-      axis: { title: null, format: '%b %d', labelAngle: -45 },
+      {
+        "name": "highlight",
+        "select": {
+          "type": "point",
+          "nearest": true,
+          "on": "mouseover",
+          "encodings": ["x"],
+        },
+        "views": ["points"]
+      }
+    ],
+    "transform": [
+      { "filter": { "field": "metric", "equal": { "expr": "selected_metric" } } },
+      {
+        "window": [{
+          "field": "value",
+          "op": "mean",
+          "as": "rolling_mean"
+        }],
+        "frame": [-15, 15]
+      }
+    ],
+    encoding: {
+      x: {
+        field: 'date',
+        type: 'ordinal',
+        timeUnit: 'dayofyear',
+        // https://github.com/d3/d3-time-format#locale_format
+        axis: { title: null, format: '%b %d', labelAngle: -45 },
+      },
+      y: {
+        field: 'value',
+        type: 'quantitative',
+      },
+      "tooltip": { "field": "value", "type": "quantitative" }
     },
-    y: {
-      field: 'value',
-      type: 'quantitative',
-    },
-    "tooltip": { "field": "value", "type": "quantitative" }
-  },
-  "layer": [{
-      "name": "line",
-      "mark": { "type": "line", "opacity": 1.0 }
-    },
-    {
-      "name": "points",
-      "mark": { "type": "circle" },
-      "encoding": {
-        "size": {
-          "condition": { "param": "highlight", "empty": false, "value": 200 },
-          "value": 50
+    "layer": [{
+        "name": "line",
+        "mark": { "type": "line", "opacity": 1.0 }
+      },
+      {
+        "name": "points",
+        "mark": { "type": "circle" },
+        "encoding": {
+          "size": {
+            "condition": { "param": "highlight", "empty": false, "value": 200 },
+            "value": 50
+          }
         }
-      }
-    },
-    {
-      "name": "moving_average",
-      "mark": { "type": "line", "color": "red", "opacity": 0.5 },
-      "encoding": {
-        "y": { "field": "rolling_mean", "title": "Value" }
-      }
-    },
-  ],
-};
+      },
+      {
+        "name": "moving_average",
+        "mark": { "type": "line", "color": "red", "opacity": 0.5 },
+        "encoding": {
+          "y": { "field": "rolling_mean", "title": "Value" }
+        }
+      },
+    ],
+  };
 
-// Embed the visualization in the container with id `vis`
-vegaEmbed('#vis', vlSpec);
+  // Embed the visualization in the container with id `vis`
+  vegaEmbed('#vis', vlSpec);
 </script>
 <p>
   <ul>

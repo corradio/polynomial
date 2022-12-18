@@ -29,7 +29,7 @@ def get_integration_implementation(metric):
 
 @login_required
 def index(request):
-    data = [
+    measurements = [
         {
             "metric": measurement.metric.name,
             "value": measurement.value,
@@ -38,8 +38,8 @@ def index(request):
         for measurement in Measurement.objects.filter(metric__user=request.user)
     ]
     context = {
-        "json_data": json.dumps(data),
-        "json_unique_metrics": json.dumps(sorted(set([d["metric"] for d in data]))),
+        "measurements": measurements,
+        "unique_metrics": sorted(set([d["metric"] for d in measurements])),
     }
     return render(request, "mainapp/index.html", context)
 
