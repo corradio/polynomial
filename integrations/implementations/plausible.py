@@ -19,7 +19,16 @@ class Plausible(Integration):
             },
             "metric": {
                 "type": "string",
-                "choices": ["visitors"],
+                "choices": sorted(
+                    [
+                        "visitors",
+                        "pageviews",
+                        "bounce_rate",
+                        "visit_duration",
+                        "events",
+                        "visits",
+                    ]
+                ),
                 "default": "visitors",
                 "required": True,
             },
@@ -40,18 +49,21 @@ class Plausible(Integration):
     def collect_past(self, date: date) -> MeasurementTuple:
         site_id = self.config["site_id"]
         period = "day"
+        # See https://plausible.io/docs/metrics-definitions
         metric = self.config["metric"]
         filters: List[str] = self.config["filters"]
 
         url = f"https://plausible.io/api/v1/stats/aggregate"
         url += f"?site_id={site_id}"
         url += "&period=day"
-        # TODO: timezone?
+        # Plausible uses timezones defined in the plausible site config
         url += f"&date={date.strftime('%Y-%m-%d')}"
         url += f"&metrics={metric}"
         if filters:
+            # See https://plausible.io/docs/stats-api#filtering
             url += f"&filters={filters}"
         response = self.r.get(url)
         response.raise_for_status()
-        visitor_count = int(response.json()["results"]["visitors"]["value"])
+        data = response.json()
+        visitor_count = int(data["results"][metric]["value"])
         return MeasurementTuple(date=date, value=visitor_count)
