@@ -30,6 +30,11 @@ class Twitter(Integration):
     def can_backfill(self):
         return True
 
+    def earliest_backfill(self):
+        # Twitter can only return the last 7*24 hours of data,
+        # which means only the last 6 full days can be used
+        return (datetime.now() - timedelta(days=6)).date()
+
     def collect_past(self, date: date) -> MeasurementTuple:
         # Twitter API expects datetimes in isoformat with UTC zone
         # TODO: pass user timezone here tzinfo=ZoneInfo(...)
@@ -43,9 +48,7 @@ class Twitter(Integration):
         end_time_utc_iso = (
             end_time.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
         )
-
         print(start_time_utc_iso, end_time_utc_iso)
-        print("--")
         response = self.r.get(
             "https://api.twitter.com/2/tweets/counts/recent",
             params={

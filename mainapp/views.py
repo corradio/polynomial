@@ -61,7 +61,8 @@ def metric_backfill(request, pk):
     try:
         with metric.get_integration_instance() as inst:
             measurements = inst.collect_past_range(
-                date_start=start_date, date_end=date.today() - timedelta(days=1)
+                date_start=max(start_date, inst.earliest_backfill()),
+                date_end=date.today() - timedelta(days=1),
             )
     except Exception as e:
         exc_info = sys.exc_info()

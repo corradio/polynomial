@@ -28,6 +28,9 @@ class Integration:
     def can_backfill(self) -> bool:
         pass
 
+    def earliest_backfill(self) -> date:
+        return date.min
+
     def collect_latest(self) -> MeasurementTuple:
         # Default implementation uses `collect_past`,
         # and thus assumes integration can backfill
