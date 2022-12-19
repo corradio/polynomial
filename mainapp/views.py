@@ -106,11 +106,9 @@ def integration_collect_latest(request, integration_id):
         data = json.loads(request.body)
         config = data.get("integration_config")
         config = config and json.loads(config)
-        secrets = data.get("integration_secrets")
-        secrets = secrets and json.loads(secrets)
         integration_class = INTEGRATION_CLASSES[integration_id]
         try:
-            with integration_class(config, secrets) as inst:
+            with integration_class(config) as inst:
                 measurement = inst.collect_latest()
                 return JsonResponse(
                     {

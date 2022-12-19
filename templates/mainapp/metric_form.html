@@ -12,7 +12,6 @@
         var csrftoken = document.querySelector('input[name=csrfmiddlewaretoken]').value;
         var data = JSON.stringify({
           integration_config: document.getElementById('id_integration_config').value,
-          integration_secrets: document.getElementById('id_integration_secrets').value,
         });
         var integrationId = document.getElementById('id_integration_id').value;
         fetch('/integrations/' + integrationId + '/collect_latest', {

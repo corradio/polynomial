@@ -22,7 +22,6 @@ class Metric(models.Model):
     integration_id = models.CharField(
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )
-    integration_secrets = models.JSONField(blank=True, null=True)  # TODO: Encrypt
 
     def callable_config_schema(model_instance: Optional["Metric"] = None):
         # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
@@ -41,7 +40,7 @@ class Metric(models.Model):
 
     def get_integration_instance(self) -> Integration:
         integration_class = INTEGRATION_CLASSES[self.integration_id]
-        return integration_class(self.integration_config, self.integration_secrets)
+        return integration_class(self.integration_config)
 
     def can_backfill(self):
         return self.get_integration_instance().can_backfill()

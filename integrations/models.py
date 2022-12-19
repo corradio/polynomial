@@ -13,9 +13,8 @@ class Integration:
         EMPTY_CONFIG_SCHEMA  # Use https://bhch.github.io/react-json-form/playground
     )
 
-    def __init__(self, config: Dict, secrets: Dict):
+    def __init__(self, config: Dict):
         self.config = config
-        self.secrets = secrets
 
     def __enter__(self):
         # Database connections can be done here

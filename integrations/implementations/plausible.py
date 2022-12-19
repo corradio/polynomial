@@ -12,6 +12,7 @@ class Plausible(Integration):
     config_schema = {
         "type": "dict",
         "keys": {
+            "api_key": {"type": "string", "format": "password", "required": True},
             "site_id": {
                 "type": "string",
                 "required": True,
@@ -38,9 +39,7 @@ class Plausible(Integration):
 
     def __enter__(self):
         self.r = requests.Session()
-        self.r.headers.update(
-            {"Authorization": f"Bearer {self.secrets['PLAUSIBLE_API_KEY']}"}
-        )
+        self.r.headers.update({"Authorization": f"Bearer {self.config['api_key']}"})
         return self
 
     def can_backfill(self):
