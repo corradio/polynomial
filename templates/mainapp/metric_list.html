@@ -4,12 +4,25 @@
     <h2>Metrics</h2>
     <div>
         {% for metric in object_list %}
-            <p>
-              <a href="{% url 'metric-details' metric.id %}">
-                {{ metric.name }}
-              </a>
-              [using {{ metric.integration_id }}, can_backfill={{ metric.can_backfill }}, created {{ metric.created_at }}]
-            </p>
+            <div>
+              <a href="{% url 'metric-details' metric.id %}">{{ metric.name }}</a>
+              <span> - </span>
+              <form style="display:inline" action="{% url 'metric-collect-latest' metric.id %}" method="POST">
+                {% csrf_token %}
+                <input type="submit" value="collect latest">
+              </form>
+              {% if metric.can_backfill %}
+              <form style="display:inline" action="{% url 'metric-backfill' metric.id %}" method="POST">
+                {% csrf_token %}
+                <input type="submit" value="backfill last 30 days">
+                <input type="hidden" name="since" value="30 day">
+              </form>
+              {% endif %}
+              <br />
+              [using {{ metric.integration_id }}, can_backfill={{ metric.can_backfill }}]
+              <br />
+              <br />
+            </div>
         {% endfor %}
     </div>
     <hr />

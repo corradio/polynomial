@@ -10,10 +10,13 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotAllowed,
+    HttpResponseRedirect,
+    HttpResponseServerError,
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy
+from django.utils.dateparse import parse_date, parse_duration
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
@@ -39,58 +42,62 @@ def index(request):
     return render(request, "mainapp/index.html", context)
 
 
-# TODO: Refactor this route
 @login_required
-def metric_collect(request, metric_id):
-    metric = get_object_or_404(Metric, pk=metric_id, user=request.user)
-    try:
-        if request.GET.get("since"):
-            from django.utils.dateparse import parse_date
-
-            since = parse_date(request.GET["since"])
-            if not since:
-                return HttpResponseBadRequest(f"Invalid argument `since`")
-            # Note: we could also use parse_duration() and pass e.g. "3 days"
-            measurements = metric.get_integration_instance().collect_past_range(
-                date_start=since, date_end=date.today() - timedelta(days=1)
-            )
-            # Save in this case
-            for measurement in measurements:
-                Measurement.objects.update_or_create(
-                    metric=metric,
-                    date=measurement.date,
-                    defaults={
-                        "value": measurement.value,
-                        "metric": metric,
-                    },
-                )
-        else:
-            measurements = [metric.get_integration_instance().collect_latest()]
-            # TODO: Should this route change the DB?
-            # Should it be another VERB?
-            # Measurement.objects.update_or_create(
-            #     metric=metric,
-            #     date=measurement.date,
-            #     defaults={"value": measurement.value},
-            # )
-    except Exception as e:
-        import sys
-        import traceback
-
-        exc_info = sys.exc_info()
-        return JsonResponse(
-            {
-                "error": "\n".join(traceback.format_exception(*exc_info)),
-                "status": "error",
-            },
-            status=500,
+def metric_backfill(request, pk):
+    metric = get_object_or_404(Metric, pk=pk, user=request.user)
+    if not request.method == "POST":
+        return HttpResponseNotAllowed(["POST"])
+    if not request.POST.get("since"):
+        return HttpResponseBadRequest("Field `since` or `duration` is required.")
+    start_date = parse_date(request.POST["since"])
+    if not start_date:
+        interval = parse_duration(request.POST["since"])
+    if not interval:
+        return HttpResponseBadRequest(
+            f"Invalid argument `since`: should be a date or a duration."
         )
-    return JsonResponse(
-        {
-            "measurements": measurements,
-            "status": "ok",
-        }
+    start_date = date.today() - interval
+    # Note: we could also use parse_duration() and pass e.g. "3 days"
+    try:
+        with metric.get_integration_instance() as inst:
+            measurements = inst.collect_past_range(
+                date_start=start_date, date_end=date.today() - timedelta(days=1)
+            )
+    except Exception as e:
+        exc_info = sys.exc_info()
+        return HttpResponseServerError("\n".join(traceback.format_exception(*exc_info)))
+    # Save
+    for measurement in measurements:
+        Measurement.objects.update_or_create(
+            metric=metric,
+            date=measurement.date,
+            defaults={
+                "value": measurement.value,
+                "metric": metric,
+            },
+        )
+    return HttpResponse(f"{len(measurements)} collected!")
+
+
+@login_required
+def metric_collect_latest(request, pk):
+    if not request.method == "POST":
+        return HttpResponseNotAllowed(["POST"])
+    metric = get_object_or_404(Metric, pk=pk, user=request.user)
+    try:
+        with metric.get_integration_instance() as inst:
+            measurement = inst.collect_latest()
+    except Exception as e:
+        exc_info = sys.exc_info()
+        return HttpResponseServerError("\n".join(traceback.format_exception(*exc_info)))
+    Measurement.objects.update_or_create(
+        metric=metric,
+        date=measurement.date,
+        defaults={
+            "value": measurement.value,
+        },
     )
+    return HttpResponse(f"Success!")
 
 
 @login_required
@@ -101,13 +108,6 @@ def integration_collect_latest(request, integration_id):
         config = config and json.loads(config)
         secrets = data.get("integration_secrets")
         secrets = secrets and json.loads(secrets)
-        # TODO: Remove this
-        import os
-
-        secrets = {
-            **(secrets or {}),
-            "PLAUSIBLE_API_KEY": os.environ["PLAUSIBLE_API_KEY"],
-        }
         integration_class = INTEGRATION_CLASSES[integration_id]
         try:
             with integration_class(config, secrets) as inst:

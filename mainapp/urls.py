@@ -11,6 +11,16 @@ urlpatterns = [
         name="metric-details",
     ),
     path(
+        "metrics/<int:pk>/backfill",
+        views.metric_backfill,
+        name="metric-backfill",
+    ),
+    path(
+        "metrics/<int:pk>/collect_latest",
+        views.metric_collect_latest,
+        name="metric-collect-latest",
+    ),
+    path(
         "metrics/<int:pk>/delete",
         views.MetricDeleteView.as_view(),
         name="metric-delete",

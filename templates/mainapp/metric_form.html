@@ -25,6 +25,8 @@
         }).then(response => {
           if (response.ok) {
             return response.json();
+          } else {
+            return {'status': 'error', 'error': response};
           }
         })
         .then(data => {
