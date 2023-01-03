@@ -28,3 +28,6 @@ format:
 
 typecheck:
 	poetry run mypy .
+
+deploy:
+	poetry run fly deploy

@@ -14,6 +14,11 @@ import os
 from pathlib import Path
 from typing import List
 
+from environs import Env
+
+env = Env()
+env.read_env()  # read .env file, if it exists
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,16 +27,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-pc4)q6#@l865x7317^$u3&+6$bymh5zwg&!&lv2m*(qnrft3*#"
+SECRET_KEY = env.str(
+    "SECRET_KEY",
+    default="django-insecure-pc4)q6#@l865x7317^$u3&+6$bymh5zwg&!&lv2m*(qnrft3*#",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS: List[str] = []
+ALLOWED_HOSTS: List[str] = ["127.0.0.1", "localhost", "polynomial.fly.dev"]
 
 # The following needs to be set to None in order to make sure
 # the `opener` property keeps being filled during OAuth popups
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
+CSRF_TRUSTED_ORIGINS = ["https://polynomial.fly.dev"]
 
 
 # Application definition
@@ -82,14 +92,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "database",
-        "USER": "postgres",
-        "PASSWORD": "mypassword",
-        "HOST": "127.0.0.1",
-        "PORT": "5432",
-    }
+    "default": env.dj_db_url(
+        "DATABASE_URL", default="postgres://postgres:mypassword@127.0.0.1:5432/database"
+    ),
 }
 
 AUTH_USER_MODEL = "mainapp.User"
