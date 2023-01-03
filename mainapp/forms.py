@@ -19,8 +19,9 @@ class MetricForm(ModelForm):
 
     class Meta:
         model = Metric
-        fields = ["name", "integration_config", "integration_id"]
+        fields = ["name", "integration_config", "integration_id", "credentials"]
         widgets = {
             # Make this field available to the form but invisible to user
-            "integration_id": HiddenInput()
+            "integration_id": HiddenInput(),
+            "credentials": HiddenInput(),
         }

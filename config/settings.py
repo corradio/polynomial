@@ -29,6 +29,10 @@ DEBUG = True
 
 ALLOWED_HOSTS: List[str] = []
 
+# The following needs to be set to None in order to make sure
+# the `opener` property keeps being filled during OAuth popups
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
 
 # Application definition
 

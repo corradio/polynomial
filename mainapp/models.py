@@ -8,7 +8,7 @@ from django.urls import reverse
 from django_jsonform.models.fields import JSONField
 
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS, Integration
-from integrations.models import EMPTY_CONFIG_SCHEMA
+from integrations.models import EMPTY_CONFIG_SCHEMA, WebAuthIntegration
 
 
 class User(AbstractUser):
@@ -22,6 +22,7 @@ class Metric(models.Model):
     integration_id = models.CharField(
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )
+    credentials = models.JSONField(blank=True, null=True)
 
     def callable_config_schema(model_instance: Optional["Metric"] = None):
         # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
@@ -32,15 +33,17 @@ class Metric(models.Model):
         return EMPTY_CONFIG_SCHEMA
 
     integration_config = JSONField(blank=True, null=True, schema=callable_config_schema)
-
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def get_absolute_url(self):
         return reverse("metric-details", args=[self.pk])
 
+    def can_web_auth(self):
+        return issubclass(INTEGRATION_CLASSES[self.integration_id], WebAuthIntegration)
+
     def get_integration_instance(self) -> Integration:
         integration_class = INTEGRATION_CLASSES[self.integration_id]
-        return integration_class(self.integration_config)
+        return integration_class(self.integration_config, credentials=self.credentials)
 
     def can_backfill(self):
         return self.get_integration_instance().can_backfill()
