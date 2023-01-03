@@ -4,6 +4,12 @@ from . import views
 
 urlpatterns = [
     path("", views.index, name="index"),
+    path(
+        "callbacks/authorize",
+        views.AuthorizeCallbackView.as_view(),
+        name="authorize-callback",
+    ),
+    # Metrics
     path("metrics/", views.MetricListView.as_view(), name="metrics"),
     path(
         "metrics/<int:pk>/",
@@ -26,18 +32,35 @@ urlpatterns = [
         name="metric-delete",
     ),
     path(
+        "metrics/<int:pk>/authorize",
+        views.MetricAuthorizeView.as_view(),
+        name="metric-authorize",
+    ),
+    path(
         "metrics/add/<integration_id>/",
         views.MetricCreateView.as_view(),
         name="metric-add",
     ),
+    # This route can be called by the cron job
+    # path(
+    #     "metrics/collect_latest",
+    #     views.XX.as_view(),
+    #     name="metric-all-collect_latest",
+    # ),
+    # Integrations (i.e. metric, and thus, db independent)
     path(
         "integrations/",
         views.IntegrationListView.as_view(),
         name="integrations",
     ),
     path(
+        "integrations/<integration_id>/authorize",
+        views.IntegrationAuthorizeView.as_view(),
+        name="integrations",
+    ),
+    path(
         "integrations/<integration_id>/collect_latest",
         views.integration_collect_latest,
-        name="integration_collect_latest",
+        name="integration-collect-latest",
     ),
 ]

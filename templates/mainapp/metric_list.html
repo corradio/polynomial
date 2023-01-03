@@ -18,8 +18,14 @@
                 <input type="hidden" name="since" value="30 day">
               </form>
               {% endif %}
+              {% if metric.can_web_auth %}
+              <form style="display:inline" action="{% url 'metric-authorize' metric.id %}" method="GET">
+                {% csrf_token %}
+                <input type="submit" value="authorize">
+              </form>
+              {% endif %}
               <br />
-              [using {{ metric.integration_id }}, can_backfill={{ metric.can_backfill }}]
+              [using {{ metric.integration_id }}, can_backfill={{ metric.can_backfill }}, can_web_auth={{ metric.can_web_auth }}]
               <br />
               <br />
             </div>

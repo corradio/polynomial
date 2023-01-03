@@ -20,10 +20,7 @@ initdb:
 resetdb: cleardb initdb seed
 
 runserver:
-	$(MANAGE) runserver
-
-shell:
-	$(MANAGE) shell
+	OAUTHLIB_INSECURE_TRANSPORT=1 $(MANAGE) runserver
 
 format:
 	poetry run black .

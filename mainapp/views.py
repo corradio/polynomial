@@ -1,4 +1,5 @@
 import json
+import secrets
 import sys
 import traceback
 from datetime import date, datetime, timedelta
@@ -15,11 +16,19 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404, render
-from django.urls import reverse_lazy
+from django.template import Context, Template
+from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
-from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    ListView,
+    TemplateView,
+    UpdateView,
+)
 
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
+from integrations.models import WebAuthIntegration
 
 from .forms import MetricForm
 from .models import Measurement, Metric, User
@@ -107,9 +116,11 @@ def integration_collect_latest(request, integration_id):
         data = json.loads(request.body)
         config = data.get("integration_config")
         config = config and json.loads(config)
+        credentials = data.get("credentials")
+        credentials = credentials and json.loads(credentials)
         integration_class = INTEGRATION_CLASSES[integration_id]
         try:
-            with integration_class(config) as inst:
+            with integration_class(config, credentials=credentials) as inst:
                 measurement = inst.collect_latest()
                 return JsonResponse(
                     {
@@ -159,6 +170,14 @@ class MetricCreateView(CreateView, LoginRequiredMixin):
         form.instance.integration_id = self.kwargs["integration_id"]
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        integration_id = self.kwargs["integration_id"]
+        context["can_web_auth"] = issubclass(
+            INTEGRATION_CLASSES[integration_id], WebAuthIntegration
+        )
+        return context
+
 
 class MetricDeleteView(DeleteView, LoginRequiredMixin):  # type: ignore[misc]
     model = Metric
@@ -176,3 +195,103 @@ class MetricUpdateView(UpdateView, LoginRequiredMixin):
     def get_queryset(self, *args, **kwargs):
         # Only show metric if user can access it
         return super().get_queryset(*args, **kwargs).filter(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        metric = self.object
+        context["can_web_auth"] = metric.can_web_auth
+        return context
+
+
+class MetricAuthorizeView(TemplateView, LoginRequiredMixin):
+    def get(self, request, *args, **kwargs):
+        metric = get_object_or_404(Metric, pk=self.kwargs.get("pk"), user=request.user)
+        # Generate a state which will identify this request
+        state = secrets.token_urlsafe(16)
+        # Get integration instance and get the uri
+        integration_instance = metric.get_integration_instance()
+        assert isinstance(integration_instance, WebAuthIntegration)
+        uri = integration_instance.get_authorization_uri(
+            state,
+            authorize_callback_uri=request.build_absolute_uri(
+                reverse("authorize-callback")
+            ),
+        )
+        assert uri is not None
+        # Save parameters in session
+        self.request.session[state] = {
+            "metric_id": metric.id,
+        }
+        return HttpResponseRedirect(uri)
+
+
+class IntegrationAuthorizeView(TemplateView, LoginRequiredMixin):
+    def get(self, request, *args, **kwargs):
+        # Generate a state which will identify this request
+        state = secrets.token_urlsafe(16)
+        # Get integration instance and get the uri
+        integration_id = self.kwargs["integration_id"]
+        integration_class = INTEGRATION_CLASSES[integration_id]
+        assert issubclass(integration_class, WebAuthIntegration)
+        uri = integration_class.get_authorization_uri(
+            state,
+            authorize_callback_uri=request.build_absolute_uri(
+                reverse("authorize-callback")
+            ),
+        )
+        assert uri is not None
+        # Save parameters in session
+        self.request.session[state] = {
+            "integration_id": integration_id,
+        }
+        return HttpResponseRedirect(uri)
+
+
+class AuthorizeCallbackView(TemplateView, LoginRequiredMixin):
+    def get(self, request, *args, **kwargs):
+        data = self.request.GET
+        state = data["state"]
+        if state not in self.request.session:
+            return HttpResponseBadRequest()
+        else:
+            obj = self.request.session[state]
+            # The cache object can have either:
+            # - a metric_id (if it was called from /metrics/<pk>/authorize)
+            # - an integration_id (if it was called from /integrations/<id>/authorize)
+            metric = None
+            if "metric_id" in obj:
+                # Get integration instance
+                metric = get_object_or_404(
+                    Metric, pk=obj["metric_id"], user=request.user
+                )
+            integration_id = metric.integration_id if metric else obj["integration_id"]
+            integration_class = INTEGRATION_CLASSES[integration_id]
+            assert issubclass(integration_class, WebAuthIntegration)
+            credentials = integration_class.process_callback(
+                uri=request.get_full_path(),
+                state=state,
+                authorize_callback_uri=request.build_absolute_uri(
+                    reverse("authorize-callback")
+                ),
+            )
+            # Clean up session
+            del self.request.session[state]
+            # Save credentials if a metric is present
+            if metric:
+                metric.credentials = credentials
+                metric.save()
+                return HttpResponseRedirect(metric.get_absolute_url())
+            else:
+                # Return the credentials to the parent window
+                t = Template(
+                    """
+                    {{ credentials|json_script:"credentials" }}
+                    <script>
+                        var credentials = JSON.parse(document.getElementById('credentials').textContent);
+                        window.opener.postMessage(credentials);
+                        window.close();
+                    </script>
+                """
+                )
+                c = Context({"credentials": credentials})
+                return HttpResponse(t.render(c))
