@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from typing import List
 
+from celery.schedules import crontab
 from environs import Env
 
 env = Env()
@@ -97,6 +98,13 @@ DATABASES = {
     ),
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env.str("REDIS_URL", default="redis://127.0.0.1:6379"),
+    }
+}
+
 AUTH_USER_MODEL = "mainapp.User"
 
 
@@ -140,3 +148,13 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Celery settings
+CELERY_BROKER_URL = env.str("REDIS_URL", default="redis://127.0.0.1:6379")
+CELERY_RESULT_BACKEND = env.str("REDIS_URL", default="redis://127.0.0.1:6379")
+CELERY_BEAT_SCHEDULE = {
+    "collect_all_latest": {
+        "task": "mainapp.tasks.collect_all_latest_task",
+        "schedule": crontab(minute=0, hour=2),
+    },
+}

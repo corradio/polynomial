@@ -11,7 +11,6 @@ WORKDIR /code
 
 RUN set -ex && \
     pip install --upgrade pip poetry && \
-    apt-get update && \
     rm -rf /root/.cache/
 
 COPY poetry.lock pyproject.toml ./

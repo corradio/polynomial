@@ -41,12 +41,6 @@ urlpatterns = [
         views.MetricCreateView.as_view(),
         name="metric-add",
     ),
-    # This route can be called by the cron job
-    # path(
-    #     "metrics/collect_latest",
-    #     views.XX.as_view(),
-    #     name="metric-all-collect_latest",
-    # ),
     # Integrations (i.e. metric, and thus, db independent)
     path(
         "integrations/",

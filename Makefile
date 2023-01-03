@@ -31,3 +31,10 @@ typecheck:
 
 deploy:
 	poetry run fly deploy
+
+# Celery
+runworker:
+	poetry run celery -A config worker -l INFO
+
+runbeat:
+	poetry run celery -A config beat -l INFO
