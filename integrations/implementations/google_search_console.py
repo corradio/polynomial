@@ -74,7 +74,9 @@ class GoogleSearchConsole(OAuth2Integration):
     def _paginated_query(
         self, url, date_start: date, date_end: date, request_data: Dict, startRow=0
     ):
-        response = self.session.post(url, json={**request_data, "rowLimit": ROW_LIMIT})
+        response = self.session.post(
+            url, json={**request_data, "rowLimit": ROW_LIMIT, "startRow": startRow}
+        )
         response.raise_for_status()
         data = response.json()
         rows = data["rows"]
@@ -97,7 +99,6 @@ class GoogleSearchConsole(OAuth2Integration):
             "endDate": date_end.strftime("%Y-%m-%d"),
             "type": "web",
             "dataState": "all",  # One of 'final' or 'all' (which includes fresh data)
-            "startRow": 0,
             "dimensions": ["date"],
             "dimensionFilterGroups": [
                 {"groupType": "and", "filters": self.config["filters"]}
