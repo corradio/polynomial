@@ -93,11 +93,10 @@ class OAuth2Integration(WebAuthIntegration):
         self,
         config: Dict,
         credentials: Dict,
-        credentials_updater: Callable[[Dict], None],
+        credentials_updater: Optional[Callable[[Dict], None]],
     ):
         super().__init__(config)
         self.credentials = credentials
-        assert credentials_updater is not None
         self.credentials_updater = credentials_updater
 
     def __enter__(self):
