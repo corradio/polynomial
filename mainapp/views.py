@@ -208,10 +208,10 @@ class MetricAuthorizeView(TemplateView, LoginRequiredMixin):
         metric = get_object_or_404(Metric, pk=self.kwargs.get("pk"), user=request.user)
         # Generate a state which will identify this request
         state = secrets.token_urlsafe(16)
-        # Get integration instance and get the uri
-        integration_instance = metric.get_integration_instance()
-        assert isinstance(integration_instance, WebAuthIntegration)
-        uri = integration_instance.get_authorization_uri(
+        # Get integration class and get the uri
+        integration_class = INTEGRATION_CLASSES[metric.integration_id]
+        assert issubclass(integration_class, WebAuthIntegration)
+        uri = integration_class.get_authorization_uri(
             state,
             authorize_callback_uri=request.build_absolute_uri(
                 reverse("authorize-callback")
@@ -229,7 +229,7 @@ class IntegrationAuthorizeView(TemplateView, LoginRequiredMixin):
     def get(self, request, *args, **kwargs):
         # Generate a state which will identify this request
         state = secrets.token_urlsafe(16)
-        # Get integration instance and get the uri
+        # Get integration class and get the uri
         integration_id = self.kwargs["integration_id"]
         integration_class = INTEGRATION_CLASSES[integration_id]
         assert issubclass(integration_class, WebAuthIntegration)

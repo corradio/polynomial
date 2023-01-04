@@ -43,7 +43,16 @@ class Metric(models.Model):
 
     def get_integration_instance(self) -> Integration:
         integration_class = INTEGRATION_CLASSES[self.integration_id]
-        return integration_class(self.integration_config, credentials=self.credentials)
+
+        def credentials_updater(new_credentials):
+            self.credentials = new_credentials
+            self.save()
+
+        return integration_class(
+            self.integration_config,
+            credentials=self.credentials,
+            credentials_updater=credentials_updater,
+        )
 
     def can_backfill(self):
         return self.get_integration_instance().can_backfill()

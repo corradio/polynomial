@@ -50,6 +50,8 @@ class Postgresql(Integration):
             self.conn.close()
 
     def can_backfill(self):
+        if not "sql_query_template" in self.config:
+            return False
         sql_query_template = self.config["sql_query_template"]
         return (
             "%(date_start)s" in sql_query_template
