@@ -5,7 +5,7 @@ from typing import Any, Callable, ClassVar, Dict, List, NamedTuple, Optional
 import requests
 from requests_oauthlib import OAuth2Session
 
-MeasurementTuple = NamedTuple("MeasurementTuple", [("date", date), ("value", int)])
+MeasurementTuple = NamedTuple("MeasurementTuple", [("date", date), ("value", float)])
 
 
 EMPTY_CONFIG_SCHEMA = {"type": "object", "keys": {}}
@@ -42,7 +42,10 @@ class Integration:
                 "Integration can't backfill: `collect_latest` should be overridden"
             )
         day = date.today() - timedelta(days=1)
-        return self.collect_past_range(date_start=day, date_end=day)[0]
+        results = self.collect_past_range(date_start=day, date_end=day)
+        if not results:
+            raise Exception("No results returned")
+        return results[0]
 
     def collect_past(self, date: date) -> MeasurementTuple:
         raise NotImplementedError()

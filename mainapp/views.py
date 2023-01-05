@@ -133,8 +133,11 @@ def integration_collect_latest(request, integration_id):
                     }
                 )
         except Exception as e:
-            exc_info = sys.exc_info()
-            error_str = "\n".join(traceback.format_exception(*exc_info))
+            if False:
+                exc_info = sys.exc_info()
+                error_str = "\n".join(traceback.format_exception(*exc_info))
+            else:
+                error_str = f"{type(e).__name__}: {str(e)}"
             return JsonResponse(
                 {"error": error_str, "datetime": datetime.now(), "status": "error"}
             )
