@@ -120,7 +120,9 @@ def integration_collect_latest(request, integration_id):
         credentials = credentials and json.loads(credentials)
         integration_class = INTEGRATION_CLASSES[integration_id]
         try:
-            with integration_class(config, credentials=credentials) as inst:
+            with integration_class(
+                config, credentials=credentials, credentials_updater=None
+            ) as inst:
                 measurement = inst.collect_latest()
                 return JsonResponse(
                     {
