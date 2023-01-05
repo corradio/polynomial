@@ -36,17 +36,24 @@ from .models import Measurement, Metric, User
 
 @login_required
 def index(request):
-    measurements: List[Dict[str, Union[float, str]]] = [
+    measurements_by_metric = [
         {
-            "metric": measurement.metric.name,
-            "value": measurement.value,
-            "date": measurement.date.isoformat(),
+            "metric_id": metric.id,
+            "metric_name": metric.name,
+            "measurements": [
+                {
+                    "value": measurement.value,
+                    "date": measurement.date.isoformat(),
+                }
+                for measurement in Measurement.objects.filter(metric=metric).order_by(
+                    "date"
+                )
+            ],
         }
-        for measurement in Measurement.objects.filter(metric__user=request.user)
+        for metric in Metric.objects.filter(user=request.user).order_by("name")
     ]
     context = {
-        "measurements": measurements,
-        "unique_metrics": sorted(set([d["metric"] for d in measurements])),
+        "measurements_by_metric": measurements_by_metric,
     }
     return render(request, "mainapp/index.html", context)
 
