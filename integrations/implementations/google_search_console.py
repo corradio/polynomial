@@ -24,8 +24,7 @@ class GoogleSearchConsole(OAuth2Integration):
             },
             "metric": {
                 "type": "string",
-                "choices": ["position", "clicks", "impressions", "ctr"],
-                "default": "visitors",
+                "choices": sorted(["position", "clicks", "impressions", "ctr"]),
                 "required": True,
             },
             "filters": {
@@ -92,6 +91,7 @@ class GoogleSearchConsole(OAuth2Integration):
     ) -> List[MeasurementTuple]:
         # Parameters
         site_url = self.config["site_url"]
+        metric = self.config["metric"]
 
         request_data = {
             # dates must be given in PT time
@@ -109,5 +109,5 @@ class GoogleSearchConsole(OAuth2Integration):
         rows = self._paginated_query(request_url, date_start, date_end, request_data)
 
         return [
-            MeasurementTuple(date=row["keys"][0], value=row["position"]) for row in rows
+            MeasurementTuple(date=row["keys"][0], value=row[metric]) for row in rows
         ]
