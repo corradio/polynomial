@@ -64,6 +64,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -168,13 +169,18 @@ SOCIALACCOUNT_PROVIDERS = {
             "access_type": "online",
         },
         "APP": {
-            "client_id": env.str("GOOGLE_CLIENT_ID"),
-            "secret": env.str("GOOGLE_CLIENT_SECRET"),
+            "client_id": env.str("GOOGLE_CLIENT_ID", default=None),
+            "secret": env.str("GOOGLE_CLIENT_SECRET", default=None),
         },
     }
 }
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+if not DEBUG:
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+    USE_X_FORWARDED_HOST = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Celery settings
 CELERY_BROKER_URL = env.str("REDIS_URL", default="redis://127.0.0.1:6379")
@@ -185,3 +191,16 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute=0, hour=2),
     },
 }
+
+# Static deployment
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# This is the place where the static files will be collected before deployment
+STATIC_ROOT = BASE_DIR / "static"
+
+# SMTP
+EMAIL_HOST = "smtp.mailgun.org"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", default=None)
+EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", default=None)
+ADMINS = [("Olivier", "XXX")]

@@ -5,4 +5,4 @@ env.read_env()  # read .env file, if it exists
 
 
 def get_secret(key):
-    return env.str(key)
+    return env.str(key, default=None)

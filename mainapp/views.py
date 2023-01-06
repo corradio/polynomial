@@ -289,7 +289,7 @@ class AuthorizeCallbackView(TemplateView, LoginRequiredMixin):
             integration_class = INTEGRATION_CLASSES[integration_id]
             assert issubclass(integration_class, WebAuthIntegration)
             credentials = integration_class.process_callback(
-                uri=request.get_full_path(),
+                uri=request.build_absolute_uri(request.get_full_path()),
                 state=state,
                 authorize_callback_uri=request.build_absolute_uri(
                     reverse("authorize-callback")
