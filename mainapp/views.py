@@ -154,7 +154,16 @@ class IntegrationListView(ListView):
 
 class MetricListView(ListView, LoginRequiredMixin):
     def get_queryset(self):
-        return Metric.objects.all().filter(user=self.request.user).order_by("name")
+        # Only return metrics for integrations that actually exist
+        # This is useful for developing new integrations,
+        # as having data in the db without having it present on the branch
+        # might crash
+        return (
+            Metric.objects.all()
+            .filter(user=self.request.user)
+            .filter(integration_id__in=INTEGRATION_IDS)
+            .order_by("name")
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
