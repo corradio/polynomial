@@ -5,3 +5,4 @@ __pycache__
 .venv
 .mypy_cache
 .env
+celerybeat-schedule
