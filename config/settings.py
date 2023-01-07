@@ -199,6 +199,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute=0, hour=2),
     },
 }
+CELERY_SEND_TASK_ERROR_EMAILS = True
 
 # Static deployment
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
