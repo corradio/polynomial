@@ -28,7 +28,8 @@ class Metric(models.Model):
         # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         # `model_instance` will be None while creating new object
         if model_instance and model_instance.integration_id:
-            return model_instance.get_integration_instance().callable_config_schema
+            with model_instance.get_integration_instance() as inst:
+                return inst.callable_config_schema
         # Empty schema
         return EMPTY_CONFIG_SCHEMA
 
