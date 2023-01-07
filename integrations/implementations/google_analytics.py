@@ -44,7 +44,7 @@ class GoogleAnalytics(OAuth2Integration):
         view_id_choices = sorted(
             [
                 {
-                    "title": f"{prop['name']} - {profile['name']}",
+                    "title": f"{prop['name']} - {profile['name']} ({profile['id']})",
                     "value": profile["id"],
                 }
                 for item in items
