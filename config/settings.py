@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import List
@@ -35,6 +36,9 @@ SECRET_KEY = env.str(
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
+
+if DEBUG:
+    logging.basicConfig(level=logging.DEBUG)
 
 ALLOWED_HOSTS: List[str] = ["127.0.0.1", "localhost", "polynomial.fly.dev"]
 
