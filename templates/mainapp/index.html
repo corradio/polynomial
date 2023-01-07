@@ -9,7 +9,10 @@
 <div>
 {% for measurement in measurements_by_metric %}
   <div style="margin: 10px; padding: 10px; border-radius: 7px; background-color: white; border: 1px solid lightgray;">
-    <div>{{ measurement.metric_name }}</div>
+    <div>
+      {{ measurement.metric_name }}
+      [<a href="{% url 'metric-details' measurement.metric_id %}">edit</a>]
+    </div>
     <div id="chart-{{ measurement.metric_id }}" style="width: 100%; height: 300px;"></div>
   </div>
   {% with metric_id_str=measurement.metric_id|stringformat:"s" %}
@@ -66,6 +69,7 @@
           labelColor: 'gray',
           domainColor: 'black',
           tickSize: 3,
+          grid: false,
         },
       },
       y: {
