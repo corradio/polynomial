@@ -120,6 +120,11 @@ class OAuth2Integration(WebAuthIntegration):
             auto_refresh_url=self.refresh_url,
             # If the token gets refreshed, we will have to save it
             token_updater=self.credentials_updater,
+            # For Google, the client_id+secret must be supplied for refresh tokens
+            auto_refresh_kwargs={
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+            },
         )
         assert self.session.authorized
 
