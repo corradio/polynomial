@@ -49,7 +49,7 @@ urlpatterns = [
     ),
     path(
         "integrations/<integration_id>/authorize",
-        views.IntegrationAuthorizeView.as_view(),
+        views.integration_authorize,
         name="integrations",
     ),
     path(

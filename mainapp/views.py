@@ -127,16 +127,23 @@ def integration_collect_latest(request, integration_id):
         credentials = credentials and json.loads(credentials)
         integration_class = INTEGRATION_CLASSES[integration_id]
         try:
+            new_credentials = None
+
+            def credentials_updater(arg):
+                new_credentials = arg
+
             with integration_class(
-                config, credentials=credentials, credentials_updater=None
+                config, credentials=credentials, credentials_updater=credentials_updater
             ) as inst:
                 measurement = inst.collect_latest()
                 return JsonResponse(
                     {
                         "measurement": measurement,
                         "datetime": datetime.now(),
-                        "can_backfill": inst.can_backfill(),
+                        "canBackfill": inst.can_backfill(),
                         "status": "ok",
+                        "newSchema": inst.callable_config_schema,
+                        "newCredentials": new_credentials,
                     }
                 )
         except Exception as e:
@@ -149,6 +156,32 @@ def integration_collect_latest(request, integration_id):
                 {"error": error_str, "datetime": datetime.now(), "status": "error"}
             )
     return HttpResponseNotAllowed(["POST"])
+
+
+@login_required
+def integration_authorize(request, integration_id):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    config = request.POST["integration_config"]
+    config = config and json.loads(config)
+    # Generate a state which will identify this request
+    state = secrets.token_urlsafe(16)
+    # Get integration class and get the uri
+    integration_class = INTEGRATION_CLASSES[integration_id]
+    assert issubclass(integration_class, WebAuthIntegration)
+    uri = integration_class.get_authorization_uri(
+        state,
+        authorize_callback_uri=request.build_absolute_uri(
+            reverse("authorize-callback")
+        ),
+    )
+    assert uri is not None
+    # Save parameters in session
+    request.session[state] = {
+        "integration_id": integration_id,
+        "integration_config": config,
+    }
+    return HttpResponseRedirect(uri)
 
 
 class IntegrationListView(ListView):
@@ -246,28 +279,6 @@ class MetricAuthorizeView(TemplateView, LoginRequiredMixin):
         return HttpResponseRedirect(uri)
 
 
-class IntegrationAuthorizeView(TemplateView, LoginRequiredMixin):
-    def get(self, request, *args, **kwargs):
-        # Generate a state which will identify this request
-        state = secrets.token_urlsafe(16)
-        # Get integration class and get the uri
-        integration_id = self.kwargs["integration_id"]
-        integration_class = INTEGRATION_CLASSES[integration_id]
-        assert issubclass(integration_class, WebAuthIntegration)
-        uri = integration_class.get_authorization_uri(
-            state,
-            authorize_callback_uri=request.build_absolute_uri(
-                reverse("authorize-callback")
-            ),
-        )
-        assert uri is not None
-        # Save parameters in session
-        self.request.session[state] = {
-            "integration_id": integration_id,
-        }
-        return HttpResponseRedirect(uri)
-
-
 class AuthorizeCallbackView(TemplateView, LoginRequiredMixin):
     def get(self, request, *args, **kwargs):
         data = self.request.GET
@@ -279,6 +290,9 @@ class AuthorizeCallbackView(TemplateView, LoginRequiredMixin):
             # The cache object can have either:
             # - a metric_id (if it was called from /metrics/<pk>/authorize)
             # - an integration_id (if it was called from /integrations/<id>/authorize)
+            # If metric is not passed, then it needs to contain the `integration_config` object
+            # in order for us to be able to create an integration instance, which is needed
+            # in case we need to reload the schema dynamically
             metric = None
             if "metric_id" in obj:
                 # Get integration instance
@@ -297,22 +311,43 @@ class AuthorizeCallbackView(TemplateView, LoginRequiredMixin):
             )
             # Clean up session
             del self.request.session[state]
-            # Save credentials if a metric is present
+            # Create credential updater
+            def credentials_updater(new_credentials):
+                if metric:
+                    metric.credentials = new_credentials
+                    metric.save()
+
             if metric:
-                metric.credentials = credentials
-                metric.save()
+                credentials_updater(credentials)
                 return HttpResponseRedirect(metric.get_absolute_url())
             else:
-                # Return the credentials to the parent window
+                assert "integration_config" in obj
+                integration_config = obj["integration_config"]
+                # Prepare the template that will be rendered to the parent window
+                # which will include credentials and updated schema
                 t = Template(
                     """
                     {{ credentials|json_script:"credentials" }}
+                    {{ new_schema|json_script:"new_schema" }}
                     <script>
                         var credentials = JSON.parse(document.getElementById('credentials').textContent);
-                        window.opener.postMessage(credentials);
+                        var newSchema = JSON.parse(document.getElementById('new_schema').textContent);
+                        window.opener.postMessage({ credentials, newSchema });
                         window.close();
                     </script>
                 """
                 )
-                c = Context({"credentials": credentials})
+                # Get new updated schema
+                # Create instance instead of class, now that we have credentials
+                with integration_class(
+                    config=integration_config,
+                    credentials=credentials,
+                    credentials_updater=credentials_updater,
+                ) as inst:
+                    c = Context(
+                        {
+                            "credentials": credentials,
+                            "new_schema": inst.callable_config_schema,
+                        }
+                    )
                 return HttpResponse(t.render(c))

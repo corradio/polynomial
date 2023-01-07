@@ -28,7 +28,7 @@ class Metric(models.Model):
         # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         # `model_instance` will be None while creating new object
         if model_instance and model_instance.integration_id:
-            return INTEGRATION_CLASSES[model_instance.integration_id].config_schema
+            return model_instance.get_integration_instance().callable_config_schema
         # Empty schema
         return EMPTY_CONFIG_SCHEMA
 
@@ -55,7 +55,7 @@ class Metric(models.Model):
         )
 
     def can_backfill(self):
-        return self.get_integration_instance().can_backfill()
+        return self.get_integration_instance().can_backfill
 
     class Meta:
         constraints = [

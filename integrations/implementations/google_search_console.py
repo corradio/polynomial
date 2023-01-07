@@ -13,59 +13,66 @@ ROW_LIMIT = 10000  # Number of rows to fetch at a time
 
 @final
 class GoogleSearchConsole(OAuth2Integration):
-    # # Use https://bhch.github.io/react-json-form/playground
-    config_schema = {
-        "type": "dict",
-        "keys": {
-            "site_url": {
-                "type": "string",
-                "required": True,
-                "helpText": "This is a help text",
-            },
-            "metric": {
-                "type": "string",
-                "choices": sorted(["position", "clicks", "impressions", "ctr"]),
-                "required": True,
-            },
-            "filters": {
-                "type": "array",
-                "items": {
-                    "type": "dict",
-                    "keys": {
-                        "dimension": {
-                            "type": "string",
-                            "choices": [
-                                "country",
-                                "device",
-                                "page",
-                                "query",
-                                "searchAppearance",
-                            ],
-                        },
-                        "operator": {
-                            "type": "string",
-                            "choices": [
-                                "contains",
-                                "equals",
-                                "notContains",
-                                "notEquals",
-                                "includingRegex",
-                                "excludingRegex",
-                            ],
-                        },
-                        "expression": {"type": "string"},
-                    },
-                },
-            },
-        },
-    }
-
     client_id = get_secret("GOOGLE_CLIENT_ID")
     client_secret = get_secret("GOOGLE_CLIENT_SECRET")
     authorization_url = "https://accounts.google.com/o/oauth2/v2/auth"
     token_url = "https://oauth2.googleapis.com/token"
     refresh_url = "https://oauth2.googleapis.com/token"
     scopes = ["https://www.googleapis.com/auth/webmasters.readonly"]
+
+    @property
+    def callable_config_schema(self):
+        if not self.is_authorized:
+            return self.config_schema
+        response = self.session.get("https://www.googleapis.com/webmasters/v3/sites")
+        response.raise_for_status()
+        site_urls = [entry["siteUrl"] for entry in response.json()["siteEntry"]]
+        # Use https://bhch.github.io/react-json-form/playground
+        return {
+            "type": "dict",
+            "keys": {
+                "site_url": {
+                    "type": "string",
+                    "required": True,
+                    "choices": site_urls,
+                },
+                "metric": {
+                    "type": "string",
+                    "choices": sorted(["position", "clicks", "impressions", "ctr"]),
+                    "required": True,
+                },
+                "filters": {
+                    "type": "array",
+                    "items": {
+                        "type": "dict",
+                        "keys": {
+                            "dimension": {
+                                "type": "string",
+                                "choices": [
+                                    "country",
+                                    "device",
+                                    "page",
+                                    "query",
+                                    "searchAppearance",
+                                ],
+                            },
+                            "operator": {
+                                "type": "string",
+                                "choices": [
+                                    "contains",
+                                    "equals",
+                                    "notContains",
+                                    "notEquals",
+                                    "includingRegex",
+                                    "excludingRegex",
+                                ],
+                            },
+                            "expression": {"type": "string"},
+                        },
+                    },
+                },
+            },
+        }
 
     def can_backfill(self):
         return True

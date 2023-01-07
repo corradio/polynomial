@@ -16,58 +16,88 @@ DIMENSIONS = sorted(["ga:countryIsoCode"])
 
 @final
 class GoogleAnalytics(OAuth2Integration):
-    # # Use https://bhch.github.io/react-json-form/playground
-    config_schema = {
-        "type": "dict",
-        "keys": {
-            "view_id": {
-                "type": "string",
-                "required": True,
-                "helpText": "This is a help text",
-            },
-            "metric": {
-                "type": "string",
-                "choices": METRICS,
-                "required": True,
-            },
-            "filters": {
-                "type": "array",
-                "items": {
-                    "type": "dict",
-                    "keys": {
-                        "dimensionName": {
-                            "type": "string",
-                            "choices": DIMENSIONS,
-                        },
-                        "operator": {
-                            "type": "string",
-                            "choices": sorted(
-                                [
-                                    "REGEXP",
-                                    "BEGINS_WITH",
-                                    "ENDS_WITH",
-                                    "PARTIAL",
-                                    "EXACT",
-                                    "NUMERIC_EQUAL",
-                                    "NUMERIC_GREATER_THAN",
-                                    "NUMERIC_LESS_THAN",
-                                    "IN_LIST",  # Not supported as it would require multiple expressions
-                                ]
-                            ),
-                        },
-                        "expression": {"type": "string"},
-                    },
-                },
-            },
-        },
-    }
-
     client_id = get_secret("GOOGLE_CLIENT_ID")
     client_secret = get_secret("GOOGLE_CLIENT_SECRET")
     authorization_url = "https://accounts.google.com/o/oauth2/v2/auth"
     token_url = "https://oauth2.googleapis.com/token"
     refresh_url = "https://oauth2.googleapis.com/token"
     scopes = ["https://www.googleapis.com/auth/analytics.readonly"]
+
+    @property
+    def callable_config_schema(self):
+        if not self.is_authorized:
+            return self.config_schema
+        # Get all valid view ids
+        response = self.session.get(
+            "https://www.googleapis.com/analytics/v3/management/accountSummaries"
+        )
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code in [400, 403]:
+                # Try to explain to the user
+                data = e.response.json()
+                raise Exception(data["error"]["message"])
+            else:
+                raise
+        items = response.json()["items"]
+        view_id_choices = sorted(
+            [
+                {
+                    "title": f"{prop['name']} - {profile['name']}",
+                    "value": profile["id"],
+                }
+                for item in items
+                for prop in item["webProperties"]
+                for profile in prop["profiles"]
+            ],
+            key=lambda d: d["title"],
+        )
+        # Use https://bhch.github.io/react-json-form/playground
+        return {
+            "type": "dict",
+            "keys": {
+                "view_id": {
+                    "type": "string",
+                    "required": True,
+                    "choices": view_id_choices,
+                },
+                "metric": {
+                    "type": "string",
+                    "choices": METRICS,
+                    "required": True,
+                },
+                "filters": {
+                    "type": "array",
+                    "items": {
+                        "type": "dict",
+                        "keys": {
+                            "dimensionName": {
+                                "type": "string",
+                                "choices": DIMENSIONS,
+                            },
+                            "operator": {
+                                "type": "string",
+                                "choices": sorted(
+                                    [
+                                        "REGEXP",
+                                        "BEGINS_WITH",
+                                        "ENDS_WITH",
+                                        "PARTIAL",
+                                        "EXACT",
+                                        "NUMERIC_EQUAL",
+                                        "NUMERIC_GREATER_THAN",
+                                        "NUMERIC_LESS_THAN",
+                                        "IN_LIST",  # Not supported as it would require multiple expressions
+                                    ]
+                                ),
+                            },
+                            "expression": {"type": "string"},
+                        },
+                    },
+                },
+            },
+        }
 
     def can_backfill(self):
         return True
@@ -96,7 +126,6 @@ class GoogleAnalytics(OAuth2Integration):
             if e.response.status_code == 400:
                 # Try to explain to the user
                 data = e.response.json()
-                print(data)
                 raise Exception(data["error"]["message"])
             else:
                 raise

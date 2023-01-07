@@ -12,9 +12,8 @@ EMPTY_CONFIG_SCHEMA = {"type": "object", "keys": {}}
 
 
 class Integration:
-    config_schema: Dict = (
-        EMPTY_CONFIG_SCHEMA  # Use https://bhch.github.io/react-json-form/playground
-    )
+    # Use https://bhch.github.io/react-json-form/playground
+    config_schema: Dict = EMPTY_CONFIG_SCHEMA
 
     def __init__(self, config: Optional[Dict], *args, **kwargs):
         self.config = config or {}
@@ -27,6 +26,12 @@ class Integration:
         # Cleanup should be done here (e.g. database connection cleanup)
         pass
 
+    @property
+    def callable_config_schema(self) -> Dict:
+        # Here one can return a schema that is dynamically updated
+        return self.config_schema
+
+    @property
     @abstractmethod
     def can_backfill(self) -> bool:
         pass
@@ -37,7 +42,7 @@ class Integration:
     def collect_latest(self) -> MeasurementTuple:
         # Default implementation uses `collect_past` through `collect_past_range`,
         # and thus assumes integration can backfill
-        if not self.can_backfill():
+        if not self.can_backfill:
             raise NotImplementedError(
                 "Integration can't backfill: `collect_latest` should be overridden"
             )
@@ -55,7 +60,7 @@ class Integration:
     ) -> List[MeasurementTuple]:
         # Default implementation uses `collect_past` for each date,
         # and thus assumes integration can backfill
-        assert self.can_backfill()
+        assert self.can_backfill
         dates = [date_end]
         while True:
             new_date = dates[-1] - timedelta(days=1)
@@ -94,16 +99,20 @@ class OAuth2Integration(WebAuthIntegration):
 
     def __init__(
         self,
-        config: Dict,
+        config: Optional[Dict],
         credentials: Dict,
-        credentials_updater: Optional[Callable[[Dict], None]],
+        credentials_updater: Callable[[Dict], None],
     ):
         super().__init__(config)
         self.credentials = credentials
         self.credentials_updater = credentials_updater
+        self.session = None
 
     def __enter__(self):
         assert self.credentials is not None, "Credentials need to be supplied"
+        assert (
+            self.credentials_updater is not None
+        ), "Credential updated needs to be supplied"
         self.session = OAuth2Session(
             self.client_id,
             scope=self.scopes,
@@ -117,6 +126,12 @@ class OAuth2Integration(WebAuthIntegration):
         # Clean up credentials as they shouldn't be used
         del self.credentials
         return self
+
+    @property
+    def is_authorized(self) -> bool:
+        if not self.session:
+            return False
+        return self.session.authorized
 
     @classmethod
     def get_authorization_uri(cls, state: str, authorize_callback_uri: str):
@@ -134,9 +149,7 @@ class OAuth2Integration(WebAuthIntegration):
 
     @classmethod
     def process_callback(cls, uri: str, state: str, authorize_callback_uri: str):
-        client = OAuth2Session(
-            cls.client_id, scope=cls.scopes, redirect_uri=authorize_callback_uri
-        )
+        client = OAuth2Session(cls.client_id, redirect_uri=authorize_callback_uri)
         # Checks that the state is valid, will raise
         # MismatchingStateError if not.
         client.fetch_token(
@@ -144,6 +157,7 @@ class OAuth2Integration(WebAuthIntegration):
             client_secret=cls.client_secret,
             authorization_response=uri,
             state=state,
+            include_client_id=True,
         )
         credentials = client.token
         return credentials
