@@ -9,7 +9,7 @@ logger = get_task_logger(__name__)
 @shared_task()
 def collect_latest_task(metric_id: int):
     metric = Metric.objects.get(pk=metric_id)
-    with metric.get_integration_instance() as inst:
+    with metric.integration_instance as inst:
         measurement = inst.collect_latest()
     Measurement.objects.update_or_create(
         metric=metric,

@@ -75,7 +75,7 @@ def metric_backfill(request, pk):
     start_date = date.today() - interval
     # Note: we could also use parse_duration() and pass e.g. "3 days"
     try:
-        with metric.get_integration_instance() as inst:
+        with metric.integration_instance as inst:
             measurements = inst.collect_past_range(
                 date_start=max(start_date, inst.earliest_backfill()),
                 date_end=date.today() - timedelta(days=1),
@@ -102,7 +102,7 @@ def metric_collect_latest(request, pk):
         return HttpResponseNotAllowed(["POST"])
     metric = get_object_or_404(Metric, pk=pk, user=request.user)
     try:
-        with metric.get_integration_instance() as inst:
+        with metric.integration_instance as inst:
             measurement = inst.collect_latest()
     except Exception as e:
         exc_info = sys.exc_info()

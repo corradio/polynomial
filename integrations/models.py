@@ -13,7 +13,7 @@ EMPTY_CONFIG_SCHEMA = {"type": "object", "keys": {}}
 
 class Integration:
     # Use https://bhch.github.io/react-json-form/playground
-    config_schema: Dict = EMPTY_CONFIG_SCHEMA
+    config_schema: ClassVar[Dict] = EMPTY_CONFIG_SCHEMA
 
     def __init__(self, config: Optional[Dict], *args, **kwargs):
         self.config = config or {}

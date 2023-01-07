@@ -28,9 +28,17 @@ class Metric(models.Model):
         # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         # `model_instance` will be None while creating new object
         if model_instance and model_instance.integration_id:
-            with model_instance.get_integration_instance() as inst:
-                return inst.callable_config_schema
-        # Empty schema
+            # Check if we are capable of __enter__ an integration
+            # - integration_config always needs to be present
+            # - if can_web_auth, then we also need integration_credentials
+            if model_instance.integration_config and (
+                not model_instance.can_web_auth or model_instance.credentials
+            ):
+                with model_instance.integration_instance as inst:
+                    return inst.callable_config_schema
+            # We can't create an instance, just return the class variable
+            return INTEGRATION_CLASSES[model_instance.integration_id].config_schema
+        # No model instance, return empty schema
         return EMPTY_CONFIG_SCHEMA
 
     integration_config = JSONField(blank=True, null=True, schema=callable_config_schema)
@@ -39,10 +47,12 @@ class Metric(models.Model):
     def get_absolute_url(self):
         return reverse("metric-details", args=[self.pk])
 
+    @property
     def can_web_auth(self):
         return issubclass(INTEGRATION_CLASSES[self.integration_id], WebAuthIntegration)
 
-    def get_integration_instance(self) -> Integration:
+    @property
+    def integration_instance(self) -> Integration:
         integration_class = INTEGRATION_CLASSES[self.integration_id]
 
         def credentials_updater(new_credentials):
@@ -55,8 +65,9 @@ class Metric(models.Model):
             credentials_updater=credentials_updater,
         )
 
+    @property
     def can_backfill(self):
-        return self.get_integration_instance().can_backfill
+        return self.integration_instance.can_backfill
 
     class Meta:
         constraints = [
