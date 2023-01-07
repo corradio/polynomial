@@ -133,7 +133,11 @@
             }
             // Update schema if any
             if (data.newSchema) {
-              var newConfig = { ...config, schema: data.newSchema };
+              var newConfig = {
+                ...config,
+                data: formInstance.getData(),
+                schema: data.newSchema
+              };
               formInstance.update(newConfig);
             }
           }
