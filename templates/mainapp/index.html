@@ -13,7 +13,7 @@
       {{ measurement.metric_name }}
       [<a href="{% url 'metric-details' measurement.metric_id %}">edit</a>]
     </div>
-    <div id="chart-{{ measurement.metric_id }}" style="width: 100%; height: 300px;"></div>
+    <div id="chart-{{ measurement.metric_id }}" style="width: 100%; height: 250px;"></div>
   </div>
   {% with metric_id_str=measurement.metric_id|stringformat:"s" %}
     {% with script_id="measurement-"|add:metric_id_str %}
@@ -70,6 +70,12 @@
           domainColor: 'black',
           tickSize: 3,
           grid: false,
+        },
+        scale: {
+          domain: [
+            new Date(new Date().setDate(new Date().getDate() - 60)).getTime(),
+            new Date().getTime(),
+          ]
         },
       },
       y: {
