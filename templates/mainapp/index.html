@@ -1,22 +1,28 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.6.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
 {% endblock %}
+
 {% block content %}
 <h1>Dashboard</h1>
 <div>
 {% for measurement in measurements_by_metric %}
   <div style="margin: 10px; padding: 10px; border-radius: 7px; background-color: white; border: 1px solid lightgray;">
     <div>
+      {% with "integrations/icons/"|add:measurement.integration_id|add:".png" as icon_url %}
+        <img class="integration-icon" src="{% static icon_url %}" alt="">
+      {% endwith %}
       {{ measurement.metric_name }}
       [<a href="{% url 'metric-details' measurement.metric_id %}">edit</a>]
     </div>
     <div id="chart-{{ measurement.metric_id }}" style="width: 100%; height: 250px;"></div>
   </div>
-  {% with metric_id_str=measurement.metric_id|stringformat:"s" %}
-    {% with script_id="measurement-"|add:metric_id_str %}
+  {% with measurement.metric_id|stringformat:"s" as metric_id_str %}
+    {% with "measurement-"|add:metric_id_str as script_id %}
       {{ measurement | json_script:script_id }}
     {% endwith %}
   {% endwith %}

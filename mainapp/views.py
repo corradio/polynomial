@@ -40,6 +40,7 @@ def index(request):
         {
             "metric_id": metric.id,
             "metric_name": metric.name,
+            "integration_id": metric.integration_id,
             "measurements": [
                 {
                     "value": measurement.value,

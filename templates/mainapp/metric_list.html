@@ -1,10 +1,14 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
     <h2>Metrics</h2>
     <div>
         {% for metric in object_list %}
             <div>
+              {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
+                <img class="integration-icon" src="{% static icon_url %}" alt="">
+              {% endwith %}
               <a href="{% url 'metric-details' metric.id %}">{{ metric.name }}</a>
               <span> - </span>
               <form style="display:inline" action="{% url 'metric-collect-latest' metric.id %}" method="POST">

@@ -1,10 +1,17 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
     <h2>Integrations</h2>
     <ul>
         {% for integration_id in object_list %}
-            <li>{{ integration_id }} <a href="{% url 'metric-add' integration_id %}">[configure]</a></li>
+            <li>
+              {% with "integrations/icons/"|add:integration_id|add:".png" as icon_url %}
+                <img class="integration-icon" src="{% static icon_url %}" alt="">
+              {% endwith %}
+              {{ integration_id }}
+              <a href="{% url 'metric-add' integration_id %}">[configure]</a>
+            </li>
         {% endfor %}
     </ul>
 {% endblock %}

@@ -95,6 +95,10 @@ TEMPLATES = [
     },
 ]
 
+STATICFILES_DIRS = [
+    ("integrations/icons", BASE_DIR / "integrations/icons"),
+]
+
 WSGI_APPLICATION = "config.wsgi.application"
 
 
