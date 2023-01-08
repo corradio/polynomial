@@ -5,18 +5,66 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}{% endblock %}</title>
+    <title>Polynomial | Lightweight metrics engine for your most vital KPIs</title>
     <style>
       * {
         font-family: sans-serif;
       }
+      body {
+        background-color: #f8faf9;
+        margin: 0;
+      }
+
+      .header {
+        display: flex;
+        border-bottom: 1px solid lightgray;
+        padding: 1em;
+        align-items: center;
+        background-color: white;
+      }
+      .header > :first-child {
+        font-weight: bold;
+      }
+      .header > :not(:first-child) {
+        flex-grow: 1;
+      }
+      .header > .right {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .header > .right > div {
+        padding-left: .5em;
+      }
+
+      .content-container {
+        padding: 10px;
+      }
+
       img.integration-icon {
         width: .9em;
       }
+
+      .card {
+        padding: 10px;
+        border-radius: 7px;
+        background-color: white;
+        border: 1px solid lightgray;
+        margin-bottom: 10px;
+      }
+
     </style>
     {% block head %}{% endblock %}
   </head>
-  <body style="background-color: #f8faf9;">
-    {% block content %}{% endblock %}
+  <body>
+    <div class="header">
+      <div><a href="/">Polynomial</a></div>
+      <div class="right">
+        <div><a href="{% url 'integrations' %}">Add new metric</a></div>
+        <div><a href="{% url 'metrics' %}">Settings</a></div>
+      </div>
+    </div>
+    <div class="content-container">
+      {% block content %}{% endblock %}
+    </div>
   </body>
 </html>

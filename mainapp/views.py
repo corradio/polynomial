@@ -215,7 +215,7 @@ class MetricListView(ListView, LoginRequiredMixin):
 class MetricCreateView(CreateView, LoginRequiredMixin):
     model = Metric
     form_class = MetricForm
-    success_url = "/metrics"
+    success_url = reverse_lazy("metrics")
 
     def get_initial(self):
         return {"integration_id": self.kwargs["integration_id"]}
@@ -246,6 +246,7 @@ class MetricDeleteView(DeleteView, LoginRequiredMixin):  # type: ignore[misc]
 class MetricUpdateView(UpdateView, LoginRequiredMixin):
     model = Metric
     form_class = MetricForm
+    success_url = reverse_lazy("metrics")
 
     def get_queryset(self, *args, **kwargs):
         # Only show metric if user can access it

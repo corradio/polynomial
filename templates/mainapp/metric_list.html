@@ -5,36 +5,31 @@
     <h2>Metrics</h2>
     <div>
         {% for metric in object_list %}
-            <div>
+            <div style="margin-bottom: 1em;">
               {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
                 <img class="integration-icon" src="{% static icon_url %}" alt="">
               {% endwith %}
               <a href="{% url 'metric-details' metric.id %}">{{ metric.name }}</a>
-              <span> - </span>
-              <form style="display:inline" action="{% url 'metric-collect-latest' metric.id %}" method="POST">
-                {% csrf_token %}
-                <input type="submit" value="collect latest">
-              </form>
-              {% if metric.can_backfill %}
-              <form style="display:inline" action="{% url 'metric-backfill' metric.id %}" method="POST">
-                {% csrf_token %}
-                <input type="submit" value="backfill last 60 days">
-                <input type="hidden" name="since" value="60 day">
-              </form>
-              {% endif %}
-              {% if metric.can_web_auth %}
-              <form style="display:inline" action="{% url 'metric-authorize' metric.id %}" method="GET">
-                {% csrf_token %}
-                <input type="submit" value="authorize">
-              </form>
-              {% endif %}
-              <br />
-              [using {{ metric.integration_id }}, can_backfill={{ metric.can_backfill }}, can_web_auth={{ metric.can_web_auth }}]
-              <br />
-              <br />
+              <div style="margin-top: .2em;">
+                <form style="display:inline" action="{% url 'metric-collect-latest' metric.id %}" method="POST">
+                  {% csrf_token %}
+                  <input type="submit" value="collect latest">
+                </form>
+                {% if metric.can_backfill %}
+                <form style="display:inline" action="{% url 'metric-backfill' metric.id %}" method="POST">
+                  {% csrf_token %}
+                  <input type="submit" value="backfill last 60 days">
+                  <input type="hidden" name="since" value="60 day">
+                </form>
+                {% endif %}
+                {% if metric.can_web_auth %}
+                <form style="display:inline" action="{% url 'metric-authorize' metric.id %}" method="GET">
+                  {% csrf_token %}
+                  <input type="submit" value="authorize">
+                </form>
+                {% endif %}
+              </div>
             </div>
         {% endfor %}
     </div>
-    <hr />
-    <a href="{% url 'integrations' %}">Browse integrations</a>
 {% endblock %}
