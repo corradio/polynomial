@@ -148,7 +148,7 @@ class OAuth2Integration(WebAuthIntegration):
             cls.authorization_url,
             state=state,
             access_type="offline",
-            prompt="select_account",
+            prompt="consent",
         )
         return uri
 
