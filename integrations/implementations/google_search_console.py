@@ -5,7 +5,7 @@ from typing import Dict, List, final
 
 import requests
 
-from ..models import MeasurementTuple, OAuth2Integration
+from ..base import MeasurementTuple, OAuth2Integration
 from ..utils import get_secret
 
 ROW_LIMIT = 10000  # Number of rows to fetch at a time
@@ -19,6 +19,7 @@ class GoogleSearchConsole(OAuth2Integration):
     token_url = "https://oauth2.googleapis.com/token"
     refresh_url = "https://oauth2.googleapis.com/token"
     scopes = ["https://www.googleapis.com/auth/webmasters.readonly"]
+    authorize_extras = {"access_type": "offline", "prompt": "consent"}
 
     @property
     def callable_config_schema(self):

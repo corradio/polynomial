@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.linkedin_oauth2",
     "mainapp",
 ]
 
@@ -180,7 +181,22 @@ SOCIALACCOUNT_PROVIDERS = {
             "client_id": env.str("GOOGLE_CLIENT_ID", default=None),
             "secret": env.str("GOOGLE_CLIENT_SECRET", default=None),
         },
-    }
+    },
+    "linkedin_oauth2": {
+        "SCOPE": ["r_liteprofile", "r_emailaddress"],
+        "PROFILE_FIELDS": [
+            "id",
+            "first-name",
+            "last-name",
+            "email-address",
+            "picture-url",
+            "public-profile-url",
+        ],
+        "APP": {
+            "client_id": env.str("LINKEDIN_CLIENT_ID", default=None),
+            "secret": env.str("LINKEDIN_CLIENT_SECRET", default=None),
+        },
+    },
 }
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
@@ -216,3 +232,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", default=None)
 EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", default=None)
 ADMINS = [("Olivier", "XXX")]
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

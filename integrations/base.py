@@ -1,6 +1,20 @@
+import base64
+import hashlib
+import os
+import re
 from abc import abstractmethod
 from datetime import date, timedelta
-from typing import Any, Callable, ClassVar, Dict, List, NamedTuple, Optional
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    List,
+    Literal,
+    NamedTuple,
+    Optional,
+    Tuple,
+)
 
 import requests
 from requests_oauthlib import OAuth2Session
@@ -26,9 +40,8 @@ class Integration:
         # Cleanup should be done here (e.g. database connection cleanup)
         pass
 
-    @property
+    # This will only be used if the method is overridden
     def callable_config_schema(self) -> Dict:
-        # Here one can return a schema that is dynamically updated
         return self.config_schema
 
     @property
@@ -72,15 +85,35 @@ class Integration:
 
 
 class WebAuthIntegration(Integration):
+    def __init__(
+        self,
+        config: Optional[Dict],
+        credentials: Dict,
+        credentials_updater: Callable[[Dict], None],
+    ):
+        super().__init__(config)
+        credentials = credentials
+        credentials_updater = credentials_updater
+        assert credentials is not None, "Credentials need to be supplied"
+        assert (
+            credentials_updater is not None
+        ), "Credential updated needs to be supplied"
+
     @classmethod
     @abstractmethod
-    def get_authorization_uri(cls, state: str, authorize_callback_uri: str) -> str:
+    def get_authorization_uri_and_code_verifier(
+        cls, state: str, authorize_callback_uri: str
+    ) -> Tuple[str, Optional[str]]:
         pass
 
     @classmethod
     @abstractmethod
     def process_callback(
-        cls, uri: str, state: str, authorize_callback_uri: str
+        cls,
+        uri: str,
+        state: str,
+        authorize_callback_uri: str,
+        code_verifier: Optional[str] = None,
     ) -> Dict:
         pass
 
@@ -95,6 +128,10 @@ class OAuth2Integration(WebAuthIntegration):
     authorization_url: ClassVar[str]
     token_url: ClassVar[str]
     refresh_url: ClassVar[Optional[str]] = None
+    code_challenge_method: ClassVar[Optional[Literal["S256"]]] = None
+    authorize_extras: ClassVar[Dict] = {}
+    token_extras: ClassVar[Dict] = {}
+
     session: OAuth2Session
 
     def __init__(
@@ -103,57 +140,63 @@ class OAuth2Integration(WebAuthIntegration):
         credentials: Dict,
         credentials_updater: Callable[[Dict], None],
     ):
-        super().__init__(config)
-        self.credentials = credentials
-        self.credentials_updater = credentials_updater
-        self.session = None
-
-    def __enter__(self):
-        assert self.credentials is not None, "Credentials need to be supplied"
-        assert (
-            self.credentials_updater is not None
-        ), "Credential updated needs to be supplied"
+        super().__init__(config, credentials, credentials_updater)
         self.session = OAuth2Session(
             self.client_id,
             scope=self.scopes,
-            token=self.credentials,
+            token=credentials,
             auto_refresh_url=self.refresh_url,
             # If the token gets refreshed, we will have to save it
-            token_updater=self.credentials_updater,
+            token_updater=credentials_updater,
             # For Google, the client_id+secret must be supplied for refresh tokens
             auto_refresh_kwargs={
                 "client_id": self.client_id,
                 "client_secret": self.client_secret,
             },
         )
-        assert self.session.authorized
 
-        # Clean up credentials as they shouldn't be used
-        del self.credentials
+    def __enter__(self):
+        assert self.session.authorized
         return self
 
     @property
     def is_authorized(self) -> bool:
-        if not self.session:
-            return False
         return self.session.authorized
 
     @classmethod
-    def get_authorization_uri(cls, state: str, authorize_callback_uri: str):
+    def get_authorization_uri_and_code_verifier(
+        cls, state: str, authorize_callback_uri: str
+    ) -> Tuple[str, Optional[str]]:
         client = OAuth2Session(
             cls.client_id, scope=cls.scopes, redirect_uri=authorize_callback_uri
         )
+        code_challenge = None
+        code_verifier = None
+        if cls.code_challenge_method is not None:
+            code_verifier = base64.urlsafe_b64encode(os.urandom(30)).decode("utf-8")
+            code_verifier = re.sub("[^a-zA-Z0-9]+", "", code_verifier)
+
+            code_challenge_b = hashlib.sha256(code_verifier.encode("utf-8")).digest()
+            code_challenge = base64.urlsafe_b64encode(code_challenge_b).decode("utf-8")
+            code_challenge = code_challenge.replace("=", "")
         # Prepare authorization request
         uri, state = client.authorization_url(
             cls.authorization_url,
             state=state,
-            access_type="offline",
-            prompt="consent",
+            code_challenge=code_challenge,
+            code_challenge_method=cls.code_challenge_method,
+            **cls.authorize_extras,
         )
-        return uri
+        return uri, code_verifier
 
     @classmethod
-    def process_callback(cls, uri: str, state: str, authorize_callback_uri: str):
+    def process_callback(
+        cls,
+        uri: str,
+        state: str,
+        authorize_callback_uri: str,
+        code_verifier: Optional[str] = None,
+    ):
         client = OAuth2Session(cls.client_id, redirect_uri=authorize_callback_uri)
         # Checks that the state is valid, will raise
         # MismatchingStateError if not.
@@ -162,7 +205,8 @@ class OAuth2Integration(WebAuthIntegration):
             client_secret=cls.client_secret,
             authorization_response=uri,
             state=state,
-            include_client_id=True,
+            code_verifier=code_verifier,
+            **cls.token_extras,
         )
         credentials = client.token
         return credentials

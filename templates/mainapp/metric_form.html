@@ -8,72 +8,20 @@
     {% csrf_token %}
     {{ form }}
     {% if can_web_auth %}
-    <input type="button" id="button-authorize" value="Authorize">
+    <input type="button" id="button-authorize" value="Re-authorize">
     {% endif %}
     <input type="button" id="button-test" value="Test">
-    <input type="submit" value="Save">
+    <input type="submit" id="button-submit" value="Save" disabled>
     <script>
       var testButton = document.getElementById("button-test");
       var authorizeButton = document.getElementById("button-authorize");
+      var submitButton = document.getElementById("button-submit");
 
       // Authorization
       if (authorizeButton) {
-        authorizeButton.onclick = function(event) {
-          event.preventDefault();
-          var integrationId = document.getElementById('id_integration_id').value;
-          // Note, after the first redirect, the opener
-          // is set to null, and we can't control the opened window anymore.
-          var windowName = 'IntegrationAuthorize';
-          var windowProxy = window.open(
-            '',
-            windowName,
-            'width=600, height=700, toolbar=no, menubar=no, popup=yes'
-          );
-          if (!windowProxy) {
-            // The window wasn't allowed to open
-            // This is likely caused by built-in popup blockers.
-            alert('Could not open pop up. Do you have a popup blocker activated?');
-          }
-
-          // Submit POST from window
-          var form = document.createElement("form");
-          form.setAttribute("method", "post");
-          form.setAttribute("action", '/integrations/' + integrationId + '/authorize');
-          form.setAttribute("target", 'IntegrationAuthorize');
-          // add CSRF
-          var input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'csrfmiddlewaretoken';
-          input.value = document.querySelector('input[name=csrfmiddlewaretoken]').value;
-          form.appendChild(input);
-          // add config
-          var input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'integration_config';
-          var configElement = document.getElementById('id_integration_config');
-          input.value = configElement.value;
-          form.appendChild(input);
-          // Add form and submit
-          document.body.appendChild(form);
-          form.target = windowName;
-          form.submit();
-          document.body.removeChild(form);
-        }
-      }
-      // Authorization callback
-      window.addEventListener("message", receiveMessage, false);
-      function receiveMessage(event) {
-        if (event.origin !== window.location.origin) {
-          console.warn(`Message received by ${event.origin}; IGNORED.`);
-          return;
-        }
-        var eventData = event.data;
-        document.getElementById('id_credentials').value = JSON.stringify(eventData.credentials);
-        if (eventData.newSchema) {
-          var formInstance = reactJsonForm.getFormInstance('id_integration_config_jsonform');
-          var config = JSON.parse(document.getElementById('id_integration_config').dataset.djangoJsonform);
-          var newConfig = { ...config, schema: eventData.newSchema };
-          formInstance.update(newConfig);
+        authorizeButton.onclick = function(e) {
+          // Note: this will lose all unsaved settings
+          location.href = location.href + 'authorize';
         }
       }
       // Test
@@ -92,28 +40,28 @@
             return;
           }
         }
-
         var csrftoken = document.querySelector('input[name=csrfmiddlewaretoken]').value;
         var data = JSON.stringify({
           integration_config: configElement.value,
-          credentials: document.getElementById('id_credentials').value,
         });
-        var integrationId = document.getElementById('id_integration_id').value;
-        fetch('/integrations/' + integrationId + '/collect_latest', {
+        fetch(location.href + 'test', {
           method: 'POST', headers: {
             'X-CSRFToken': csrftoken,
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
           },
           body: data,
-        }).then(response => {
+        })
+        .then(response => {
           if (response.ok) {
             return response.json();
           } else {
-            return {'status': 'error', 'error': response};
+            // HTTPError
+            return {'status': 'error', 'error': response.status + ' ' + response.statusText};
           }
         })
         .catch(error => {
+          // Other error
           return {'status': 'error', 'error': error};
         })
         .then(data => {
@@ -121,16 +69,13 @@
           document.querySelector('#integration-test-container').style.color = isError
             ? 'red'
             : 'green';
+          submitButton.disabled = isError;
           var label = document.querySelector('#integration-test-container span.label');
-          label.innerText = '[' + data.datetime + ']';
+          label.innerText = '[' + (data.datetime || new Date()) + ']';
           if (isError) {
              label.innerText += ' Integration failed:';
           } else {
             label.innerText += ' Integration successfully ran:';
-            // Update credentials if any
-            if (data.newCredentials) {
-              document.getElementById('id_credentials').value = JSON.stringify(data.newCredentials);
-            }
             // Update schema if any
             if (data.newSchema) {
               var newConfig = {

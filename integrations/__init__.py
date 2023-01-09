@@ -3,7 +3,7 @@ import inspect
 import pkgutil
 from typing import Dict, List, Type
 
-from .models import Integration
+from .base import Integration, OAuth2Integration
 
 INTEGRATION_IDS: List[str] = [
     integration_name
@@ -16,7 +16,9 @@ INTEGRATION_CLASSES: Dict[str, Type[Integration]] = {
     integration_name: inspect.getmembers(
         importlib.import_module(f"integrations.implementations.{integration_name}"),
         lambda member: inspect.isclass(member)
-        and member != Integration
+        # Check it's not an abstract type
+        and member != Integration and member != OAuth2Integration
+        # Check it's a subclass
         and issubclass(member, Integration),
     )[0][
         1

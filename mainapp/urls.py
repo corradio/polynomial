@@ -33,28 +33,39 @@ urlpatterns = [
     ),
     path(
         "metrics/<int:pk>/authorize",
-        views.MetricAuthorizeView.as_view(),
+        views.metric_authorize,
         name="metric-authorize",
     ),
     path(
-        "metrics/add/<integration_id>/",
+        "metrics/<int:pk>/test",
+        views.metric_test,
+        name="metric-test",
+    ),
+    # These are metric creation routes, which use the cache as backend
+    path(
+        "metrics/new",
+        views.metric_new,
+        name="metric-new",
+    ),
+    path(
+        "metrics/new/<state>/",
         views.MetricCreateView.as_view(),
-        name="metric-add",
+        name="metric-new-with-state",
+    ),
+    path(
+        "metrics/new/<state>/authorize",
+        views.metric_new_authorize,
+        name="metric-new-with-state-authorize",
+    ),
+    path(
+        "metrics/new/<state>/test",
+        views.metric_new_test,
+        name="metric-new-with-state-test",
     ),
     # Integrations (i.e. metric, and thus, db independent)
     path(
         "integrations/",
         views.IntegrationListView.as_view(),
         name="integrations",
-    ),
-    path(
-        "integrations/<integration_id>/authorize",
-        views.integration_authorize,
-        name="integrations",
-    ),
-    path(
-        "integrations/<integration_id>/collect_latest",
-        views.integration_collect_latest,
-        name="integration-collect-latest",
     ),
 ]

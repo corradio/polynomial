@@ -8,7 +8,7 @@ from django.urls import reverse
 from django_jsonform.models.fields import JSONField
 
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS, Integration
-from integrations.models import EMPTY_CONFIG_SCHEMA, WebAuthIntegration
+from integrations.base import EMPTY_CONFIG_SCHEMA, WebAuthIntegration
 
 
 class User(AbstractUser):
@@ -28,16 +28,22 @@ class Metric(models.Model):
         # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         # `model_instance` will be None while creating new object
         if model_instance and model_instance.integration_id:
-            # Check if we are capable of __enter__ an integration
-            # - integration_config always needs to be present
-            # - if can_web_auth, then we also need integration_credentials
-            if model_instance.integration_config and (
-                not model_instance.can_web_auth or model_instance.credentials
+            # Check if a callable schema exists
+            instance_class = INTEGRATION_CLASSES[model_instance.integration_id]
+            if (
+                instance_class.callable_config_schema.__qualname__.split(".")[0]
+                == instance_class.__name__
             ):
-                with model_instance.integration_instance as inst:
-                    return inst.callable_config_schema
-            # We can't create an instance, just return the class variable
-            return INTEGRATION_CLASSES[model_instance.integration_id].config_schema
+                # We will here attempt to __init__ and __enter__ an
+                # integration. This can cause it to crash if it e.g. hasn't
+                # been authenticated yet
+                # if class is instance of OAuth2Integration, then we will
+                # require credentials to __init__
+                if not model_instance.can_web_auth or model_instance.credentials:
+                    with model_instance.integration_instance as inst:
+                        return inst.callable_config_schema()
+            # There's no callable schema
+            return instance_class.config_schema
         # No model instance, return empty schema
         return EMPTY_CONFIG_SCHEMA
 

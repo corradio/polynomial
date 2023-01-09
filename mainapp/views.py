@@ -10,12 +10,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
     HttpResponseNotAllowed,
     HttpResponseRedirect,
     HttpResponseServerError,
     JsonResponse,
 )
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template import Context, Template
 from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
@@ -28,7 +29,7 @@ from django.views.generic import (
 )
 
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
-from integrations.models import WebAuthIntegration
+from integrations.base import WebAuthIntegration
 
 from .forms import MetricForm
 from .models import Measurement, Metric, User
@@ -119,70 +120,45 @@ def metric_collect_latest(request, pk):
 
 
 @login_required
-def integration_collect_latest(request, integration_id):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        config = data.get("integration_config")
-        config = config and json.loads(config)
-        credentials = data.get("credentials")
-        credentials = credentials and json.loads(credentials)
-        integration_class = INTEGRATION_CLASSES[integration_id]
-        try:
-            new_credentials = None
-
-            def credentials_updater(arg):
-                new_credentials = arg
-
-            with integration_class(
-                config, credentials=credentials, credentials_updater=credentials_updater
-            ) as inst:
-                measurement = inst.collect_latest()
-                return JsonResponse(
-                    {
-                        "measurement": measurement,
-                        "datetime": datetime.now(),
-                        "canBackfill": inst.can_backfill(),
-                        "status": "ok",
-                        "newSchema": inst.callable_config_schema,
-                        "newCredentials": new_credentials,
-                    }
-                )
-        except Exception as e:
-            if False:
-                exc_info = sys.exc_info()
-                error_str = "\n".join(traceback.format_exception(*exc_info))
-            else:
-                error_str = f"{type(e).__name__}: {str(e)}"
-            return JsonResponse(
-                {"error": error_str, "datetime": datetime.now(), "status": "error"}
-            )
-    return HttpResponseNotAllowed(["POST"])
-
-
-@login_required
-def integration_authorize(request, integration_id):
-    if request.method != "POST":
+def metric_new_test(request, state):
+    if not request.method == "POST":
         return HttpResponseNotAllowed(["POST"])
-    config = request.POST["integration_config"]
+    data = json.loads(request.body)
+    config = data.get("integration_config")
     config = config and json.loads(config)
-    # Generate a state which will identify this request
-    state = secrets.token_urlsafe(16)
-    # Get integration class and get the uri
+    # Get server side information
+    metric_cache = request.session[state]["metric"]
+    integration_id = metric_cache.get("integration_id")
+    credentials = metric_cache.get("credentials")
     integration_class = INTEGRATION_CLASSES[integration_id]
-    assert issubclass(integration_class, WebAuthIntegration)
-    uri = integration_class.get_authorization_uri(
-        state,
-        authorize_callback_uri=request.build_absolute_uri(
-            reverse("authorize-callback")
-        ),
-    )
-    assert uri is not None
-    # Save parameters in session
-    request.session[state] = {
-        "integration_id": integration_id,
-        "integration_config": config,
-    }
-    return HttpResponseRedirect(uri)
+
+    def credentials_updater(arg):
+        metric_cache["credentials"] = arg
+        request.session.modified = True
+
+    try:
+        with integration_class(
+            config, credentials=credentials, credentials_updater=credentials_updater
+        ) as inst:
+            measurement = inst.collect_latest()
+            return JsonResponse(
+                {
+                    "measurement": measurement,
+                    "datetime": datetime.now(),
+                    "canBackfill": inst.can_backfill(),
+                    "status": "ok",
+                    "newSchema": inst.callable_config_schema(),
+                }
+            )
+    except Exception as e:
+        if False:
+            exc_info = sys.exc_info()
+            error_str = "\n".join(traceback.format_exception(*exc_info))
+        else:
+            error_str = f"{type(e).__name__}: {str(e)}"
+        return JsonResponse(
+            {"error": error_str, "datetime": datetime.now(), "status": "error"}
+        )
 
 
 class IntegrationListView(ListView):
@@ -212,26 +188,90 @@ class MetricListView(ListView, LoginRequiredMixin):
         return context
 
 
+@login_required
+def metric_new(request):
+    # Generate a new state to uniquely identify this new creation
+    state = secrets.token_urlsafe(32)
+    integration_id = request.GET["integration_id"]
+    request.session[state] = {
+        "metric": {"integration_id": integration_id},
+        "user_id": request.user.id,
+    }
+    return redirect(reverse("metric-new-with-state", args=[state]))
+
+
 class MetricCreateView(CreateView, LoginRequiredMixin):
     model = Metric
     form_class = MetricForm
     success_url = reverse_lazy("metrics")
 
+    def dispatch(self, request, state, *args, **kwargs):
+        self.state = state
+        # Make sure someone with the link can't impersonate a user
+        if request.session.get(self.state, {}).get("user_id") != request.user.id:
+            return HttpResponseForbidden()
+        metric_data = request.session.get(self.state, {}).get("metric", {})
+        self.integration_id = metric_data.get("integration_id")
+        self.credentials = metric_data.get("credentials")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        # Detect whether or not we should redirect to authorize
+        integration_class = INTEGRATION_CLASSES[self.integration_id]
+        can_web_auth = issubclass(integration_class, WebAuthIntegration)
+        if can_web_auth and not self.credentials:
+            return redirect(
+                reverse("metric-new-with-state-authorize", args=[self.state])
+            )
+        else:
+            return super().get(request, *args, **kwargs)
+
     def get_initial(self):
-        return {"integration_id": self.kwargs["integration_id"]}
+        data = self.request.session.get(self.state)
+        if data is None:
+            return redirect(reverse("metric-new", args=[self.integration_id]))
+        # Restore form
+        initials = data.get("metric", {"integration_id": self.integration_id})
+        assert initials["integration_id"] == self.integration_id
+        return initials
 
     def form_valid(self, form):
+        # This happens when the user saves the form
+        # Here we build the Metric instance (`form.instance`)
         form.instance.user = self.request.user
-        form.instance.integration_id = self.kwargs["integration_id"]
+        # Add hidden (server only) fields
+        form.instance.credentials = self.credentials
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        integration_id = self.kwargs["integration_id"]
         context["can_web_auth"] = issubclass(
-            INTEGRATION_CLASSES[integration_id], WebAuthIntegration
+            INTEGRATION_CLASSES[self.integration_id], WebAuthIntegration
         )
         return context
+
+
+@login_required
+def metric_new_authorize(request, state):
+    # Get session state
+    metric_data = request.session[state]["metric"]
+    integration_id = metric_data["integration_id"]
+    # Get integration class and get the uri
+    integration_class = INTEGRATION_CLASSES[integration_id]
+    assert issubclass(integration_class, WebAuthIntegration)
+    uri, code_verifier = integration_class.get_authorization_uri_and_code_verifier(
+        state,
+        authorize_callback_uri=request.build_absolute_uri(
+            reverse("authorize-callback")
+        ),
+    )
+    assert uri is not None
+    # Save parameters in session
+    request.session[state] = {
+        **request.session[state],
+        "code_verifier": code_verifier,
+    }
+    return HttpResponseRedirect(uri)
 
 
 class MetricDeleteView(DeleteView, LoginRequiredMixin):  # type: ignore[misc]
@@ -259,49 +299,93 @@ class MetricUpdateView(UpdateView, LoginRequiredMixin):
         return context
 
 
-class MetricAuthorizeView(TemplateView, LoginRequiredMixin):
-    def get(self, request, *args, **kwargs):
-        metric = get_object_or_404(Metric, pk=self.kwargs.get("pk"), user=request.user)
-        # Generate a state which will identify this request
-        state = secrets.token_urlsafe(16)
-        # Get integration class and get the uri
-        integration_class = INTEGRATION_CLASSES[metric.integration_id]
-        assert issubclass(integration_class, WebAuthIntegration)
-        uri = integration_class.get_authorization_uri(
-            state,
-            authorize_callback_uri=request.build_absolute_uri(
-                reverse("authorize-callback")
-            ),
+@login_required
+def metric_authorize(request, pk):
+    metric = get_object_or_404(Metric, pk=pk, user=request.user)
+    integration_id = metric.integration_id
+    # Get integration class and get the uri
+    integration_class = INTEGRATION_CLASSES[integration_id]
+    assert issubclass(integration_class, WebAuthIntegration)
+    # Generate state to uniquely identify this request
+    state = secrets.token_urlsafe(32)
+    uri, code_verifier = integration_class.get_authorization_uri_and_code_verifier(
+        state,
+        authorize_callback_uri=request.build_absolute_uri(
+            reverse("authorize-callback")
+        ),
+    )
+    assert uri is not None
+    # Save parameters in session
+    request.session[state] = {
+        "metric_id": metric.id,
+        "code_verifier": code_verifier,
+    }
+    return HttpResponseRedirect(uri)
+
+
+@login_required
+def metric_test(request, pk):
+    if not request.method == "POST":
+        return HttpResponseNotAllowed(["POST"])
+    data = json.loads(request.body)
+    config = data.get("integration_config")
+    config = config and json.loads(config)
+    # Get server side information
+    metric = get_object_or_404(Metric, pk=pk, user=request.user)
+    integration_id = metric.integration_id
+    credentials = metric.credentials
+    integration_class = INTEGRATION_CLASSES[integration_id]
+
+    def credentials_updater(arg):
+        metric.credentials = arg
+        metric.save()
+
+    try:
+        with integration_class(
+            config, credentials=credentials, credentials_updater=credentials_updater
+        ) as inst:
+            measurement = inst.collect_latest()
+            return JsonResponse(
+                {
+                    "measurement": measurement,
+                    "datetime": datetime.now(),
+                    "canBackfill": inst.can_backfill(),
+                    "status": "ok",
+                    "newSchema": inst.callable_config_schema(),
+                }
+            )
+    except Exception as e:
+        if True:
+            exc_info = sys.exc_info()
+            error_str = "\n".join(traceback.format_exception(*exc_info))
+        else:
+            error_str = f"{type(e).__name__}: {str(e)}"
+        return JsonResponse(
+            {"error": error_str, "datetime": datetime.now(), "status": "error"}
         )
-        assert uri is not None
-        # Save parameters in session
-        self.request.session[state] = {
-            "metric_id": metric.id,
-        }
-        return HttpResponseRedirect(uri)
 
 
 class AuthorizeCallbackView(TemplateView, LoginRequiredMixin):
     def get(self, request, *args, **kwargs):
-        data = self.request.GET
-        state = data["state"]
+        state = self.request.GET["state"]
         if state not in self.request.session:
             return HttpResponseBadRequest()
         else:
-            obj = self.request.session[state]
+            cache_obj = self.request.session[state]
             # The cache object can have either:
             # - a metric_id (if it was called from /metrics/<pk>/authorize)
-            # - an integration_id (if it was called from /integrations/<id>/authorize)
-            # If metric is not passed, then it needs to contain the `integration_config` object
-            # in order for us to be able to create an integration instance, which is needed
-            # in case we need to reload the schema dynamically
+            # - Nothing (if it was called from /metrics/new/<state>/authorize)
             metric = None
-            if "metric_id" in obj:
+            if "metric_id" in cache_obj:
                 # Get integration instance
                 metric = get_object_or_404(
-                    Metric, pk=obj["metric_id"], user=request.user
+                    Metric, pk=cache_obj["metric_id"], user=request.user
                 )
-            integration_id = metric.integration_id if metric else obj["integration_id"]
+            integration_id = (
+                metric.integration_id
+                if metric
+                else cache_obj["metric"]["integration_id"]
+            )
             integration_class = INTEGRATION_CLASSES[integration_id]
             assert issubclass(integration_class, WebAuthIntegration)
             credentials = integration_class.process_callback(
@@ -310,46 +394,16 @@ class AuthorizeCallbackView(TemplateView, LoginRequiredMixin):
                 authorize_callback_uri=request.build_absolute_uri(
                     reverse("authorize-callback")
                 ),
+                code_verifier=cache_obj.get("code_verifier"),
             )
-            # Clean up session
-            del self.request.session[state]
-            # Create credential updater
-            def credentials_updater(new_credentials):
-                if metric:
-                    metric.credentials = new_credentials
-                    metric.save()
-
+            # Save credentials
             if metric:
-                credentials_updater(credentials)
-                return HttpResponseRedirect(metric.get_absolute_url())
+                metric.credentials = credentials
+                metric.save()
+                # Clean up session as it won't be used anymore
+                del self.request.session[state]
+                return redirect(metric)
             else:
-                assert "integration_config" in obj
-                integration_config = obj["integration_config"]
-                # Prepare the template that will be rendered to the parent window
-                # which will include credentials and updated schema
-                t = Template(
-                    """
-                    {{ credentials|json_script:"credentials" }}
-                    {{ new_schema|json_script:"new_schema" }}
-                    <script>
-                        var credentials = JSON.parse(document.getElementById('credentials').textContent);
-                        var newSchema = JSON.parse(document.getElementById('new_schema').textContent);
-                        window.opener.postMessage({ credentials, newSchema });
-                        window.close();
-                    </script>
-                """
-                )
-                # Get new updated schema
-                # Create instance instead of class, now that we have credentials
-                with integration_class(
-                    config=integration_config,
-                    credentials=credentials,
-                    credentials_updater=credentials_updater,
-                ) as inst:
-                    c = Context(
-                        {
-                            "credentials": credentials,
-                            "new_schema": inst.callable_config_schema,
-                        }
-                    )
-                return HttpResponse(t.render(c))
+                cache_obj["metric"]["credentials"] = credentials
+                request.session.modified = True
+                return redirect(reverse("metric-new-with-state", args=[state]))

@@ -3,7 +3,7 @@ from typing import List, final
 
 import requests
 
-from ..models import Integration, MeasurementTuple
+from ..base import Integration, MeasurementTuple
 
 
 @final
@@ -38,6 +38,9 @@ class Plausible(Integration):
     }
 
     def __enter__(self):
+        assert (
+            self.config is not None
+        ), "Configuration is required in order to run this integration"
         self.r = requests.Session()
         self.r.headers.update({"Authorization": f"Bearer {self.config['api_key']}"})
         return self
