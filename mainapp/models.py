@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import date, timedelta
 from typing import Optional
 
@@ -9,6 +10,8 @@ from django_jsonform.models.fields import JSONField
 
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS, Integration
 from integrations.base import EMPTY_CONFIG_SCHEMA, WebAuthIntegration
+
+logger = logging.getLogger(__name__)
 
 
 class User(AbstractUser):
@@ -73,7 +76,12 @@ class Metric(models.Model):
 
     @property
     def can_backfill(self):
-        return self.integration_instance.can_backfill
+        # This can crash depending on how the integration is implemented
+        try:
+            return self.integration_instance.can_backfill()
+        except:
+            logger.exception("Exception while calling `can_backfill`")
+            return False
 
     class Meta:
         constraints = [

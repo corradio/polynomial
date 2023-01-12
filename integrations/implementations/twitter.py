@@ -19,10 +19,17 @@ class Twitter(Integration):
     config_schema = {
         "type": "dict",
         "keys": {
-            "query": {
+            "account": {
                 "type": "string",
                 "required": True,
-                "helpText": "https://developer.twitter.com/en/docs/twitter-api/tweets/counts/integrate/build-a-query",
+            },
+            "metric": {
+                "type": "string",
+                "choices": [
+                    {"title": "Followers", "value": "follower_count"},
+                    {"title": "Mentions", "value": "mention_count"},
+                ],
+                "required": True,
             },
         },
     }
@@ -34,7 +41,8 @@ class Twitter(Integration):
         return self
 
     def can_backfill(self):
-        return True
+        # Only the `mention_count` metric can be backfilled
+        return self.config["metric"] == "mention_count"
 
     def earliest_backfill(self):
         # Twitter can only return the last 7*24 hours of data,
@@ -54,15 +62,31 @@ class Twitter(Integration):
         end_time_utc_iso = (
             end_time.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
         )
-        response = self.session.get(
-            "https://api.twitter.com/2/tweets/counts/recent",
-            params={
-                "query": self.config["query"],
-                "start_time": start_time_utc_iso,
-                "end_time": end_time_utc_iso,
-            },
-        )
-        response.raise_for_status()
-        data = response.json()
-        mentions = data["meta"]["total_tweet_count"]
+        # Make sure we never have the @ (this will allow us to support both cases)
+        account = self.config["account"].replace("@", "")
+
+        metric = self.config["metric"]
+        if metric == "mention_count":
+            response = self.session.get(
+                "https://api.twitter.com/2/tweets/counts/recent",
+                params={
+                    # See https://developer.twitter.com/en/docs/twitter-api/tweets/counts/integrate/build-a-query
+                    "query": f'"@{account}"',
+                    "start_time": start_time_utc_iso,
+                    "end_time": end_time_utc_iso,
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
+            mentions = data["meta"]["total_tweet_count"]
+        elif metric == "follower_count":
+            response = self.session.get(
+                f"https://api.twitter.com/2/users/by/username/{account}?user.fields=public_metrics"
+            )
+            response.raise_for_status()
+            data = response.json()["data"]
+            mentions = data["public_metrics"]["followers_count"]
+        else:
+            raise NotImplementedError(f"Unknown metric {metric}")
+
         return MeasurementTuple(date=date, value=mentions)

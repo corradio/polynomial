@@ -44,7 +44,6 @@ class Integration:
     def callable_config_schema(self) -> Dict:
         return self.config_schema
 
-    @property
     @abstractmethod
     def can_backfill(self) -> bool:
         pass
@@ -55,7 +54,7 @@ class Integration:
     def collect_latest(self) -> MeasurementTuple:
         # Default implementation uses `collect_past` through `collect_past_range`,
         # and thus assumes integration can backfill
-        if not self.can_backfill:
+        if not self.can_backfill():
             raise NotImplementedError(
                 "Integration can't backfill: `collect_latest` should be overridden"
             )
@@ -74,7 +73,7 @@ class Integration:
     ) -> List[MeasurementTuple]:
         # Default implementation uses `collect_past` for each date,
         # and thus assumes integration can backfill
-        assert self.can_backfill
+        assert self.can_backfill()
         dates = [date_end]
         while True:
             new_date = dates[-1] - timedelta(days=1)
