@@ -49,6 +49,19 @@ class Twitter(Integration):
         # which means only the last 6 full days can be used
         return (datetime.now() - timedelta(days=6)).date()
 
+    def collect_latest(self):
+        if not self.can_backfill():
+            account = self.config["account"].replace("@", "")
+            response = self.session.get(
+                f"https://api.twitter.com/2/users/by/username/{account}?user.fields=public_metrics"
+            )
+            response.raise_for_status()
+            data = response.json()["data"]
+            mentions = data["public_metrics"]["followers_count"]
+            return MeasurementTuple(date=date.today(), value=mentions)
+        else:
+            return super().collect_latest()
+
     def collect_past(self, date: date) -> MeasurementTuple:
         # Twitter API expects datetimes in isoformat with UTC zone
         # TODO: pass user timezone here tzinfo=ZoneInfo(...)
@@ -79,14 +92,9 @@ class Twitter(Integration):
             response.raise_for_status()
             data = response.json()
             mentions = data["meta"]["total_tweet_count"]
-        elif metric == "follower_count":
-            response = self.session.get(
-                f"https://api.twitter.com/2/users/by/username/{account}?user.fields=public_metrics"
-            )
-            response.raise_for_status()
-            data = response.json()["data"]
-            mentions = data["public_metrics"]["followers_count"]
         else:
-            raise NotImplementedError(f"Unknown metric {metric}")
+            raise NotImplementedError(
+                f"Unknown metric {metric}. Are you sure it can backfill?"
+            )
 
         return MeasurementTuple(date=date, value=mentions)

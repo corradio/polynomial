@@ -106,16 +106,12 @@ class Github(OAuth2Integration):
         ]
 
     def collect_latest(self) -> MeasurementTuple:
+        if self.can_backfill():
+            # This will call collect_past_range
+            return super().collect_latest()
+        # This metric can't backfill
         metric_key = self.config["metric"]
         metric_config = self._get_metric_config_for_key(metric_key)
-        if "backfill_days" in metric_config:
-            # This metric can backfill
-            data = self.collect_past_range(
-                date_start=date.today(), date_end=date.today()
-            )
-            assert len(data) == 1
-            return data[0]
-        # This metric can't backfill
         url = f"https://api.github.com/repos/{self.config['repo_full_name']}{metric_config['path']}"
         r = self.session.get(url)
         r.raise_for_status()
