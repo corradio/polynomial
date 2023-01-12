@@ -4,16 +4,21 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-from ..models import Integration, MeasurementTuple
+from ..base import Integration, MeasurementTuple
+from ..utils import get_secret
 
 
 @final
 class Twitter(Integration):
+    # Twitter uses the "app-only" credential mode
+    # as we're only accessing public data
+    api_key = get_secret("TWITTER_BEARER_TOKEN")
+    code_challenge_method = "S256"
+
     # Use https://bhch.github.io/react-json-form/playground
     config_schema = {
         "type": "dict",
         "keys": {
-            "api_key": {"type": "string", "format": "password", "required": True},
             "query": {
                 "type": "string",
                 "required": True,
@@ -23,8 +28,9 @@ class Twitter(Integration):
     }
 
     def __enter__(self):
-        self.r = requests.Session()
-        self.r.headers.update({"Authorization": f"Bearer {self.config['api_key']}"})
+        super().__enter__()
+        self.session = requests.Session()
+        self.session.headers.update({"Authorization": f"Bearer {self.api_key}"})
         return self
 
     def can_backfill(self):
@@ -48,8 +54,7 @@ class Twitter(Integration):
         end_time_utc_iso = (
             end_time.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
         )
-        print(start_time_utc_iso, end_time_utc_iso)
-        response = self.r.get(
+        response = self.session.get(
             "https://api.twitter.com/2/tweets/counts/recent",
             params={
                 "query": self.config["query"],
