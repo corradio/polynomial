@@ -63,6 +63,7 @@ class Integration:
         results = self.collect_past_range(date_start=day, date_end=day)
         if not results:
             raise Exception("No results returned")
+        assert len(results) == 1, "More than one result was returned"
         return results[0]
 
     def collect_past(self, date: date) -> MeasurementTuple:

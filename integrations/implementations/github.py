@@ -4,6 +4,7 @@ from typing import Dict, List, Union, final
 import requests
 
 from ..base import MeasurementTuple, OAuth2Integration
+from ..utils import get_secret
 
 REPO_METRICS: List[Dict[str, Union[str, int]]] = [
     {"title": "stars", "path": "", "response_prop": "stargazers_count"},
@@ -30,8 +31,8 @@ REPO_METRICS = [{**v, "value": v.get("value", v["title"])} for v in REPO_METRICS
 
 @final
 class Github(OAuth2Integration):
-    client_id = "ee0d9a8ab68b56911699"
-    client_secret = "7a03bf5fc46e3be41115df21857d78fe4d3512bd"
+    client_id = get_secret("GITHUB_CLIENT_ID")
+    client_secret = get_secret("GITHUB_CLIENT_SECRET")
     authorization_url = "https://github.com/login/oauth/authorize"
     scopes = ["public_repo"]
     token_url = "https://github.com/login/oauth/access_token"
