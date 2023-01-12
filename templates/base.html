@@ -15,29 +15,38 @@
         margin: 0;
       }
 
-      .header {
+      header {
         display: flex;
         border-bottom: 1px solid lightgray;
         padding: 1em;
         align-items: center;
         background-color: white;
       }
-      .header > :first-child {
+      header > :first-child {
         font-weight: bold;
       }
-      .header > :not(:first-child) {
+      header > :not(:first-child) {
         flex-grow: 1;
       }
-      .header > .right {
+      header > .right {
         display: flex;
         justify-content: flex-end;
       }
-      .header > .right > div {
+      header > .right > div {
         padding-left: .5em;
       }
 
       .content-container {
         padding: 10px;
+      }
+
+      footer {
+        padding: 1em;
+        background-color: white;
+        text-align: center;
+        font-size: small;
+        color: gray;
+        border-top: 1px solid lightgray;
       }
 
       img.integration-icon {
@@ -56,15 +65,18 @@
     {% block head %}{% endblock %}
   </head>
   <body>
-    <div class="header">
+    <header>
       <div><a href="/">Polynomial</a></div>
       <div class="right">
         <div><a href="{% url 'integrations' %}">Add new metric</a></div>
         <div><a href="{% url 'metrics' %}">Settings</a></div>
       </div>
-    </div>
+    </header>
     <div class="content-container">
       {% block content %}{% endblock %}
     </div>
   </body>
+  <footer>
+    💡 Got feedback or ideas? Share them <a href="https://docs.google.com/forms/d/e/1FAIpQLScYQROio_QR2F8FFtalrE-4TXvJ8lsJEIrJ7W8-ZULcUxLVqw/viewform">here</a>.
+  </footer>
 </html>
