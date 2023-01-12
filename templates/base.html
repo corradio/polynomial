@@ -59,6 +59,23 @@
         background-color: white;
         border: 1px solid lightgray;
         margin-bottom: 10px;
+        width: 100%;
+      }
+      :has(> .card) {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      /* Desktop overrides */
+      @media only screen and (min-width: 900px) {
+        .card {
+          width: calc(50% - 0.5 * 10px);
+          /* Tells the browser to include the border in the width */
+          box-sizing: border-box;
+        }
+        .card:nth-child(2n + 1) {
+          margin-right: 10px;
+        }
       }
 
     </style>
