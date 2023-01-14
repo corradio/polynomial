@@ -40,6 +40,10 @@
             return;
           }
         }
+        document.querySelector('#integration-test-container').style.color = 'gray';
+        var testLabel = document.querySelector('#integration-test-container span.label');
+        testLabel.innerText = '[' + new Date() + '] Testing..';
+
         var csrftoken = document.querySelector('input[name=csrfmiddlewaretoken]').value;
         var data = JSON.stringify({
           integration_config: configElement.value,
@@ -70,12 +74,12 @@
             ? 'red'
             : 'green';
           submitButton.disabled = isError;
-          var label = document.querySelector('#integration-test-container span.label');
-          label.innerText = '[' + (data.datetime || new Date()) + ']';
+          var testLabel = document.querySelector('#integration-test-container span.label');
+          testLabel.innerText = '[' + (data.datetime || new Date()) + ']';
           if (isError) {
-             label.innerText += ' Integration failed:';
+             testLabel.innerText += ' Integration failed:';
           } else {
-            label.innerText += ' Integration successfully ran:';
+            testLabel.innerText += ' Integration successfully ran:';
             // Update schema if any
             if (data.newSchema) {
               var newConfig = {

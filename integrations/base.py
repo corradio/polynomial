@@ -24,6 +24,9 @@ MeasurementTuple = NamedTuple("MeasurementTuple", [("date", date), ("value", flo
 
 EMPTY_CONFIG_SCHEMA = {"type": "object", "keys": {}}
 
+# https://stackoverflow.com/questions/51499034/google-oauthlib-scope-has-changed
+os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
+
 
 class Integration:
     # Use https://bhch.github.io/react-json-form/playground
