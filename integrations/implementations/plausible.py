@@ -63,7 +63,7 @@ class Plausible(Integration):
         url += f"&metrics={metric}"
         if filters:
             # See https://plausible.io/docs/stats-api#filtering
-            url += f"&filters={filters}"
+            url += f"&filters={';'.join(filters)}"
         response = self.r.get(url)
         response.raise_for_status()
         data = response.json()
