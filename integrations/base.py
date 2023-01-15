@@ -29,6 +29,8 @@ os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 
 
 class Integration:
+    _exclude_in_prod: ClassVar[bool] = False
+
     # Use https://bhch.github.io/react-json-form/playground
     config_schema: ClassVar[Dict] = EMPTY_CONFIG_SCHEMA
 

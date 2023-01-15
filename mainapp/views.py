@@ -29,6 +29,7 @@ from django.views.generic import (
     UpdateView,
 )
 
+from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import WebAuthIntegration
 
@@ -170,7 +171,11 @@ class IntegrationListView(ListView):
     template_name = "mainapp/integration_list.html"
 
     def get_queryset(self):
-        return INTEGRATION_IDS
+        return [
+            i
+            for i in INTEGRATION_IDS
+            if DEBUG or not INTEGRATION_CLASSES[i]._exclude_in_prod
+        ]
 
 
 class MetricListView(ListView, LoginRequiredMixin):
