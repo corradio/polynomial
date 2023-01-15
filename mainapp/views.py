@@ -3,6 +3,7 @@ import secrets
 import sys
 import traceback
 from datetime import date, datetime, timedelta
+from types import MethodType
 from typing import Dict, List, Union
 
 from django.contrib.auth.decorators import login_required
@@ -131,6 +132,9 @@ def metric_new_test(request, state):
     integration_id = metric_cache.get("integration_id")
     credentials = metric_cache.get("credentials")
     integration_class = INTEGRATION_CLASSES[integration_id]
+    # Save the config in the cache so a page reload keeps it
+    metric_cache["integration_config"] = config
+    request.session.modified = True
 
     def credentials_updater(arg):
         metric_cache["credentials"] = arg
@@ -231,9 +235,31 @@ class MetricCreateView(CreateView, LoginRequiredMixin):
         if data is None:
             return redirect(reverse("metric-new", args=[self.integration_id]))
         # Restore form
-        initials = data.get("metric", {"integration_id": self.integration_id})
-        assert initials["integration_id"] == self.integration_id
-        return initials
+        initial = data.get("metric", {"integration_id": self.integration_id})
+        assert initial["integration_id"] == self.integration_id
+        return initial
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # The callable schema will require an initialised instance that will get
+        # passed to it.
+        # Furthermore, getting the schema from the form might cause credential
+        # updates. We therefore need to pass an instance of a Metric
+        # object which is capable of updating the cached credentials
+        kwargs["instance"] = Metric(**kwargs["initial"])
+
+        def credentials_saver(metric_instance):
+            metric = self.request.session[self.state]["metric"]
+            metric["credentials"] = metric_instance.credentials
+            self.request.session[self.state] = {
+                **self.request.session[self.state],
+                "metric": metric,
+            }
+
+        kwargs["instance"].save_credentials = MethodType(
+            credentials_saver, kwargs["instance"]
+        )
+        return kwargs
 
     def form_valid(self, form):
         # This happens when the user saves the form

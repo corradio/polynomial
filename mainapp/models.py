@@ -27,6 +27,11 @@ class Metric(models.Model):
     )
     credentials = models.JSONField(blank=True, null=True)
 
+    # The credentials can be saved either in db, or in cache, while the object
+    # is temporarily being built. We therefore allow this to be changed later.
+    def save_credentials(self):
+        self.save()
+
     def callable_config_schema(model_instance: Optional["Metric"] = None):
         # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         # `model_instance` will be None while creating new object
@@ -66,7 +71,7 @@ class Metric(models.Model):
 
         def credentials_updater(new_credentials):
             self.credentials = new_credentials
-            self.save()
+            self.save_credentials()
 
         return integration_class(
             self.integration_config,
