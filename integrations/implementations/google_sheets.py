@@ -25,23 +25,22 @@ class GoogleSheets(OAuth2Integration):
             "spreadsheet_id": {
                 "type": "string",
                 "required": True,
-                "helpText": "...",
+                "helpText": "Can be found in a Google Sheets' URL https://docs.google.com/spreadsheets/d/<spreadsheet id>/edit#gid=0",
             },
             "sheet_range": {
                 "type": "string",
                 "required": True,
                 "title": "Sheet name",
-                "helpText": "...",
             },
             "date_column": {
                 "type": "string",
                 "required": True,
-                "helpText": "...",
+                "helpText": "Name of the column from which dates will be extracted",
             },
             "value_column": {
                 "type": "string",
                 "required": True,
-                "helpText": "...",
+                "helpText": "Name of the column from which values will be extracted",
             },
             "filters": {
                 "type": "array",
@@ -65,9 +64,6 @@ class GoogleSheets(OAuth2Integration):
         # The integer part of the Excel date stores the number of days since
         # the epoch and the fractional part stores the percentage of the day.
         days = int(xldate)
-        print(
-            epoch + timedelta(days, 0, 0, 0), (epoch + timedelta(days, 0, 0, 0)).date()
-        )
         return (epoch + timedelta(days, 0, 0, 0)).date()
 
     def collect_past_range(
@@ -100,14 +96,22 @@ class GoogleSheets(OAuth2Integration):
         data = response.json()["values"]
         header = data[0]
         data = data[1:]
+
+        def get_cell(row, column_name):
+            if not column_name in header:
+                raise ValueError(
+                    f"Unknown column {column_name}. Detected columns: {header}"
+                )
+            return row[header.index(column_name)]
+
         # Parse data
         measurements = [
             MeasurementTuple(
-                date=self._serial_date_to_date(d[header.index(date_column)]),
-                value=float(d[header.index(value_column)]),
+                date=self._serial_date_to_date(get_cell(d, date_column)),
+                value=float(get_cell(d, value_column)),
             )
             for d in data
-            if all([d[header.index(f["column"])] == f["value"] for f in filters])
+            if all([get_cell(d, f["column"]) == f["value"] for f in filters])
         ]
 
         return [m for m in measurements if m.date >= date_start and m.date <= date_end]
