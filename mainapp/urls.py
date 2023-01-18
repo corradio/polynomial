@@ -41,6 +41,11 @@ urlpatterns = [
         views.metric_test,
         name="metric-test",
     ),
+    path(
+        "metrics/<int:pk>/duplicate",
+        views.metric_duplicate,
+        name="metric-duplicate",
+    ),
     # These are metric creation routes, which use the cache as backend
     path(
         "metrics/new",

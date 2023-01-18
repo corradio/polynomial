@@ -8,6 +8,7 @@ from typing import Dict, List, Union
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.forms.models import model_to_dict
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -195,6 +196,24 @@ class MetricListView(ListView, LoginRequiredMixin):
         context = super().get_context_data(*args, **kwargs)
         context["INTEGRATION_CLASSES"] = INTEGRATION_CLASSES
         return context
+
+
+@login_required
+def metric_duplicate(request, pk):
+    metric = get_object_or_404(Metric, pk=pk, user=request.user)
+    # Copy object
+    metric_object = model_to_dict(metric)
+    metric_object["name"] = f"Copy of {metric_object['name']}"
+    del metric_object["id"]
+    del metric_object["user"]
+
+    # Generate a new state to uniquely identify this new creation
+    state = secrets.token_urlsafe(32)
+    request.session[state] = {
+        "metric": metric_object,
+        "user_id": request.user.id,
+    }
+    return redirect(reverse("metric-new-with-state", args=[state]))
 
 
 @login_required
