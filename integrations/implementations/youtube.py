@@ -150,7 +150,7 @@ class Youtube(OAuth2Integration):
         # API returns delayed results
         # We therefore here call collect_past_range and
         # seek results in the past
-        max_delay = 2
+        max_delay = 3
         results = self.collect_past_range(
             date_start=date.today() - timedelta(days=max_delay),
             date_end=date.today() - timedelta(days=1),
