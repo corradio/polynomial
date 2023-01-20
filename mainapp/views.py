@@ -179,7 +179,7 @@ class IntegrationListView(ListView):
         ]
 
 
-class MetricListView(ListView, LoginRequiredMixin):
+class MetricListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         # Only return metrics for integrations that actually exist
         # This is useful for developing new integrations,
@@ -228,7 +228,7 @@ def metric_new(request):
     return redirect(reverse("metric-new-with-state", args=[state]))
 
 
-class MetricCreateView(CreateView, LoginRequiredMixin):
+class MetricCreateView(LoginRequiredMixin, CreateView):
     model = Metric
     form_class = MetricForm
     success_url = reverse_lazy("metrics")
@@ -324,7 +324,7 @@ def metric_new_authorize(request, state):
     return HttpResponseRedirect(uri)
 
 
-class MetricDeleteView(DeleteView, LoginRequiredMixin):  # type: ignore[misc]
+class MetricDeleteView(LoginRequiredMixin, DeleteView):  # type: ignore[misc]
     model = Metric
     success_url = reverse_lazy("metrics")
 
@@ -333,7 +333,7 @@ class MetricDeleteView(DeleteView, LoginRequiredMixin):  # type: ignore[misc]
         return super().get_queryset(*args, **kwargs).filter(user=self.request.user)
 
 
-class MetricUpdateView(UpdateView, LoginRequiredMixin):
+class MetricUpdateView(LoginRequiredMixin, UpdateView):
     model = Metric
     form_class = MetricForm
     success_url = reverse_lazy("metrics")
@@ -415,7 +415,7 @@ def metric_test(request, pk):
         )
 
 
-class AuthorizeCallbackView(TemplateView, LoginRequiredMixin):
+class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         state = self.request.GET["state"]
         if state not in self.request.session:
