@@ -63,6 +63,7 @@ class GoogleSheets(OAuth2Integration):
         epoch = datetime(1899, 12, 30)
         # The integer part of the Excel date stores the number of days since
         # the epoch and the fractional part stores the percentage of the day.
+        assert xldate != "", "Empty date detected in date column"
         days = int(xldate)
         return (epoch + timedelta(days, 0, 0, 0)).date()
 
