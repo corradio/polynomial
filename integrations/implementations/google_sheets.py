@@ -66,6 +66,13 @@ class GoogleSheets(OAuth2Integration):
         days = int(xldate)
         return (epoch + timedelta(days, 0, 0, 0)).date()
 
+    def collect_latest(self) -> MeasurementTuple:
+        results = self.collect_past_range(
+            date_start=date.min,
+            date_end=date.today() - timedelta(days=1),
+        )
+        return results[-1]
+
     def collect_past_range(
         self, date_start: date, date_end: date
     ) -> List[MeasurementTuple]:
