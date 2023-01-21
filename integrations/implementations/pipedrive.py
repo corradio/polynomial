@@ -101,7 +101,7 @@ class Pipedrive(OAuth2Integration):
         response = self.session.get(url, params={**params, "start": start})
         response.raise_for_status()
         obj = response.json()
-        data = obj["data"]
+        data = obj["data"] or []
         pagination = obj["additional_data"]["pagination"]
         if pagination["more_items_in_collection"]:
             return data + self._paginated_request(
