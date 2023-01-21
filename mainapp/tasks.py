@@ -40,12 +40,14 @@ def celery_task_failure_email(sender, *args, **kwargs):
     extras = {}
 
     if sender == collect_latest_task:
-        metric = Metric.objects.get(pk=args[0])
+        metric_pk = kwargs["args"][0]
+        metric = Metric.objects.get(pk=metric_pk)
         extras = model_to_dict(metric)
 
     subject = "[Django][{queue_name}@{host}] Error: Task {sender.name} ({task_id}): {exception}".format(
         queue_name="celery",  # `sender.queue` doesn't exist in 4.1?
         host=socket.gethostname(),
+        sender=sender,
         **kwargs
     )
 

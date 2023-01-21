@@ -38,3 +38,6 @@ runworker:
 
 runbeat:
 	poetry run celery -A config beat -l INFO
+
+runtasks:
+	poetry run celery -A config call mainapp.tasks.collect_all_latest_task
