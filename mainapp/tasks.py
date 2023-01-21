@@ -1,4 +1,5 @@
 import socket
+from datetime import date, timedelta
 from pprint import pformat
 
 from celery import shared_task
@@ -15,7 +16,32 @@ logger = get_task_logger(__name__)
 @shared_task()
 def collect_latest_task(metric_id: int):
     metric = Metric.objects.get(pk=metric_id)
-    with metric.integration_instance as inst:
+    integration_instance = metric.integration_instance
+    if integration_instance.can_backfill():
+        # Check if we should gather previously missing datapoints
+        # by getting last measurement
+        last_measurement = (
+            Measurement.objects.filter(metric=metric_id).order_by("-date").first()
+        )
+        if last_measurement:
+            with integration_instance as inst:
+                date_end = date.today() - timedelta(days=1)
+                measurements = inst.collect_past_range(
+                    date_start=min(last_measurement.date + timedelta(days=1), date_end),
+                    date_end=date_end,
+                )
+            for measurement in measurements:
+                Measurement.objects.update_or_create(
+                    metric=metric,
+                    date=measurement.date,
+                    defaults={
+                        "value": measurement.value,
+                    },
+                )
+            return
+
+    # For integration that can't backfill
+    with integration_instance as inst:
         measurement = inst.collect_latest()
     Measurement.objects.update_or_create(
         metric=metric,

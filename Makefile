@@ -19,6 +19,9 @@ initdb:
 
 resetdb: cleardb initdb seed
 
+shell:
+	$(MANAGE) shell
+
 runserver:
 	OAUTHLIB_INSECURE_TRANSPORT=1 DEBUG=1 $(MANAGE) runserver
 
