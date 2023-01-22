@@ -68,26 +68,26 @@ def celery_task_failure_email(sender, *args, **kwargs):
     if sender == collect_latest_task:
         metric_pk = kwargs["args"][0]
         metric = Metric.objects.get(pk=metric_pk)
-        extras = model_to_dict(metric)
+        extras = {"metric": model_to_dict(metric)}
 
-    subject = "[Django][{queue_name}@{host}] Error: Task {sender.name} ({task_id}): {exception}".format(
+    subject = "[{queue_name}@{host}] Error: {exception}:".format(
         queue_name="celery",  # `sender.queue` doesn't exist in 4.1?
         host=socket.gethostname(),
-        sender=sender,
         **kwargs
     )
 
-    message = """Task {sender.name} with id {task_id} raised exception:
-{exception!r}
+    message = """{exception!r}
 
+Traceback:
+
+{einfo}
+
+task = {sender.name}
+task_id = {task_id}
 args = {args}
 kwargs = {kwargs}
 
 extras = {extras}
-
-The contents of the full traceback was:
-
-{einfo}
     """.format(
         sender=sender, extras=pformat(extras), *args, **kwargs
     )
