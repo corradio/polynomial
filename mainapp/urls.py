@@ -67,6 +67,12 @@ urlpatterns = [
         views.metric_new_test,
         name="metric-new-with-state-test",
     ),
+    # User pages
+    path(
+        "<username>",
+        views.user_page,
+        name="user-page",
+    ),
     # Integrations (i.e. metric, and thus, db independent)
     path(
         "integrations/",

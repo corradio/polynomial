@@ -457,3 +457,29 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
                 cache_obj["metric"]["credentials"] = credentials
                 request.session.modified = True
                 return redirect(reverse("metric-new-with-state", args=[state]))
+
+
+def user_page(request, username):
+    user = get_object_or_404(User, username=username)
+    measurements_by_metric = [
+        {
+            "metric_id": metric.id,
+            "metric_name": metric.name,
+            "integration_id": metric.integration_id,
+            "measurements": [
+                {
+                    "value": measurement.value,
+                    "date": measurement.date.isoformat(),
+                }
+                for measurement in Measurement.objects.filter(metric=metric).order_by(
+                    "date"
+                )
+            ],
+        }
+        for metric in Metric.objects.filter(user=user).order_by("name")
+    ]
+    context = {
+        "measurements_by_metric": measurements_by_metric,
+        "page_user": user,  # don't override `user` which is the logged in user
+    }
+    return render(request, "mainapp/user_page.html", context)

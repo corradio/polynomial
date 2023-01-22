@@ -1,0 +1,142 @@
+{% load static %}
+
+{% for measurement in measurements_by_metric %}
+  <div class="card">
+    <div>
+      {% with "integrations/icons/"|add:measurement.integration_id|add:".png" as icon_url %}
+        <img class="integration-icon" src="{% static icon_url %}" alt="">
+      {% endwith %}
+      {{ measurement.metric_name }}
+      {% if not page_user or user == page_user %}
+      [<a href="{% url 'metric-details' measurement.metric_id %}">edit</a>]
+      [<a href="{% url 'metric-duplicate' measurement.metric_id %}">duplicate</a>]
+      {% endif %}
+    </div>
+    <div id="chart-{{ measurement.metric_id }}" style="width: 100%; height: 250px;"></div>
+    {% with measurement.metric_id|stringformat:"s" as metric_id_str %}
+      {% with "measurement-"|add:metric_id_str as script_id %}
+        {{ measurement | json_script:script_id }}
+      {% endwith %}
+    {% endwith %}
+  </div>
+{% empty %}
+  <center>
+    You don't have a metric yet. Let's add one!
+    <p>
+      <a href="{% url 'integrations' %}">Add metric</a>
+    </p>
+  </center>
+{% endfor %}
+  <script type="text/javascript">
+    var vlSpec = {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      width: "container",
+      height: "container",
+      view: {"stroke": "transparent"}, // Remove background rectangle
+      // This ensures the padding is not added on top of axis padding
+      autosize: {type: 'none'},
+      padding: {right: 30, left: 30, top: 5, bottom: 30},
+
+      data: {
+        values: null // will be filled later
+      },
+
+      "params": [
+        {
+          "name": "highlight",
+          "select": {
+            "type": "point",
+            "nearest": true,
+            "on": "mouseover",
+            "encodings": ["x"],
+          },
+          "views": ["points"]
+        }
+      ],
+      "transform": [
+        {
+          "window": [{
+            "field": "value",
+            "op": "mean",
+            "as": "rolling_mean"
+          }],
+          "frame": [-15, 15]
+        }
+      ],
+      encoding: {
+        x: {
+          field: 'date',
+          type: 'temporal',
+          axis: {
+            title: null,
+            labelAngle: 0,
+            // https://github.com/d3/d3-time-format#locale_format
+            labelExpr: "[timeFormat(datum.value, '%d'), (timeFormat(datum.value, '%d') == '01' || datum.index == 0) ? timeFormat(datum.value, '%b') : '']",
+            labelColor: 'gray',
+            domainColor: 'black',
+            tickSize: 3,
+            grid: false,
+          },
+          scale: {
+            domain: [
+              new Date(new Date().setDate(new Date().getDate() - 60)).getTime(),
+              new Date().getTime(),
+            ]
+          },
+        },
+        y: {
+          field: 'value',
+          type: 'quantitative',
+          axis: {
+            title: false,
+            grid: true,
+            domain: false,
+            ticks: false,
+            offset: 4,
+            format: '.2s', // will show SI units (k, M, G...)
+            orient: 'right',
+            labelColor: 'gray',
+          },
+        },
+        "tooltip": { "field": "value", "type": "quantitative" }
+      },
+      "layer": [
+        // Line
+        {
+          "name": "line",
+          "mark": { "type": "line", "opacity": 1.0 }
+        },
+        // Points
+        {
+          "name": "points",
+          "mark": { "type": "circle" },
+          "encoding": {
+            "size": {
+              "condition": { "param": "highlight", "empty": false, "value": 200 },
+              "value": 20 // default value
+            }
+          }
+        },
+        // Moving average
+        {
+          "name": "moving_average",
+          "mark": { "type": "line", "color": "red", "opacity": 0.5 },
+          "encoding": {
+            "y": { "field": "rolling_mean", "title": "Value" }
+          }
+        },
+      ],
+    };
+    var values;
+    {% for measurement in measurements_by_metric %}
+      values = JSON.parse(document.getElementById('measurement-{{ measurement.metric_id }}').textContent).measurements
+        // due to the way javascript parses dates, we must take some care here
+        // see https://stackoverflow.com/questions/64319836/date-parsing-and-when-to-use-utc-timeunits-in-vega-lite
+        .map(d => ({ ...d, date: d.date + 'T00:00:00' }));
+      vegaEmbed(
+        '#chart-{{ measurement.metric_id }}',
+        {...vlSpec, data: { values } },
+        {"actions": false}
+      );
+    {% endfor %}
+  </script>
