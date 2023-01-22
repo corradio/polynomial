@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Polynomial | Lightweight metrics engine for your most vital KPIs</title>
+    <title>Polynomial | {% block head_title %}{% endblock %}</title>
     <style>
       * {
         font-family: sans-serif;
@@ -79,7 +79,8 @@
       }
 
     </style>
-    {% block head %}{% endblock %}
+    {% block extra_head %}
+    {% endblock %}
   </head>
   <body>
     <header>
@@ -87,6 +88,12 @@
       <div class="right">
         <div><a href="{% url 'integrations' %}">Add new metric</a></div>
         <div><a href="{% url 'metrics' %}">Settings</a></div>
+        {% if user.is_authenticated %}
+        <div><a href="{% url 'account_logout' %}">Sign Out</a></div>
+        {% else %}
+        <div><a href="{% url 'account_login' %}">Sign In</a></div>
+        <div><a href="{% url 'account_signup' %}">Sign Up</a></div>
+        {% endif %}
       </div>
     </header>
     <div class="content-container">
