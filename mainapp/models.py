@@ -25,11 +25,11 @@ class Metric(models.Model):
     integration_id = models.CharField(
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )
-    credentials = models.JSONField(blank=True, null=True)
+    integration_credentials = models.JSONField(blank=True, null=True)
 
     # The credentials can be saved either in db, or in cache, while the object
     # is temporarily being built. We therefore allow this to be changed later.
-    def save_credentials(self):
+    def save_integration_credentials(self):
         self.save()
 
     def callable_config_schema(model_instance: Optional["Metric"] = None):
@@ -47,7 +47,10 @@ class Metric(models.Model):
                 # been authenticated yet
                 # if class is instance of OAuth2Integration, then we will
                 # require credentials to __init__
-                if not model_instance.can_web_auth or model_instance.credentials:
+                if (
+                    not model_instance.can_web_auth
+                    or model_instance.integration_credentials
+                ):
                     with model_instance.integration_instance as inst:
                         return inst.callable_config_schema()
             # There's no callable schema
@@ -70,12 +73,12 @@ class Metric(models.Model):
         integration_class = INTEGRATION_CLASSES[self.integration_id]
 
         def credentials_updater(new_credentials):
-            self.credentials = new_credentials
-            self.save_credentials()
+            self.integration_credentials = new_credentials
+            self.save_integration_credentials()
 
         return integration_class(
             self.integration_config,
-            credentials=self.credentials,
+            credentials=self.integration_credentials,
             credentials_updater=credentials_updater,
         )
 

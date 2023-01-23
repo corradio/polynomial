@@ -132,19 +132,21 @@ def metric_new_test(request, state):
     # Get server side information
     metric_cache = request.session[state]["metric"]
     integration_id = metric_cache.get("integration_id")
-    credentials = metric_cache.get("credentials")
+    integration_credentials = metric_cache.get("integration_credentials")
     integration_class = INTEGRATION_CLASSES[integration_id]
     # Save the config in the cache so a page reload keeps it
     metric_cache["integration_config"] = config
     request.session.modified = True
 
     def credentials_updater(arg):
-        metric_cache["credentials"] = arg
+        metric_cache["integration_credentials"] = arg
         request.session.modified = True
 
     try:
         with integration_class(
-            config, credentials=credentials, credentials_updater=credentials_updater
+            config,
+            credentials=integration_credentials,
+            credentials_updater=credentials_updater,
         ) as inst:
             measurement = inst.collect_latest()
             return JsonResponse(
@@ -240,14 +242,14 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
             return HttpResponseForbidden()
         metric_data = request.session.get(self.state, {}).get("metric", {})
         self.integration_id = metric_data.get("integration_id")
-        self.credentials = metric_data.get("credentials")
+        self.integration_credentials = metric_data.get("integration_credentials")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         # Detect whether or not we should redirect to authorize
         integration_class = INTEGRATION_CLASSES[self.integration_id]
         can_web_auth = issubclass(integration_class, WebAuthIntegration)
-        if can_web_auth and not self.credentials:
+        if can_web_auth and not self.integration_credentials:
             return redirect(
                 reverse("metric-new-with-state-authorize", args=[self.state])
             )
@@ -274,7 +276,7 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
 
         def credentials_saver(metric_instance):
             metric = self.request.session[self.state]["metric"]
-            metric["credentials"] = metric_instance.credentials
+            metric["integration_credentials"] = metric_instance.integration_credentials
             self.request.session[self.state] = {
                 **self.request.session[self.state],
                 "metric": metric,
@@ -290,7 +292,7 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
         # Here we build the Metric instance (`form.instance`)
         form.instance.user = self.request.user
         # Add hidden (server only) fields
-        form.instance.credentials = self.credentials
+        form.instance.integration_credentials = self.integration_credentials
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -383,16 +385,18 @@ def metric_test(request, pk):
     # Get server side information
     metric = get_object_or_404(Metric, pk=pk, user=request.user)
     integration_id = metric.integration_id
-    credentials = metric.credentials
+    integration_credentials = metric.integration_credentials
     integration_class = INTEGRATION_CLASSES[integration_id]
 
     def credentials_updater(arg):
-        metric.credentials = arg
+        metric.integration_credentials = arg
         metric.save()
 
     try:
         with integration_class(
-            config, credentials=credentials, credentials_updater=credentials_updater
+            config,
+            credentials=integration_credentials,
+            credentials_updater=credentials_updater,
         ) as inst:
             measurement = inst.collect_latest()
             return JsonResponse(
@@ -438,7 +442,7 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
             )
             integration_class = INTEGRATION_CLASSES[integration_id]
             assert issubclass(integration_class, WebAuthIntegration)
-            credentials = integration_class.process_callback(
+            integration_credentials = integration_class.process_callback(
                 uri=request.build_absolute_uri(request.get_full_path()),
                 state=state,
                 authorize_callback_uri=request.build_absolute_uri(
@@ -448,13 +452,13 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
             )
             # Save credentials
             if metric:
-                metric.credentials = credentials
+                metric.integration_credentials = integration_credentials
                 metric.save()
                 # Clean up session as it won't be used anymore
                 del self.request.session[state]
                 return redirect(metric)
             else:
-                cache_obj["metric"]["credentials"] = credentials
+                cache_obj["metric"]["integration_credentials"] = integration_credentials
                 request.session.modified = True
                 return redirect(reverse("metric-new-with-state", args=[state]))
 
