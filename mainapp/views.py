@@ -4,7 +4,7 @@ import sys
 import traceback
 from datetime import date, datetime, timedelta
 from types import MethodType
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -21,7 +21,6 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import Context, Template
 from django.urls import reverse, reverse_lazy
-from django.utils.dateparse import parse_date, parse_duration
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -36,6 +35,7 @@ from integrations.base import WebAuthIntegration
 
 from .forms import MetricForm
 from .models import Measurement, Metric, User
+from .tasks import backfill_task
 
 
 @login_required
@@ -66,39 +66,8 @@ def index(request):
 @login_required
 def metric_backfill(request, pk):
     metric = get_object_or_404(Metric, pk=pk, user=request.user)
-    if not request.method == "POST":
-        return HttpResponseNotAllowed(["POST"])
-    if not request.POST.get("since"):
-        return HttpResponseBadRequest("Field `since` or `duration` is required.")
-    start_date = parse_date(request.POST["since"])
-    if not start_date:
-        interval = parse_duration(request.POST["since"])
-    if not interval:
-        return HttpResponseBadRequest(
-            f"Invalid argument `since`: should be a date or a duration."
-        )
-    start_date = date.today() - interval
-    # Note: we could also use parse_duration() and pass e.g. "3 days"
-    try:
-        with metric.integration_instance as inst:
-            measurements = inst.collect_past_range(
-                date_start=max(start_date, inst.earliest_backfill()),
-                date_end=date.today() - timedelta(days=1),
-            )
-    except Exception as e:
-        exc_info = sys.exc_info()
-        return HttpResponseBadRequest("\n".join(traceback.format_exception(*exc_info)))
-    # Save
-    for measurement in measurements:
-        Measurement.objects.update_or_create(
-            metric=metric,
-            date=measurement.date,
-            defaults={
-                "value": measurement.value,
-                "metric": metric,
-            },
-        )
-    return HttpResponse(f"{len(measurements)} collected!")
+    backfill_task.delay(metric_id=pk, since=request.POST.get("since"))
+    return HttpResponse(f"Task dispatched")
 
 
 @login_required

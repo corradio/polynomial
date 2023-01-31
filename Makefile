@@ -37,7 +37,7 @@ deploy:
 
 # Celery
 runworker:
-	poetry run celery -A config worker -l INFO
+	poetry run celery -A config worker -l DEBUG
 
 runbeat:
 	poetry run celery -A config beat -l INFO

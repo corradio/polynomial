@@ -1,12 +1,16 @@
 import socket
 from datetime import date, timedelta
 from pprint import pformat
+from typing import Optional
 
 from celery import shared_task
 from celery.signals import task_failure
 from celery.utils.log import get_task_logger
 from django.core.mail import mail_admins
 from django.forms.models import model_to_dict
+from django.utils.dateparse import parse_date, parse_duration
+
+from config.settings import DEBUG
 
 from .models import Measurement, Metric
 
@@ -58,11 +62,44 @@ def collect_all_latest_task():
         collect_latest_task.delay(metric.id)
 
 
+@shared_task()
+def backfill_task(metric_id: int, since: Optional[str]):
+    metric = Metric.objects.get(pk=metric_id)
+    if since is None:
+        start_date: Optional[date] = date.min
+    else:
+        start_date = parse_date(since)
+        if not start_date:
+            interval = parse_duration(since)  # e.g. "3 days"
+            if not interval:
+                raise ValueError(
+                    f"Invalid argument `since`: should be a date or a duration."
+                )
+            start_date = date.today() - interval
+    assert start_date is not None
+    with metric.integration_instance as inst:
+        measurements = inst.collect_past_range(
+            date_start=max(start_date, inst.earliest_backfill()),
+            date_end=date.today() - timedelta(days=1),
+        )
+    logger.info(f"Collected {len(measurements)} measurements")
+    # Save
+    for measurement in measurements:
+        Measurement.objects.update_or_create(
+            metric=metric,
+            date=measurement.date,
+            defaults={
+                "value": measurement.value,
+                "metric": metric,
+            },
+        )
+
+
 @task_failure.connect()
 def celery_task_failure_email(sender, *args, **kwargs):
-    """celery 4.0 onward has no method to send emails on failed tasks
-    so this event handler is intended to replace it
-    """
+    if DEBUG:
+        return
+
     extras = {}
 
     if sender == collect_latest_task:
@@ -73,7 +110,7 @@ def celery_task_failure_email(sender, *args, **kwargs):
     subject = "[{queue_name}@{host}] Error: {exception}:".format(
         queue_name="celery",  # `sender.queue` doesn't exist in 4.1?
         host=socket.gethostname(),
-        **kwargs
+        **kwargs,
     )
 
     message = """{exception!r}

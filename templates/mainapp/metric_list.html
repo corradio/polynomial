@@ -18,8 +18,7 @@
                 {% if metric.can_backfill %}
                 <form style="display:inline" action="{% url 'metric-backfill' metric.id %}" method="POST">
                   {% csrf_token %}
-                  <input type="submit" value="backfill last 60 days">
-                  <input type="hidden" name="since" value="60 day">
+                  <input type="submit" value="backfill">
                 </form>
                 {% endif %}
                 {% if metric.can_web_auth %}

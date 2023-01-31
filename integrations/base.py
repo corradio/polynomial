@@ -54,7 +54,7 @@ class Integration:
         pass
 
     def earliest_backfill(self) -> date:
-        return date.min
+        return date(2000, 1, 1)
 
     def collect_latest(self) -> MeasurementTuple:
         # Default implementation uses `collect_past` through `collect_past_range`,
