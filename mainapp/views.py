@@ -21,6 +21,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import Context, Template
 from django.urls import reverse, reverse_lazy
+from django.utils.dateparse import parse_date, parse_duration
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -40,6 +41,20 @@ from .tasks import backfill_task
 
 @login_required
 def index(request):
+    # TODO: code is duplicated with `user_page` view
+    start_date = None
+    if "since" in request.GET:
+        start_date = parse_date(request.GET["since"])
+        if not start_date:
+            interval = parse_duration(request.GET["since"])  # e.g. "3 days"
+            if not interval:
+                return HttpResponseBadRequest(
+                    f"Invalid argument `since`: should be a date or a duration."
+                )
+            start_date = date.today() - interval
+    if start_date is None:
+        start_date = date.today() - timedelta(days=60)
+    end_date = date.today()
     measurements_by_metric = [
         {
             "metric_id": metric.id,
@@ -50,15 +65,17 @@ def index(request):
                     "value": measurement.value,
                     "date": measurement.date.isoformat(),
                 }
-                for measurement in Measurement.objects.filter(metric=metric).order_by(
-                    "date"
-                )
+                for measurement in Measurement.objects.filter(
+                    metric=metric, date__range=[start_date, end_date]
+                ).order_by("date")
             ],
         }
         for metric in Metric.objects.filter(user=request.user).order_by("name")
     ]
     context = {
         "measurements_by_metric": measurements_by_metric,
+        "start_date": start_date,
+        "end_date": end_date,
     }
     return render(request, "mainapp/index.html", context)
 
@@ -434,6 +451,19 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
 
 def user_page(request, username):
     user = get_object_or_404(User, username=username)
+    start_date = None
+    if "since" in request.GET:
+        start_date = parse_date(request.GET["since"])
+        if not start_date:
+            interval = parse_duration(request.GET["since"])  # e.g. "3 days"
+            if not interval:
+                return HttpResponseBadRequest(
+                    f"Invalid argument `since`: should be a date or a duration."
+                )
+            start_date = date.today() - interval
+    if start_date is None:
+        start_date = date.today() - timedelta(days=60)
+    end_date = date.today()
     measurements_by_metric = [
         {
             "metric_id": metric.id,
@@ -444,15 +474,17 @@ def user_page(request, username):
                     "value": measurement.value,
                     "date": measurement.date.isoformat(),
                 }
-                for measurement in Measurement.objects.filter(metric=metric).order_by(
-                    "date"
-                )
+                for measurement in Measurement.objects.filter(
+                    metric=metric, date__range=[start_date, end_date]
+                ).order_by("date")
             ],
         }
         for metric in Metric.objects.filter(user=user).order_by("name")
     ]
     context = {
         "measurements_by_metric": measurements_by_metric,
+        "start_date": start_date,
+        "end_date": end_date,
         "page_user": user,  # don't override `user` which is the logged in user
     }
     return render(request, "mainapp/user_page.html", context)
