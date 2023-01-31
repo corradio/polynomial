@@ -87,7 +87,7 @@ def metric_backfill(request, pk):
             )
     except Exception as e:
         exc_info = sys.exc_info()
-        return HttpResponseServerError("\n".join(traceback.format_exception(*exc_info)))
+        return HttpResponseBadRequest("\n".join(traceback.format_exception(*exc_info)))
     # Save
     for measurement in measurements:
         Measurement.objects.update_or_create(
@@ -111,7 +111,7 @@ def metric_collect_latest(request, pk):
             measurement = inst.collect_latest()
     except Exception as e:
         exc_info = sys.exc_info()
-        return HttpResponseServerError("\n".join(traceback.format_exception(*exc_info)))
+        return HttpResponseBadRequest("\n".join(traceback.format_exception(*exc_info)))
     Measurement.objects.update_or_create(
         metric=metric,
         date=measurement.date,
