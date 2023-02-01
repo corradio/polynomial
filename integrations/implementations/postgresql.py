@@ -41,7 +41,9 @@ class Postgresql(Integration):
         assert (
             self.config is not None
         ), "Configuration is required in order to run this integration"
-        self.conn = psycopg2.connect(**self.config["database_connection"])
+        self.conn = psycopg2.connect(
+            **self.config["database_connection"], connect_timeout=15
+        )
         self.conn.set_session(readonly=True)
         self.cur = self.conn.cursor(cursor_factory=RealDictCursor)
         return self

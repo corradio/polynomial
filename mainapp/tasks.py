@@ -8,9 +8,15 @@ from celery.signals import task_failure
 from celery.utils.log import get_task_logger
 from django.core.mail import mail_admins
 from django.forms.models import model_to_dict
+from django.urls import reverse
 from django.utils.dateparse import parse_date, parse_duration
+from oauthlib import oauth2
+
+from config.settings import CSRF_TRUSTED_ORIGINS
 
 from .models import Measurement, Metric
+
+BASE_URL = CSRF_TRUSTED_ORIGINS[0]
 
 logger = get_task_logger(__name__)
 
@@ -95,12 +101,43 @@ def backfill_task(metric_id: int, since: Optional[str]):
 
 @task_failure.connect()
 def celery_task_failure_email(sender, *args, **kwargs):
-    extras = {}
+    exception = kwargs["exception"]
 
     if sender == collect_latest_task:
         metric_pk = kwargs["args"][0]
         metric = Metric.objects.get(pk=metric_pk)
         extras = {"metric": model_to_dict(metric)}
+
+        if isinstance(exception, oauth2.rfc6749.errors.InvalidGrantError):
+            subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
+            message = f"""Hello {metric.user.first_name} 👋
+
+Unfortunately, something went wrong last night when attempting to collect the latest data for the {metric.name} metric.
+It seems like the authorization expired.
+
+To fix the error, you will have to re-authorize by following the link below:
+{BASE_URL}{reverse('metric-authorize', args=[metric_pk])}
+"""
+        else:
+            subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
+            message = f"""Hello {metric.user.first_name} 👋
+
+Unfortunately, something went wrong last night when attempting to collect the latest data for the {metric.name} metric.
+The error was: {exception!r}
+
+{kwargs['einfo']}
+
+task = {sender.name}
+task_id = {kwargs['task_id']}
+args = {kwargs['args']}
+kwargs = {kwargs['kwargs']}
+
+extras = {extras}
+"""
+        return mail_admins(subject, message)
+
+    # Generic handler
+    extras = {}
 
     subject = "[{queue_name}@{host}] Error: {exception}:".format(
         queue_name="celery",  # `sender.queue` doesn't exist in 4.1?
@@ -109,8 +146,6 @@ def celery_task_failure_email(sender, *args, **kwargs):
     )
 
     message = """{exception!r}
-
-Traceback:
 
 {einfo}
 

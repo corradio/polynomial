@@ -231,6 +231,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", default=None)
 EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", default=None)
+EMAIL_SUBJECT_PREFIX = "[Polynomial] "
 ADMINS = [("Olivier", "XXX")]
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
