@@ -10,8 +10,6 @@ from django.core.mail import mail_admins
 from django.forms.models import model_to_dict
 from django.utils.dateparse import parse_date, parse_duration
 
-from config.settings import DEBUG
-
 from .models import Measurement, Metric
 
 logger = get_task_logger(__name__)
@@ -97,9 +95,6 @@ def backfill_task(metric_id: int, since: Optional[str]):
 
 @task_failure.connect()
 def celery_task_failure_email(sender, *args, **kwargs):
-    if DEBUG:
-        return
-
     extras = {}
 
     if sender == collect_latest_task:

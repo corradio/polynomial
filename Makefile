@@ -37,10 +37,10 @@ deploy:
 
 # Celery
 runworker:
-	poetry run celery -A config worker -l DEBUG
+	DEBUG=1 poetry run celery -A config worker -l DEBUG
 
 runbeat:
-	poetry run celery -A config beat -l INFO
+	DEBUG=1 poetry run celery -A config beat -l INFO
 
 runtasks:
-	poetry run celery -A config call mainapp.tasks.collect_all_latest_task
+	DEBUG=1 poetry run celery -A config call mainapp.tasks.collect_all_latest_task
