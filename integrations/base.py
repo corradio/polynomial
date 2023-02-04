@@ -28,6 +28,12 @@ EMPTY_CONFIG_SCHEMA = {"type": "object", "keys": {}}
 os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 
 
+# Use this exception class to raise exceptions which represent
+# errors that the user can fix by configuring the integration differently.
+class UserFixableError(Exception):
+    pass
+
+
 class Integration:
     _exclude_in_prod: ClassVar[bool] = False
 

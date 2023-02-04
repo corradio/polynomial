@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from pprint import pformat
 from typing import Optional
 
+import requests
 from celery import shared_task
 from celery.signals import task_failure
 from celery.utils.log import get_task_logger
@@ -13,6 +14,7 @@ from django.utils.dateparse import parse_date, parse_duration
 from oauthlib import oauth2
 
 from config.settings import CSRF_TRUSTED_ORIGINS
+from integrations.base import UserFixableError
 
 from .models import Measurement, Metric
 
@@ -109,6 +111,7 @@ def celery_task_failure_email(sender, *args, **kwargs):
         extras = {"metric": model_to_dict(metric)}
 
         if isinstance(exception, oauth2.rfc6749.errors.InvalidGrantError):
+            # Handler for expired OAuth
             subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
             message = f"""Hello {metric.user.first_name} 👋
 
@@ -118,21 +121,24 @@ It seems like the authorization expired.
 To fix the error, you will have to re-authorize by following the link below:
 {BASE_URL}{reverse('metric-authorize', args=[metric_pk])}
 """
-        else:
-            subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
-            message = f"""Hello {metric.user.first_name} 👋
+        elif isinstance(exception, UserFixableError) or isinstance(
+            exception, requests.HTTPError
+        ):
+            # If it's an HTTPError, only handle 400 and 403
+            if not isinstance(
+                exception, requests.HTTPError
+            ) or exception.response.status_code in [400, 403]:
+                # Handler for exceptions that can be fixed by the user
+                subject = (
+                    f"Aw snap, collecting data for the {metric.name} metric failed 😟"
+                )
+                message = f"""Hello {metric.user.first_name} 👋
 
 Unfortunately, something went wrong last night when attempting to collect the latest data for the {metric.name} metric.
 The error was: {exception!r}
 
-{kwargs['einfo']}
-
-task = {sender.name}
-task_id = {kwargs['task_id']}
-args = {kwargs['args']}
-kwargs = {kwargs['kwargs']}
-
-extras = {extras}
+To fix this error, you might have to reconfigure your metric by following the link below:
+{BASE_URL}{reverse('metric-details', args=[metric_pk])}
 """
         return mail_admins(subject, message)
 

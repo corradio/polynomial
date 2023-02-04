@@ -74,11 +74,11 @@ class Grafana(Integration):
         )
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
+        except requests.HTTPError as e:
             if e.response.status_code == 400:
                 # Try to explain to the user
                 data = e.response.json()
-                raise Exception(data["results"]["A"]["error"])
+                raise requests.HTTPError(data["results"]["A"]["error"]) from e
             else:
                 raise
         data = response.json()

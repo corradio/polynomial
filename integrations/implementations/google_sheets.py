@@ -5,7 +5,7 @@ from typing import Dict, List, final
 
 import requests
 
-from ..base import MeasurementTuple, OAuth2Integration
+from ..base import MeasurementTuple, OAuth2Integration, UserFixableError
 from ..utils import get_secret
 
 
@@ -72,6 +72,8 @@ class GoogleSheets(OAuth2Integration):
             date_start=date.min,
             date_end=date.today() - timedelta(days=1),
         )
+        if not results:
+            raise UserFixableError("No matching rows were found")
         return results[-1]
 
     def collect_past_range(
@@ -94,11 +96,11 @@ class GoogleSheets(OAuth2Integration):
         response = self.session.get(request_url, params=params)
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
+        except requests.HTTPError as e:
             if e.response.status_code in [400, 403]:
                 # Try to explain to the user
                 data = e.response.json()
-                raise Exception(data["error"]["message"])
+                raise requests.HTTPError(data["error"]["message"]) from None
             else:
                 raise
         data = response.json()["values"]
@@ -112,14 +114,22 @@ class GoogleSheets(OAuth2Integration):
                 )
             return row[header.index(column_name)]
 
+        def try_convert_cell_to_float(cell_value):
+            try:
+                return float(cell_value)
+            except ValueError as e:
+                raise UserFixableError(
+                    f'Could not convert cell value "{cell_value}" to number'
+                ) from e
+
         # Parse data
         measurements = [
             MeasurementTuple(
-                date=self._serial_date_to_date(get_cell(d, date_column)),
-                value=float(get_cell(d, value_column)),
+                date=self._serial_date_to_date(get_cell(row, date_column)),
+                value=try_convert_cell_to_float(get_cell(row, value_column)),
             )
-            for d in data
-            if all([get_cell(d, f["column"]) == f["value"] for f in filters])
+            for row in data
+            if all([get_cell(row, f["column"]) == f["value"] for f in filters])
         ]
 
         return [m for m in measurements if m.date >= date_start and m.date <= date_end]
