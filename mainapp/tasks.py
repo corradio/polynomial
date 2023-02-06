@@ -7,7 +7,7 @@ import requests
 from celery import shared_task
 from celery.signals import task_failure
 from celery.utils.log import get_task_logger
-from django.core.mail import mail_admins
+from django.core.mail import mail_admins, send_mail
 from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.dateparse import parse_date, parse_duration
@@ -135,12 +135,17 @@ To fix the error, you will have to re-authorize by following the link below:
                 message = f"""Hello {metric.user.first_name} 👋
 
 Unfortunately, something went wrong last night when attempting to collect the latest data for the {metric.name} metric.
-The error was: {exception!r}
+The error was: {exception}
 
 To fix this error, you might have to reconfigure your metric by following the link below:
 {BASE_URL}{reverse('metric-details', args=[metric_pk])}
 """
-        return mail_admins(subject, message)
+        return send_mail(
+            subject,
+            message,
+            from_email="olivier.corradi@gmail.com",
+            recipient_list=[metric.user.email],
+        )
 
     # Generic handler
     extras = {}
