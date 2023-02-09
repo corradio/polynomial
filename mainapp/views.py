@@ -14,6 +14,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
+    HttpResponseNotFound,
     HttpResponseRedirect,
     HttpResponseServerError,
     JsonResponse,
@@ -35,13 +36,11 @@ from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import WebAuthIntegration
 
 from .forms import MetricForm
-from .models import Measurement, Metric, User
+from .models import Dashboard, Measurement, Metric, User
 from .tasks import backfill_task
 
 
-@login_required
-def index(request):
-    # TODO: code is duplicated with `user_page` view
+def get_dashboard_context(request, metric_filter_kwargs=None):
     start_date = None
     if "since" in request.GET:
         start_date = parse_date(request.GET["since"])
@@ -70,13 +69,21 @@ def index(request):
                 ).order_by("date")
             ],
         }
-        for metric in Metric.objects.filter(user=request.user).order_by("name")
+        for metric in Metric.objects.filter(**metric_filter_kwargs).order_by("name")
     ]
     context = {
         "measurements_by_metric": measurements_by_metric,
         "start_date": start_date,
         "end_date": end_date,
     }
+    return context
+
+
+@login_required
+def index(request):
+    context = get_dashboard_context(
+        request, metric_filter_kwargs={"user": request.user}
+    )
     return render(request, "mainapp/index.html", context)
 
 
@@ -451,40 +458,27 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
 
 def user_page(request, username):
     user = get_object_or_404(User, username=username)
-    start_date = None
-    if "since" in request.GET:
-        start_date = parse_date(request.GET["since"])
-        if not start_date:
-            interval = parse_duration(request.GET["since"])  # e.g. "3 days"
-            if not interval:
-                return HttpResponseBadRequest(
-                    f"Invalid argument `since`: should be a date or a duration."
-                )
-            start_date = date.today() - interval
-    if start_date is None:
-        start_date = date.today() - timedelta(days=60)
-    end_date = date.today()
-    measurements_by_metric = [
-        {
-            "metric_id": metric.id,
-            "metric_name": metric.name,
-            "integration_id": metric.integration_id,
-            "measurements": [
-                {
-                    "value": measurement.value,
-                    "date": measurement.date.isoformat(),
-                }
-                for measurement in Measurement.objects.filter(
-                    metric=metric, date__range=[start_date, end_date]
-                ).order_by("date")
-            ],
-        }
-        for metric in Metric.objects.filter(user=user).order_by("name")
-    ]
+    if user == request.user:
+        # Show all dashboards
+        dashboards = Dashboard.objects.filter(user=user)
+    else:
+        # Only public ones
+        dashboards = Dashboard.objects.filter(user=user, is_public=True)
     context = {
-        "measurements_by_metric": measurements_by_metric,
-        "start_date": start_date,
-        "end_date": end_date,
+        **get_dashboard_context(request, metric_filter_kwargs={"user": user}),
+        "dashboards": dashboards,
         "page_user": user,  # don't override `user` which is the logged in user
     }
     return render(request, "mainapp/user_page.html", context)
+
+
+def dashboard(request, username, slug):
+    user = get_object_or_404(User, username=username)
+    dashboard = get_object_or_404(Dashboard, user=user, slug=slug)
+    if not dashboard.is_public and dashboard.user != request.user:
+        return HttpResponseNotFound()
+    context = {
+        **get_dashboard_context(request, metric_filter_kwargs={"dashboard": dashboard}),
+        "dashboard": dashboard,
+    }
+    return render(request, "mainapp/dashboard.html", context)

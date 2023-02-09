@@ -27,3 +27,4 @@ class MetricAdmin(admin.ModelAdmin):
 admin.site.register(models.User)
 admin.site.register(models.Metric, MetricAdmin)
 admin.site.register(models.Measurement)
+admin.site.register(models.Dashboard)

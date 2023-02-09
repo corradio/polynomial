@@ -91,6 +91,9 @@ class Metric(models.Model):
             logger.exception("Exception while calling `can_backfill`")
             return False
 
+    def __str__(self):
+        return f"{self.name}"
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=("user", "name"), name="unique_metric")
@@ -111,5 +114,27 @@ class Measurement(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=("metric", "date"), name="unique_measurement"
+            )
+        ]
+
+
+class Dashboard(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # A dashboard can have several metrics, and a metric can belong to multiple dashboards
+    metrics = models.ManyToManyField(Metric)
+    slug = models.SlugField()
+    is_public = models.BooleanField(default=False)
+    name = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse("dashboard", kwargs={"user": self.user, "slug": self.slug})
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "slug"), name="unique_dashboard_user_slug"
             )
         ]

@@ -69,9 +69,15 @@ urlpatterns = [
     ),
     # User pages
     path(
-        "<username>",
+        "<username>/",
         views.user_page,
         name="user-page",
+    ),
+    # Dashboards
+    path(
+        "<username>/<slug>",
+        views.dashboard,
+        name="dashboard",
     ),
     # Integrations (i.e. metric, and thus, db independent)
     path(
