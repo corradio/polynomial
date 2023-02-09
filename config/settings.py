@@ -40,13 +40,18 @@ DEBUG = env.bool("DEBUG", default=False)
 if DEBUG:
     logging.basicConfig(level=logging.DEBUG)
 
-ALLOWED_HOSTS: List[str] = ["127.0.0.1", "localhost", "polynomial.fly.dev"]
+ALLOWED_HOSTS: List[str] = [
+    "127.0.0.1",
+    "localhost",
+    "polynomial.fly.dev",
+    "polynomial.so",
+]
 
 # The following needs to be set to None in order to make sure
 # the `opener` property keeps being filled during OAuth popups
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
-CSRF_TRUSTED_ORIGINS = ["https://polynomial.fly.dev"]
+CSRF_TRUSTED_ORIGINS = ["https://polynomial.so"]
 
 
 # Application definition
@@ -232,6 +237,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", default=None)
 EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", default=None)
 EMAIL_SUBJECT_PREFIX = "[Polynomial] "
-ADMINS = [("Olivier", "XXX")]
+ADMINS = [("Olivier", "admin@polynomial.so")]
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

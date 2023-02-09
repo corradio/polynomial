@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block head_title %}{{ dashboard }}{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5.6.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
+{% endblock %}
+
+{% block content %}
+{% if not measurements_by_metric %}
+  <h1>Welcome to Polynomial 👋</h1>
+  You don't have a metric yet. Let's add one!
+  <p>
+    <a href="{% url 'integrations' %}">Add metric</a>
+  </p>
+{% else %}
+  <h1>{{ dashboard }}</h1>
+  {% include "mainapp/snippets/metric_mosaic.html" %}
+{% endif %}
+{% endblock %}

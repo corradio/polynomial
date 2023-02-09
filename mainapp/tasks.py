@@ -143,7 +143,7 @@ To fix this error, you might have to reconfigure your metric by following the li
         return send_mail(
             subject,
             message,
-            from_email="olivier.corradi@gmail.com",
+            from_email="olivier@polynomial.so",
             recipient_list=[metric.user.email],
         )
 
