@@ -69,12 +69,24 @@ class Integration:
             raise NotImplementedError(
                 "Integration can't backfill: `collect_latest` should be overridden"
             )
+        # Try to collect the last day
         day = date.today() - timedelta(days=1)
         results = self.collect_past_range(date_start=day, date_end=day)
-        if not results:
-            raise Exception("No results returned")
-        assert len(results) == 1, "More than one result was returned"
-        return results[0]
+        if results:
+            assert len(results) == 1, "More than one result was returned"
+            return results[-1]
+        else:
+            # No results were returned.
+            # Data might be delayed, and therefore, we might need to query
+            # a bit further back in time
+            date_end = day
+            date_start = date_end - timedelta(
+                days=7
+            )  # this is the max delay we'll allow on the data
+            results = self.collect_past_range(date_start=date_start, date_end=date_end)
+            if not results:
+                raise Exception("No results returned")
+            return results[-1]
 
     def collect_past(self, date: date) -> MeasurementTuple:
         raise NotImplementedError()

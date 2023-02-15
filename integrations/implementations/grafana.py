@@ -83,6 +83,8 @@ class Grafana(Integration):
                 raise
         data = response.json()
         frames = data["results"]["A"]["frames"]
+        if len(frames) == 0:
+            return []
         assert len(frames) == 1, f"{len(frames)} returned series (expected only one)"
         frame = frames[0]
         timestamps, values = frame["data"]["values"]
