@@ -116,7 +116,7 @@ class GoogleSheets(OAuth2Integration):
 
         def try_convert_cell_to_float(cell_value, row_index):
             try:
-                return float(cell_value)
+                return float("nan") if cell_value == "" else float(cell_value)
             except ValueError as e:
                 raise UserFixableError(
                     f'Could not convert cell value "{cell_value}" to number at row {row_index + 1}'
