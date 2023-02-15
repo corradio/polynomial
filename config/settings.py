@@ -231,7 +231,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 STATIC_ROOT = BASE_DIR / "static"
 
 # SMTP
-EMAIL_HOST = "smtp.mailgun.org"
+EMAIL_HOST = "smtp.eu.mailgun.org"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", default=None)
