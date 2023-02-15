@@ -114,21 +114,21 @@ class GoogleSheets(OAuth2Integration):
                 )
             return row[header.index(column_name)]
 
-        def try_convert_cell_to_float(cell_value):
+        def try_convert_cell_to_float(cell_value, row_index):
             try:
                 return float(cell_value)
             except ValueError as e:
                 raise UserFixableError(
-                    f'Could not convert cell value "{cell_value}" to number'
+                    f'Could not convert cell value "{cell_value}" to number at row {row_index + 1}'
                 ) from e
 
         # Parse data
         measurements = [
             MeasurementTuple(
                 date=self._serial_date_to_date(get_cell(row, date_column)),
-                value=try_convert_cell_to_float(get_cell(row, value_column)),
+                value=try_convert_cell_to_float(get_cell(row, value_column), row_index),
             )
-            for row in data
+            for row_index, row in enumerate(data)
             if all([get_cell(row, f["column"]) == f["value"] for f in filters])
         ]
 
