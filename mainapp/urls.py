@@ -67,22 +67,22 @@ urlpatterns = [
         views.metric_new_test,
         name="metric-new-with-state-test",
     ),
-    # User pages
-    path(
-        "<username>/",
-        views.user_page,
-        name="user-page",
-    ),
-    # Dashboards
-    path(
-        "<username>/<slug>",
-        views.dashboard,
-        name="dashboard",
-    ),
     # Integrations (i.e. metric, and thus, db independent)
     path(
         "integrations/",
         views.IntegrationListView.as_view(),
         name="integrations",
+    ),
+    # User pages
+    path(
+        "<username>/",  # this one needs to be at the bottom
+        views.user_page,
+        name="user-page",
+    ),
+    # Dashboards
+    path(
+        "<username>/<slug>",  # this one needs to be at the bottom
+        views.dashboard,
+        name="dashboard",
     ),
 ]
