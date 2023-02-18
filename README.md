@@ -3,6 +3,7 @@
 ## Installing dependencies
 ```sh
 poetry install
+yarn
 pre-commit install
 ```
 
@@ -40,9 +41,9 @@ make resetdb
 ```
 
 
-## Run server
+## Run everything (server + javascript/css watcher + db + cache)
 ```sh
-make runserver
+make rundev
 ```
 
 

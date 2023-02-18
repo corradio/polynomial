@@ -7,3 +7,6 @@ __pycache__
 .env
 celerybeat-schedule
 .DS_Store
+static/dist
+static/CACHE
+node_modules

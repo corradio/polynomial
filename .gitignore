@@ -1,5 +1,13 @@
+# Python
 __pycache__
 *.pyc
 .env
 celerybeat-schedule
+
+# Javascript
+node_modules
+
+# Misc
 .DS_Store
+static/dist
+static/CACHE

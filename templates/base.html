@@ -1,3 +1,4 @@
+{% load compress %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -6,6 +7,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Polynomial | {% block head_title %}{% endblock %}</title>
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'dist/output.css' %}">
+    {% endcompress %}
     <style>
       * {
         font-family: sans-serif;
@@ -99,6 +103,8 @@
     <div class="content-container">
       {% block content %}{% endblock %}
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.3/flowbite.min.js"></script>
   </body>
   <footer>
     💡 Got feedback or ideas? Share them <a href="https://docs.google.com/forms/d/e/1FAIpQLScYQROio_QR2F8FFtalrE-4TXvJ8lsJEIrJ7W8-ZULcUxLVqw/viewform">here</a>.

@@ -25,6 +25,9 @@ shell:
 runserver:
 	OAUTHLIB_INSECURE_TRANSPORT=1 DEBUG=1 $(MANAGE) runserver
 
+rundev:
+	poetry run honcho start
+
 format:
 	poetry run black .
 	poetry run isort .

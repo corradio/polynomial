@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.linkedin_oauth2",
     "organizations",
+    "compressor",
     "mainapp",
 ]
 
@@ -241,3 +242,8 @@ EMAIL_SUBJECT_PREFIX = "[Polynomial] "
 ADMINS = [("Olivier", "admin@polynomial.so")]
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Compressor
+COMPRESS_ROOT = BASE_DIR / "static"
+COMPRESS_ENABLED = True
+STATICFILES_FINDERS = ("compressor.finders.CompressorFinder",)
