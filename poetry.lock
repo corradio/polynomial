@@ -305,6 +305,17 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "django-extensions"
+version = "3.2.1"
+description = "Extensions for Django"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+Django = ">=3.2"
+
+[[package]]
 name = "django-jsonform"
 version = "2.15.0"
 description = "A user-friendly JSON editing form for Django admin."
@@ -314,6 +325,18 @@ python-versions = ">=3.4"
 
 [package.dependencies]
 django = ">=2.0"
+
+[[package]]
+name = "django-organizations"
+version = "2.1.0"
+description = "Group accounts for Django"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+Django = ">=2.2.0"
+six = "*"
 
 [[package]]
 name = "django-stubs"
@@ -881,7 +904,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9,<3.12"
-content-hash = "7323a9588d95f6a44b2726d532a69f670ab0f02326fbe64d3ae5ff1884b15697"
+content-hash = "dc13b13f3da583a596761680132987e1f346360eb389c51e8847ccd90049a7cc"
 
 [metadata.files]
 amqp = []
@@ -964,7 +987,9 @@ dj-email-url = []
 django = []
 django-allauth = []
 django-cache-url = []
+django-extensions = []
 django-jsonform = []
+django-organizations = []
 django-stubs = []
 django-stubs-ext = []
 environs = []
