@@ -10,4 +10,4 @@ node_modules
 # Misc
 .DS_Store
 static/dist
-static/CACHE
+static_root

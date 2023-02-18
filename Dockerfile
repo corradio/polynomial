@@ -9,21 +9,36 @@ RUN mkdir -p /code
 
 WORKDIR /code
 
+# Install poetry
 RUN set -ex && \
     pip install --upgrade pip poetry && \
     rm -rf /root/.cache/
 
-COPY poetry.lock pyproject.toml ./
+# Install node+yarn
+RUN apt update && apt install -y curl gnupg && \
+    curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+    apt install nodejs && \
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    apt update && apt install -y yarn
 
+# Install poetry packages
+COPY poetry.lock pyproject.toml ./
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-root --no-dev && \
     rm -rf ~/.cache/pypoetry && \
     rm -rf ~/.config/pypoetry
 
+# Install javascript packages
+COPY package.json yarn.lock ./
+RUN yarn
+
+# Copy source files
 COPY . /code/
 
-# Ignored for now as there are no static files
-RUN python manage.py collectstatic --noinput
+# Generate static files
+RUN yarn build && \
+    python manage.py collectstatic --noinput
 
 EXPOSE 8000
 

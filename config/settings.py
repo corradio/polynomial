@@ -103,9 +103,16 @@ TEMPLATES = [
     },
 ]
 
+# Django will search for static files here
 STATICFILES_DIRS = [
+    BASE_DIR / "static",
     ("integrations/icons", BASE_DIR / "integrations/icons"),
 ]
+STATICFILES_FINDERS = (
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder",
+)
 
 WSGI_APPLICATION = "config.wsgi.application"
 
@@ -230,7 +237,7 @@ CELERY_BEAT_SCHEDULE = {
 # Static deployment
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # This is the place where the static files will be collected before deployment
-STATIC_ROOT = BASE_DIR / "static"
+STATIC_ROOT = BASE_DIR / "static_root"
 
 # SMTP
 EMAIL_HOST = "smtp.eu.mailgun.org"
@@ -244,6 +251,5 @@ if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Compressor
-COMPRESS_ROOT = BASE_DIR / "static"
+# COMPRESS_ROOT = BASE_DIR / "static"
 COMPRESS_ENABLED = True
-STATICFILES_FINDERS = ("compressor.finders.CompressorFinder",)

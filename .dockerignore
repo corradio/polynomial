@@ -8,5 +8,5 @@ __pycache__
 celerybeat-schedule
 .DS_Store
 static/dist
-static/CACHE
+static_root/CACHE
 node_modules

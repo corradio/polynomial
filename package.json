@@ -4,7 +4,8 @@
     "tailwindcss": "^3.2.7"
   },
   "scripts": {
-    "watch": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --watch"
+    "build": "tailwindcss -i ./styles/src/styles.css -o ./static/dist/styles.css --minify",
+    "watch": "tailwindcss -i ./styles/src/styles.css -o ./static/dist/styles.css --watch"
   },
   "volta": {
     "node": "14.21.1",
