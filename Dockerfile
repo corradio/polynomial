@@ -38,7 +38,8 @@ COPY . /code/
 
 # Generate static files
 RUN yarn build && \
-    python manage.py collectstatic --noinput
+    python manage.py collectstatic --noinput && \
+    python manage.py compress
 
 EXPOSE 8000
 

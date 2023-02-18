@@ -251,5 +251,5 @@ if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Compressor
-# COMPRESS_ROOT = BASE_DIR / "static"
 COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = not DEBUG
