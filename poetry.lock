@@ -352,18 +352,6 @@ python-versions = ">=3.4"
 django = ">=2.0"
 
 [[package]]
-name = "django-organizations"
-version = "2.1.0"
-description = "Group accounts for Django"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-Django = ">=2.2.0"
-six = "*"
-
-[[package]]
 name = "django-stubs"
 version = "1.14.0"
 description = "Mypy stubs for Django"
@@ -959,7 +947,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9,<3.12"
-content-hash = "22f2db72c1a3360c873c39b7daf0405b9a38422added90cc303e5bfc556cbece"
+content-hash = "835961db33c0e5d07f51bb9b74b912585b8d57916e46a6814e05b8022d201e80"
 
 [metadata.files]
 amqp = []
@@ -1046,7 +1034,6 @@ django-cache-url = []
 django-compressor = []
 django-extensions = []
 django-jsonform = []
-django-organizations = []
 django-stubs = []
 django-stubs-ext = []
 environs = []

@@ -7,7 +7,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.urls import reverse
 from django_jsonform.models.fields import JSONField
-from organizations.models import Organization
 
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS, Integration
 from integrations.base import EMPTY_CONFIG_SCHEMA, WebAuthIntegration
@@ -139,9 +138,3 @@ class Dashboard(models.Model):
                 fields=("user", "slug"), name="unique_dashboard_user_slug"
             )
         ]
-
-
-# class Team(Organization):
-#     # Note: this will inherit from the Organization table
-#     # using Multi-Table Inheritance
-#     pass

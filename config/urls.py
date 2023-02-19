@@ -16,13 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.urls import include, path, re_path
-from organizations.backends import invitation_backend
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
     path("logout", LogoutView.as_view()),
-    re_path(r"^orgs/", include("organizations.urls")),
-    re_path(r"^invitations/", include(invitation_backend().get_urls())),
     path("", include("mainapp.urls")),
 ]
