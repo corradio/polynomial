@@ -6,7 +6,7 @@
 {% block content %}
   <form action="" method="post">
     {% csrf_token %}
-    {{ form }}
+    {{ form.as_p }}
     {% if can_web_auth %}
     <input type="button" id="button-authorize" value="Re-authorize">
     {% endif %}
