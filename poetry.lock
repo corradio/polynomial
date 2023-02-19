@@ -330,17 +330,6 @@ rcssmin = "1.1.1"
 rjsmin = "1.2.1"
 
 [[package]]
-name = "django-extensions"
-version = "3.2.1"
-description = "Extensions for Django"
-category = "main"
-optional = false
-python-versions = ">=3.6"
-
-[package.dependencies]
-Django = ">=3.2"
-
-[[package]]
 name = "django-jsonform"
 version = "2.15.0"
 description = "A user-friendly JSON editing form for Django admin."
@@ -947,7 +936,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9,<3.12"
-content-hash = "835961db33c0e5d07f51bb9b74b912585b8d57916e46a6814e05b8022d201e80"
+content-hash = "2bfadd1fa375006b6a5f316ce27801c68022a1631b264708e8df372c1a0fd16a"
 
 [metadata.files]
 amqp = []
@@ -1032,7 +1021,6 @@ django-allauth = []
 django-appconf = []
 django-cache-url = []
 django-compressor = []
-django-extensions = []
 django-jsonform = []
 django-stubs = []
 django-stubs-ext = []
