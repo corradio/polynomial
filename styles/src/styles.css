@@ -4,21 +4,21 @@
 
 @layer base {
   h1 {
-    @apply text-2xl;
+    @apply text-2xl mb-4;
   }
   h2 {
-    @apply text-xl;
+    @apply text-xl mb-2;
   }
   h3 {
-    @apply text-lg;
+    @apply text-lg mb-1;
   }
   a {
-    @apply text-blue-600 underline;
+    @apply text-blue-600 no-underline hover:underline;
   }
   /* forms */
-  input[type='submit'], button.primaryAction {
+  input[type='submit'], button.primaryAction, .btn {
     /* note button.primaryAction is used in django-allauth */
-    @apply py-1 px-2 rounded bg-blue-500 text-white hover:bg-blue-700;
+    @apply no-underline hover:no-underline text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800;
   }
   input[type='button'] {
     @apply py-1 px-2 rounded border border-gray-300 hover:bg-gray-100;

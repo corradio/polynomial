@@ -1,0 +1,51 @@
+{% extends "organizations_base.html" %}
+{% load i18n %}
+{% block content %}
+<h1>{% trans "My organizations" %}</h1>
+
+<table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <tr>
+            <th scope="col" class="px-6 py-3">
+                Name
+            </th>
+            <th scope="col" class="px-6 py-3">
+                Members
+            </th>
+            <th scope="col" class="px-6 py-3">
+                Actions
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for organization in organizations %}
+        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+            <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
+                <!-- <img class="w-10 h-10 rounded-full" src="/docs/images/people/profile-picture-1.jpg" alt="Jese image"> -->
+                <div class="pl-3">
+                    <div class="text-base font-semibold">{{ organization.name }}</div>
+                </div>
+            </th>
+            <td class="px-6 py-4">
+                <a href="{% url 'organization_user_list' organization.id %}">
+                {% with total_users=organization.users.all.count %}
+                   {{total_users}} member{{ total_users|pluralize }}
+                {% endwith %}
+                </a>
+            </td>
+            <td class="px-6 py-4">
+                <a href="{% url 'organization_user_add' organization.id %}" class="font-medium">Add member</a>
+                <a href="{% url 'organization_edit' organization.id %}" class="font-medium">Edit</a>
+                <a href="{% url 'organization_delete' organization.id %}" class="font-medium">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="mt-4">
+  <a href="{% url 'organization_add' %}" class="btn">
+    Create new organization
+  </a>
+</div>
+{% endblock %}

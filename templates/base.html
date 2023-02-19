@@ -95,7 +95,7 @@
         </a>
         <div class="flex items-center md:order-2">
           {% if user.is_authenticated %}
-          <a href="{% url 'integrations' %}" class="no-underline text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Add new metric</a>
+          <a href="{% url 'integrations' %}" class="btn">Add new metric</a>
           <button type="button" class="flex mr-3 text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom">
             <span class="sr-only">Open user menu</span>
             <img class="w-8 h-8 rounded-full" src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="user photo">
@@ -108,16 +108,19 @@
             </div>
             <ul class="py-2" aria-labelledby="user-menu-button">
               <li>
-                <a href="{% url 'metrics' %}" class="no-underline block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Settings</a>
+                <a href="{% url 'metrics' %}" class="no-underline hover:no-underline block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Settings</a>
               </li>
               <li>
-                <a href="{% url 'account_logout' %}" class="no-underline block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Sign out</a>
+                <a href="{% url 'organization_list' %}" class="no-underline hover:no-underline block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Organizations</a>
+              </li>
+              <li>
+                <a href="{% url 'account_logout' %}" class="no-underline hover:no-underline block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Sign out</a>
               </li>
             </ul>
           </div>
           {% else %}
-          <a href="{% url 'account_login' %}" class="no-underline font-medium rounded-lg text-sm px-4 py-2 mr-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">Login</a>
-          <a href="{% url 'account_signup' %}" class="no-underline text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Get started</a>
+          <a href="{% url 'account_login' %}" class="no-underline hover:no-underline font-medium rounded-lg text-sm px-4 py-2 mr-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">Login</a>
+          <a href="{% url 'account_signup' %}" class="btn">Get started</a>
           {% endif %}
           <!--<button data-collapse-toggle="mobile-menu-2" type="button" class="inline-flex items-center p-2 ml-1 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="mobile-menu-2" aria-expanded="false">
             <span class="sr-only">Open main menu</span>
