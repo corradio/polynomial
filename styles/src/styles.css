@@ -16,7 +16,7 @@
     @apply text-blue-600 no-underline hover:underline;
   }
   /* forms */
-  input[type='submit'], button.primaryAction, .btn {
+  input[type='submit'], button[type='submit'], button.primaryAction, .btn {
     /* note button.primaryAction is used in django-allauth */
     @apply no-underline hover:no-underline text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800;
   }
