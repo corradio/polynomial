@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
@@ -72,6 +72,56 @@ urlpatterns = [
         "integrations/",
         views.IntegrationListView.as_view(),
         name="integrations",
+    ),
+    # Orgs
+    path(
+        "orgs/",
+        include(
+            [
+                path(
+                    "",
+                    views.OrganizationListView.as_view(),
+                    name="organization_list",
+                ),
+                path(
+                    "new",
+                    views.OrganizationCreateView.as_view(),
+                    name="organization_new",
+                ),
+                path(
+                    "<int:organization_pk>/",
+                    include(
+                        [
+                            path(
+                                "edit",
+                                views.OrganizationUpdateView.as_view(),
+                                name="organization_edit",
+                            ),
+                            path(
+                                "delete",
+                                views.OrganizationDeleteView.as_view(),
+                                name="organization_delete",
+                            ),
+                            path(
+                                "people/",
+                                views.OrganizationUserListView.as_view(),
+                                name="organization_user_list",
+                            ),
+                            path(
+                                "people/new",
+                                views.OrganizationUserCreateView.as_view(),
+                                name="organization_user_new",
+                            ),
+                            path(
+                                "people/<int:user_pk>/delete",
+                                views.OrganizationUserDeleteView.as_view(),
+                                name="organization_user_delete",
+                            ),
+                        ]
+                    ),
+                ),
+            ]
+        ),
     ),
     # User pages
     path(

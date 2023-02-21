@@ -1,6 +1,4 @@
-{% extends "organizations_base.html" %}
-{% load i18n %}
-{% load org_tags %}
+{% extends "base.html" %}
 {% block content %}
 <h1>{{ organization }} members</h1>
 
@@ -22,7 +20,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for organization_user in organization.organization_users.all %}
+        {% for organization_user in organizationuser_list %}
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
             <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
                 <img class="w-10 h-10 rounded-full" src="{{ organization_user.user.socialaccount_set.all.0.get_avatar_url }}" alt="">
@@ -35,10 +33,10 @@
                 </div>  
             </th>
             <td class="px-6 py-4">
-                {% if organization|is_admin:organization_user.user %}
-                    Administrator
-                {% elif organization|is_owner:organization_user.user %}
+                {% if organization_user.is_owner %}
                     Owner
+                {% elif organization_user.is_admin %}
+                    Administrator
                 {% endif %}
             </td>
             <td class="px-6 py-4">
@@ -51,7 +49,6 @@
                 </div>
             </td>
             <td class="px-6 py-4">
-                <a href="{% url 'organization_user_edit' organization.pk organization_user.user.pk %}" class="font-medium">Edit</a>
                 <a href="{% url 'organization_user_delete' organization.pk organization_user.pk %}" class="font-medium">Remove</a>
             </td>
         </tr>
@@ -60,7 +57,7 @@
 </table>
 
 <div class="mt-4">
-  <a href="{% url 'organization_user_add' organization.pk %}" class="btn">
+  <a href="{% url 'organization_user_new' organization.pk %}" class="btn">
     Add new user
   </a>
 </div>

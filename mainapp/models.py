@@ -138,3 +138,93 @@ class Dashboard(models.Model):
                 fields=("user", "slug"), name="unique_dashboard_user_slug"
             )
         ]
+
+
+class OrganizationUser(models.Model):
+    is_admin = models.BooleanField(default=False)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
+    organization = models.ForeignKey(
+        "Organization",
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return "{0} ({1})".format(
+            str(self.user) if self.user.is_active else self.user.email,
+            self.organization.name,
+        )
+
+    def delete(self, using=None):
+        """
+        If the organization user is also the owner, this should not be deleted
+        unless it's part of a cascade from the Organization.
+        If there is no owner then the deletion should proceed.
+        """
+        if self.organization.owner.pk == self.pk:
+            raise ValueError(
+                "Cannot delete organization owner before having transferred ownership"
+            )
+        super().delete(using=using)
+
+    def get_absolute_url(self):
+        return reverse(
+            "organization_user_detail",
+            kwargs={"organization_pk": self.organization.pk, "user_pk": self.user.pk},
+        )
+
+    def is_owner(self):
+        return self.organization.is_owner(self.user)
+
+    class Meta:
+        unique_together = ("user", "organization")
+
+
+class Organization(models.Model):
+    name = models.CharField(max_length=128)
+    slug = models.SlugField(unique=True)
+    users = models.ManyToManyField(
+        User,
+        through=OrganizationUser,
+        related_name="organization_users",
+    )
+    owner = models.ForeignKey(User, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return self.name
+
+    def add_user(self, user, is_admin=False):
+        """
+        Adds a new user and if the first user makes the user an admin and
+        the owner.
+        """
+        users_count = self.users.all().count()
+        if users_count == 0:
+            is_admin = True
+        org_user = OrganizationUser.objects.create(
+            user=user, organization=self, is_admin=is_admin
+        )
+        if users_count == 0:
+            self.owner = user
+            self.save()
+
+        return org_user
+
+    def remove_user(self, user: User):
+        org_user = OrganizationUser.objects.get(user=user, organization=self)
+        org_user.delete()
+
+    def is_admin(self, user: User):
+        return (
+            True
+            if self.organizationuser_set.filter(user=user, is_admin=True)
+            else False
+        )
+
+    def is_owner(self, user: User):
+        return self.owner == user
+
+    def is_member(self, user: User):
+        return True if user in self.users.all() else False

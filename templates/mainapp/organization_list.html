@@ -1,7 +1,6 @@
-{% extends "organizations_base.html" %}
-{% load i18n %}
+{% extends "base.html" %}
 {% block content %}
-<h1>{% trans "My organizations" %}</h1>
+<h1>My organizations</h1>
 
 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -18,7 +17,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for organization in organizations %}
+        {% for organization in organization_list %}
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
             <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
                 <!-- <img class="w-10 h-10 rounded-full" src="/docs/images/people/profile-picture-1.jpg" alt="Jese image"> -->
@@ -34,7 +33,7 @@
                 </a>
             </td>
             <td class="px-6 py-4">
-                <a href="{% url 'organization_user_add' organization.id %}" class="font-medium">Add member</a>
+                <a href="{% url 'organization_user_new' organization.id %}" class="font-medium">Add member</a>
                 <a href="{% url 'organization_edit' organization.id %}" class="font-medium">Edit</a>
                 <a href="{% url 'organization_delete' organization.id %}" class="font-medium">Delete</a>
             </td>
@@ -44,8 +43,9 @@
 </table>
 
 <div class="mt-4">
-  <a href="{% url 'organization_add' %}" class="btn">
+  <a href="{% url 'organization_new' %}" class="btn">
     Create new organization
   </a>
 </div>
+
 {% endblock %}

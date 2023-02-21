@@ -35,9 +35,27 @@ from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import WebAuthIntegration
 
-from .forms import MetricForm
-from .models import Dashboard, Measurement, Metric, User
-from .tasks import backfill_task
+from ..forms import (
+    MetricForm,
+    OrganizationCreateForm,
+    OrganizationUpdateForm,
+    OrganizationUserCreateForm,
+)
+from ..models import (
+    Dashboard,
+    Measurement,
+    Metric,
+    Organization,
+    OrganizationUser,
+    User,
+)
+from ..tasks import backfill_task
+from .mixins import (
+    OrganizationAdminRequiredMixin,
+    OrganizationMembershipRequiredMixin,
+    OrganizationOwnerRequiredMixin,
+    OrganizationUserMixin,
+)
 
 
 def get_dashboard_context(request, metric_filter_kwargs=None):
@@ -319,7 +337,8 @@ def metric_new_authorize(request, state):
     return HttpResponseRedirect(uri)
 
 
-class MetricDeleteView(LoginRequiredMixin, DeleteView):  # type: ignore[misc]
+class MetricDeleteView(LoginRequiredMixin, DeleteView):
+    object: Metric
     model = Metric
     success_url = reverse_lazy("metrics")
 
@@ -482,3 +501,91 @@ def dashboard(request, username, slug):
         "dashboard": dashboard,
     }
     return render(request, "mainapp/dashboard.html", context)
+
+
+class OrganizationListView(LoginRequiredMixin, ListView):
+    model = Organization
+
+    def get_queryset(self):
+        assert isinstance(self.request.user, User)
+        return Organization.objects.filter(users=self.request.user)
+
+
+class OrganizationCreateView(LoginRequiredMixin, CreateView):
+    model = Organization
+    form_class = OrganizationCreateForm
+    success_url = reverse_lazy("organization_list")
+
+    def get_initial(self):
+        return {"owner": self.request.user}
+
+
+class OrganizationUpdateView(
+    LoginRequiredMixin, OrganizationAdminRequiredMixin, UpdateView
+):
+    model = Organization
+    pk_url_kwarg = "organization_pk"
+    form_class = OrganizationUpdateForm
+
+
+class OrganizationDeleteView(
+    LoginRequiredMixin, OrganizationOwnerRequiredMixin, DeleteView
+):
+    object: Organization
+    model = Organization
+    pk_url_kwarg = "organization_pk"
+    success_url = reverse_lazy("organization_list")
+
+
+class OrganizationUserListView(
+    LoginRequiredMixin, OrganizationMembershipRequiredMixin, ListView
+):
+    model = OrganizationUser
+
+    def get_queryset(self):
+        return OrganizationUser.objects.filter(
+            organization=self.kwargs["organization_pk"]
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["organization"] = Organization.objects.get(
+            pk=self.kwargs["organization_pk"]
+        )
+        return context
+
+
+class OrganizationUserCreateView(
+    LoginRequiredMixin, OrganizationAdminRequiredMixin, CreateView
+):
+    model = OrganizationUser
+    form_class = OrganizationUserCreateForm
+
+    def get_success_url(self):
+        return reverse(
+            "organization_user_list",
+            kwargs={"organization_pk": self.kwargs["organization_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["organization"] = Organization.objects.get(
+            pk=self.kwargs["organization_pk"]
+        )
+        return context
+
+
+class OrganizationUserDeleteView(
+    LoginRequiredMixin,
+    OrganizationAdminRequiredMixin,
+    OrganizationUserMixin,
+    DeleteView,
+):
+    object: OrganizationUser
+    model = OrganizationUser
+
+    def get_success_url(self):
+        return reverse(
+            "organization_user_list",
+            kwargs={"organization_pk": self.object.organization.pk},
+        )
