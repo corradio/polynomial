@@ -51,6 +51,7 @@ class Metric(models.Model):
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )
     integration_credentials = models.JSONField(blank=True, null=True)
+    organizations = models.ManyToManyField("Organization")
 
     # The credentials can be saved either in db, or in cache, while the object
     # is temporarily being built. We therefore allow this to be changed later.
@@ -118,6 +119,9 @@ class Metric(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+
+    def organizations_pk_list(self):
+        return [x.pk for x in self.organizations.all()]
 
     class Meta:
         constraints = [

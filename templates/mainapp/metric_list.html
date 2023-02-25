@@ -2,15 +2,73 @@
 {% load static %}
 
 {% block content %}
-    <h2>Metrics</h2>
-    <div>
+<h1>Metrics</h1>
+<table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+    <thead class="text-xs text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <tr>
+            <th scope="col" class="p-4">
+                <div class="flex items-center">
+                    <input id="checkbox-all" type="checkbox">
+                </div>
+            </th>
+            <th scope="col" colspan="3" class="px-6 py-3">
+                <div class="flex items-center justify-between">
+                    <span id="selected-label"></span>
+                    <div>
+                        <button id="organization-dropdown-button" data-dropdown-toggle="organization-dropdown" class="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg md:w-auto focus:outline-none focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 disabled:text-slate-200" disabled>
+                            <span class="chevron-after">Organization </span>
+                        </button>
+                          <!-- Dropdown menu -->
+                          <form id="organization-form" action="" method="post">{% csrf_token %}
+                          <input name="metric_ids" type="hidden" value="">
+                          <input name="organization-on-list" type="hidden" value="">
+                          <input name="organization-off-list" type="hidden" value="">
+                          <div id="organization-dropdown" class="z-10 hidden w-48 p-3 bg-white rounded-lg shadow dark:bg-gray-700">
+                            <ul class="space-y-3 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownCheckboxButton">
+                              {% for organization in organization_list %}
+                              <li>
+                                <div class="flex items-center">
+                                  <input id="organization-checkbox-{{ organization.pk }}" type="checkbox" name="{{ organization.pk }}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                                  <label for="organization-checkbox-{{ organization.pk }}" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ organization }}</label>
+                                </div>
+                              </li>
+                              {% endfor %}
+                            </ul>
+                            <div class="pt-3">
+                              <input type="submit" value="Apply">
+                            </div>
+                          </div>
+                        </form>
+                    </div>
+                </div>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
         {% for metric in object_list %}
-            <div style="margin-bottom: 1em;">
-              {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
-                <img class="integration-icon" src="{% static icon_url %}" alt="">
-              {% endwith %}
-              <a href="{% url 'metric-details' metric.id %}">{{ metric.name }}</a>
-              <div style="margin-top: .2em;">
+        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+            <td class="w-4 p-4">
+                <div class="flex items-center">
+                    <input
+                      id="checkbox-table-{{ metric.pk }}"
+                      name="{{ metric.pk }}"
+                      type="checkbox"
+                      data-organization="{{ metric.organizations_pk_list|join:"," }}"
+                    >
+                </div>
+            </td>
+            <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
+                <div class="text-base font-semibold">
+                  {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
+                    <img class="integration-icon" src="{% static icon_url %}" alt="">
+                  {% endwith %}
+                  <a href="{% url 'metric-details' metric.id %}">{{ metric.name }}</a>
+                </div>
+            </th>
+            <td class="px-6">
+                {{ metric.organizations.all|join:", " }}
+            </td>
+            <td class="px-6">
                 <form style="display:inline" action="{% url 'metric-collect-latest' metric.id %}" method="POST">
                   {% csrf_token %}
                   <input type="submit" value="collect latest">
@@ -27,8 +85,125 @@
                   <input type="submit" value="authorize">
                 </form>
                 {% endif %}
-              </div>
-            </div>
+            </td>
+        </tr>
         {% endfor %}
-    </div>
+    </tbody>
+</table>
+
+<script>
+  (function() {
+    var formIdPrefixes = ['organization'];
+    var tableCheckboxes = document.querySelectorAll('table input[id^=checkbox-table]');
+    var headerCheckbox = document.getElementById('checkbox-all');
+    var totalCount = tableCheckboxes.length;
+    function updateSelectedLabel(totalChecked) {
+      // Update caption
+      document.getElementById('selected-label').innerText = totalChecked > 0
+        ? totalChecked + ' selected'
+        : '';
+    }
+    function updateDropdown(formIdPrefix) {
+      var form = document.getElementById(formIdPrefix + '-form');
+      // Get a representation of the checked rows as a dict.
+      // true means all present, false means only some
+      var fieldIdSet = {};
+      var checkedSelector = document.querySelectorAll('table input[id^=checkbox-table]:checked');
+      Array
+        .from(checkedSelector)
+        .forEach(function(node, i) {
+          var keys = node.dataset[formIdPrefix]
+            .split(',')
+            .filter(function(k) { return k != ''; });
+          // Loop existing keys to update them
+          Object.keys(fieldIdSet).forEach(function(existingKey) {
+            if (keys.includes(existingKey)) {
+              fieldIdSet[existingKey] = fieldIdSet[existingKey] && true;
+            } else {
+              fieldIdSet[existingKey] = false;
+            }
+          });
+          // Loop through new keys
+          keys.forEach(function(key) {
+            if (fieldIdSet[key] == null) {
+              // this key will necessarily be partial if we're past the
+              // first item, as the previous items should have declared it
+              fieldIdSet[key] = (i > 0) ? false : true;
+            }
+          });
+        });
+      // Update checkboxes of dropdown
+      form.querySelectorAll('li input[type=checkbox]').forEach(function(node) {
+        node.indeterminate = false;
+        if (fieldIdSet[node.name] == null) {
+          node.checked = false;
+        } else if (fieldIdSet[node.name] == true) {
+          node.checked = true;
+        } else {
+          node.indeterminate = true;
+        }
+      });
+      // Update dropdown disabled state
+      document.getElementById(formIdPrefix + '-dropdown-button').disabled = checkedSelector.length == 0;
+    }
+    // Add listener to header checkbox
+    headerCheckbox
+      .addEventListener('click', function(e) {
+        tableCheckboxes.forEach(function(node) {
+          node.checked = e.srcElement.checked;
+        });
+        updateSelectedLabel(e.srcElement.checked ? totalCount : 0);
+        // update forms
+        formIdPrefixes.forEach(function(formIdPrefix) {
+          updateDropdown(formIdPrefix);
+        });
+      });
+    // Add listener to table checkboxes
+    tableCheckboxes.forEach(function(node) {
+      node.addEventListener('click', function(e) {
+        // Update header checkbox
+        var totalChecked = document.querySelectorAll('table input[id^=checkbox-table]:checked').length;
+        headerCheckbox.indeterminate = false;
+        if (totalCount == totalChecked) {
+          headerCheckbox.checked = true;
+        } else if (totalChecked == 0) {
+          headerCheckbox.checked = false;
+        } else {
+          headerCheckbox.indeterminate = true;
+        }
+        updateSelectedLabel(totalChecked);
+        // update forms
+        formIdPrefixes.forEach(function(formIdPrefix) {
+          updateDropdown(formIdPrefix);
+        });
+      })
+    });
+
+    formIdPrefixes.forEach(function(formIdPrefix) {
+      var form = document.getElementById(formIdPrefix + '-form');
+      form.querySelector('input[type=submit]').addEventListener('click', function(e) {
+        e.preventDefault();
+        // Gather list of checked metrics
+        var checkedMetricIds = Array
+          .from(document.querySelectorAll('table input[id^=checkbox-table]:checked'))
+          .map(function(node) {
+            return node.name
+          });
+        form.querySelector('input[name=metric_ids]').value = checkedMetricIds.join(',');
+        // Process list of properties to apply (ignore indeterminate)
+        var onList = [];
+        var offList = [];
+        form.querySelectorAll('input[type=checkbox]').forEach(function(node) {
+          if (node.indeterminate) {
+            return;
+          }
+          (node.checked ? onList : offList).push(node.name);
+        });
+        form.querySelector('input[name='+ formIdPrefix +'-on-list]').value = onList.join(',');
+        form.querySelector('input[name='+ formIdPrefix +'-off-list]').value = offList.join(',');
+        form.submit();
+      });
+    });
+  })();
+</script>
 {% endblock %}

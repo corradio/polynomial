@@ -26,7 +26,7 @@ runserver:
 	OAUTHLIB_INSECURE_TRANSPORT=1 DEBUG=1 $(MANAGE) runserver
 
 rundev:
-	poetry run honcho start
+	PYTHONUNBUFFERED=true poetry run honcho start
 
 format:
 	poetry run black .

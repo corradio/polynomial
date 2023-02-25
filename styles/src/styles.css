@@ -18,12 +18,20 @@
   /* forms */
   input[type='submit'], button[type='submit'], button.primaryAction, .btn {
     /* note button.primaryAction is used in django-allauth */
-    @apply no-underline hover:no-underline text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800;
+    @apply no-underline hover:no-underline
+      text-white font-medium rounded-lg text-sm px-4 py-2 mr-2
+      focus:ring-4 focus:ring-blue-300 focus:outline-none
+      bg-blue-700 hover:bg-blue-800
+      dark:bg-blue-600 dark:hover:bg-blue-700
+      dark:focus:ring-blue-800;
+
   }
   input[type='button'] {
-    @apply py-1 px-2 rounded border border-gray-300 hover:bg-gray-100;
+    @apply
+      py-1 px-2 rounded border border-gray-300 hover:bg-gray-100
+      disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none;
   }
-  form label {
+  form > div > label, form > p > label {
     @apply block mb-2 text-sm font-medium text-gray-900;
   }
   form input[type='checkbox'] + label {
@@ -143,4 +151,16 @@
 img.integration-icon {
   height: .9em;
   @apply inline;
+}
+
+.chevron-after::after {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: -2px;
+  content: "";
+  border: 4px solid;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
 }
