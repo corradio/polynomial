@@ -1,6 +1,16 @@
-from django import forms
+import uuid
 
-from mainapp.models import Metric, Organization, OrganizationUser
+from allauth.account.adapter import get_adapter
+from django import forms
+from django.urls import reverse
+
+from mainapp.models import (
+    Metric,
+    Organization,
+    OrganizationInvitation,
+    OrganizationUser,
+    User,
+)
 
 
 class MetricForm(forms.ModelForm):
@@ -53,39 +63,74 @@ class OrganizationUpdateForm(forms.ModelForm):
 
 
 class OrganizationUserCreateForm(forms.ModelForm):
-    email = forms.EmailField(max_length=75)
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request")
+        self.organization_pk = kwargs.pop("organization_pk")
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        invitee_email = self.cleaned_data["invitee_email"]
+        # Check if user is already member of organization
+        try:
+            invitee = User.get_by_email(invitee_email, only_verified=False)
+            try:
+                org_user = OrganizationUser.objects.get(
+                    user=invitee, organization_id=self.organization_pk
+                )
+                raise forms.ValidationError("User is already part of organization")
+            except OrganizationUser.DoesNotExist:
+                pass
+        except User.DoesNotExist:
+            pass
+
+        # Check if user has already been invited
+        try:
+            invitation = OrganizationInvitation.objects.get(
+                invitee_email=invitee_email,
+                organization_id=self.organization_pk,
+                user=None,
+            )
+            raise forms.ValidationError("User is already invited")
+        except OrganizationInvitation.DoesNotExist:
+            pass
+        return cleaned_data
 
     def save(self, *args, **kwargs):
-        """Sends an invite to the user"""
-        # try:
-        #     user = get_user_model().objects.get(
-        #         email__iexact=self.cleaned_data["email"]
-        #     )
-        # except get_user_model().DoesNotExist:
-        #     user = invitation_backend().invite_by_email(
-        #         self.cleaned_data["email"],
-        #         **{
-        #             "domain": get_current_site(self.request),
-        #             "organization": self.organization,
-        #             "sender": self.request.user,
-        #         }
-        #     )
-        # # Send a notification email to this user to inform them that they
-        # # have been added to a new organization.
-        # invitation_backend().send_notification(
-        #     user,
-        #     **{
-        #         "domain": get_current_site(self.request),
-        #         "organization": self.organization,
-        #         "sender": self.request.user,
-        #     }
-        # )
-        # return OrganizationUser.objects.create(
-        #     user=user,
-        #     organization=self.organization,
-        #     is_admin=self.cleaned_data["is_admin"],
-        # )
+        invitee_email = self.cleaned_data["invitee_email"]
+        try:
+            invitee = User.get_by_email(invitee_email, only_verified=False)
+        except User.DoesNotExist:
+            # User does not exist, will have to be created when signing up
+            invitee = None
+        invitation = OrganizationInvitation.objects.create(
+            user=invitee,  # in case user already exists
+            invitation_key=uuid.uuid4(),
+            invitee_email=invitee_email,
+            inviter=self.request.user,
+            # configuration
+            is_admin=self.cleaned_data["is_admin"],
+            organization_id=self.organization_pk,
+        )
+
+        # Send invitation
+        invite_url = self.request.build_absolute_uri(
+            reverse("invitation_accept", args=[invitation.invitation_key])
+        )
+        ctx = {
+            "invitation": invitation,
+            "invite_url": invite_url,
+        }
+        email_template = "mainapp/email/organizationinvitation_invite"
+        get_adapter().send_mail(email_template, invitee_email, ctx)
+
+        return invitation
 
     class Meta:
         model = OrganizationUser
         exclude = ("user", "organization")
+        widgets = {
+            # Make this field available to the form but invisible to user
+            "inviter": forms.HiddenInput(),
+        }
+        labels = {"invitee_email": "Email"}

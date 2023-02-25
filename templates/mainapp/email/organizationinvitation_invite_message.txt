@@ -1,0 +1,9 @@
+Hello,
+
+{{ invitation.inviter.first_name|safe }} has invited you to join {{ invitation.organization|safe }} on Polynomial.
+
+Follow this link to join.
+
+{{ invite_url }}
+
+If you are unsure about this link, please contact the sender.

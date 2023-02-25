@@ -6,13 +6,14 @@ from datetime import date, datetime, timedelta
 from types import MethodType
 from typing import Dict, List, Optional, Union
 
+from allauth.account.adapter import get_adapter
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.forms.models import model_to_dict
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
-    HttpResponseForbidden,
     HttpResponseNotAllowed,
     HttpResponseNotFound,
     HttpResponseRedirect,
@@ -23,13 +24,16 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template import Context, Template
 from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
+from django.utils.http import urlencode
 from django.views.generic import (
     CreateView,
     DeleteView,
     ListView,
     TemplateView,
     UpdateView,
+    View,
 )
+from django.views.generic.detail import SingleObjectMixin
 
 from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
@@ -46,6 +50,7 @@ from ..models import (
     Measurement,
     Metric,
     Organization,
+    OrganizationInvitation,
     OrganizationUser,
     User,
 )
@@ -250,7 +255,7 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
         self.state = state
         # Make sure someone with the link can't impersonate a user
         if request.session.get(self.state, {}).get("user_id") != request.user.id:
-            return HttpResponseForbidden()
+            raise PermissionDenied
         metric_data = request.session.get(self.state, {}).get("metric", {})
         self.integration_id = metric_data.get("integration_id")
         self.integration_credentials = metric_data.get("integration_credentials")
@@ -552,6 +557,9 @@ class OrganizationUserListView(
         context["organization"] = Organization.objects.get(
             pk=self.kwargs["organization_pk"]
         )
+        context["is_organization_admin"] = context["organization"].is_admin(
+            self.request.user
+        )
         return context
 
 
@@ -574,6 +582,16 @@ class OrganizationUserCreateView(
         )
         return context
 
+    def get_initial(self):
+        return {"inviter": self.request.user}
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {"request": self.request, "organization_pk": self.kwargs["organization_pk"]}
+        )
+        return kwargs
+
 
 class OrganizationUserDeleteView(
     LoginRequiredMixin,
@@ -589,3 +607,55 @@ class OrganizationUserDeleteView(
             "organization_user_list",
             kwargs={"organization_pk": self.object.organization.pk},
         )
+
+
+class InvitationListView(LoginRequiredMixin, ListView):
+    model = OrganizationInvitation
+
+    def get_queryset(self):
+        user = self.request.user
+        assert isinstance(user, User)
+        return OrganizationInvitation.objects.filter(
+            invitee_email__in=user.emailaddress_set.values_list("email", flat=True),
+            user=None,
+        )
+
+
+class InvitationAcceptView(SingleObjectMixin, View):
+    model = OrganizationInvitation
+
+    def get_object(self):
+        return get_object_or_404(
+            OrganizationInvitation, invitation_key=self.kwargs["key"]
+        )
+
+    def get(self, request, key):
+        invitation = self.get_object()
+
+        if request.user.is_anonymous:
+            # Mark this email address as verified, and head to sign up
+            get_adapter().stash_verified_email(request, invitation.invitee_email)
+            # Return here once we're signed up
+            return redirect(
+                f"{reverse('account_signup')}?{urlencode({'next': request.path})}"
+            )
+        else:
+            # User is authenticated
+            try:
+                invited_user = User.get_by_email(
+                    invitation.invitee_email, only_verified=False
+                )
+            except User.DoesNotExist:
+                invited_user = None
+            if request.user == invited_user:
+                # Accept invitation
+                invitation.accept(request.user)
+                # Send notification to invitee
+                ctx = {"invitation": invitation}
+                email_template = "mainapp/email/organizationinvitation_accepted"
+                get_adapter().send_mail(email_template, invitation.inviter.email, ctx)
+                return redirect("organization_list")
+            else:
+                raise PermissionDenied(
+                    "This invitation is not valid for emails associated with this account."
+                )

@@ -24,10 +24,10 @@ else:
 class OrganizationUserMixin(SingleObjectMixin, _Base):
     def get_object(self):
         organization_pk = self.kwargs["organization_pk"]
-        user_pk = self.kwargs.get("user_pk", None)
+        organization_user_pk = self.kwargs.get("organization_user_pk", None)
         return get_object_or_404(
             OrganizationUser.objects.select_related(),
-            user__pk=user_pk,
+            pk=organization_user_pk,
             organization__pk=organization_pk,
         )
 

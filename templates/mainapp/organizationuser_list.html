@@ -29,14 +29,22 @@
                       {{ organization_user.user.first_name }}
                       {{ organization_user.user.last_name }}
                     </div>
-                    <div class="font-normal text-gray-500">{{ organization_user.user.email }}</div>
-                </div>  
+                    <div class="font-normal text-gray-500">
+                      {% if organization_user.user %}
+                        {{ organization_user.user.email }}
+                      {% else %}
+                        {{ organization_user.invitee_email }}
+                      {% endif %}
+                    </div>
+                </div>
             </th>
             <td class="px-6 py-4">
                 {% if organization_user.is_owner %}
                     Owner
                 {% elif organization_user.is_admin %}
                     Administrator
+                {% else %}
+                    Member
                 {% endif %}
             </td>
             <td class="px-6 py-4">
@@ -44,12 +52,14 @@
                     {% if organization_user.user.is_active %}
                     <div class="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></div> Active
                     {% else %}
-                    <div class="h-2.5 w-2.5 rounded-full bg-gray-500 mr-2"></div> Invited (<a href="{% url 'organization_user_remind' organization.pk organization_user.pk %}" class="font-medium">resend invitation</a>)
+                    <div class="h-2.5 w-2.5 rounded-full bg-gray-500 mr-2"></div> Invited
                     {% endif %}
                 </div>
             </td>
             <td class="px-6 py-4">
+                {% if is_organization_admin %}
                 <a href="{% url 'organization_user_delete' organization.pk organization_user.pk %}" class="font-medium">Remove</a>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}

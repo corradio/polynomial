@@ -103,17 +103,17 @@ urlpatterns = [
                                 name="organization_delete",
                             ),
                             path(
-                                "people/",
+                                "orgusers/",
                                 views.OrganizationUserListView.as_view(),
                                 name="organization_user_list",
                             ),
                             path(
-                                "people/new",
+                                "orgusers/new",
                                 views.OrganizationUserCreateView.as_view(),
                                 name="organization_user_new",
                             ),
                             path(
-                                "people/<int:user_pk>/delete",
+                                "orgusers/<int:organization_user_pk>/delete",
                                 views.OrganizationUserDeleteView.as_view(),
                                 name="organization_user_delete",
                             ),
@@ -122,6 +122,17 @@ urlpatterns = [
                 ),
             ]
         ),
+    ),
+    # Invitations
+    path(
+        "invitations/",
+        view=views.InvitationListView.as_view(),
+        name="invitation_list",
+    ),
+    path(
+        "invitations/<key>",
+        view=views.InvitationAcceptView.as_view(),
+        name="invitation_accept",
     ),
     # User pages
     path(

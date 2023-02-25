@@ -1,9 +1,14 @@
 import json
 import logging
+import uuid
 from datetime import date, timedelta
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
+from allauth.account.adapter import get_adapter
+from allauth.account.models import EmailAddress
+from allauth.account.utils import setup_user_email
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django_jsonform.models.fields import JSONField
@@ -16,7 +21,27 @@ logger = logging.getLogger(__name__)
 
 class User(AbstractUser):
     # tz, see https://docs.djangoproject.com/en/4.1/topics/i18n/timezones/
-    pass
+    if TYPE_CHECKING:
+        from django.db.models.manager import RelatedManager
+
+        emailaddress_set: RelatedManager[EmailAddress]
+
+    @classmethod
+    def get_by_email(cls, email, only_verified=True):
+        try:
+            extra_filters = {}
+            if only_verified:
+                extra_filters["verified"] = True
+            return (
+                EmailAddress.objects.select_related("user")
+                .get(
+                    email__iexact=email,
+                    **extra_filters,
+                )
+                .user
+            )
+        except EmailAddress.DoesNotExist:
+            raise User.DoesNotExist from None
 
 
 class Metric(models.Model):
@@ -145,17 +170,30 @@ class OrganizationUser(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        null=True,  # Can be null if user is invited but has no account
     )
     organization = models.ForeignKey(
         "Organization",
         on_delete=models.CASCADE,
     )
+    # Invitations (optional)
+    invitation_key = models.UUIDField(unique=True, editable=False, null=True)
+    invitee_email = models.EmailField(null=True)
+    inviter = models.ForeignKey(
+        User, on_delete=models.SET_NULL, related_name="inviter", null=True
+    )
+
+    class Meta:
+        unique_together = ("user", "organization", "invitee_email")
 
     def __str__(self):
-        return "{0} ({1})".format(
-            str(self.user) if self.user.is_active else self.user.email,
-            self.organization.name,
-        )
+        if self.user:
+            return "{0} ({1})".format(
+                str(self.user) if self.user.is_active else self.user.email,
+                self.organization.name,
+            )
+        else:
+            return f"{self.invitee_email} (invited to {self.organization.name})"
 
     def delete(self, using=None):
         """
@@ -170,16 +208,21 @@ class OrganizationUser(models.Model):
         super().delete(using=using)
 
     def get_absolute_url(self):
-        return reverse(
-            "organization_user_detail",
-            kwargs={"organization_pk": self.organization.pk, "user_pk": self.user.pk},
-        )
+        if self.user:
+            return reverse(
+                "organization_user_detail",
+                kwargs={
+                    "organization_pk": self.organization.pk,
+                    "user_pk": self.user.pk,
+                },
+            )
+        else:
+            return reverse("invitation_accept", args=[self.invitation_key])
 
     def is_owner(self):
+        if not self.user:
+            return False
         return self.organization.is_owner(self.user)
-
-    class Meta:
-        unique_together = ("user", "organization")
 
 
 class Organization(models.Model):
@@ -189,6 +232,7 @@ class Organization(models.Model):
         User,
         through=OrganizationUser,
         related_name="organization_users",
+        through_fields=("organization", "user"),
     )
     owner = models.ForeignKey(User, on_delete=models.PROTECT)
 
@@ -228,3 +272,13 @@ class Organization(models.Model):
 
     def is_member(self, user: User):
         return True if user in self.users.all() else False
+
+
+class OrganizationInvitation(OrganizationUser):
+    class Meta:
+        proxy = True
+
+    def accept(self, user):
+        # Update the associate org user
+        self.user = user
+        return self.save()

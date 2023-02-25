@@ -217,6 +217,7 @@ LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Polynomial] "
 
 if not DEBUG:
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
@@ -246,6 +247,7 @@ EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", default=None)
 EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", default=None)
 EMAIL_SUBJECT_PREFIX = "[Polynomial] "
 ADMINS = [("Olivier", "admin@polynomial.so")]
+DEFAULT_FROM_EMAIL = "admin@polynomial.so"
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 

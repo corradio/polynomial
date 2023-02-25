@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load organization_tags %}
 {% block content %}
 <h1>My organizations</h1>
 
@@ -27,15 +28,17 @@
             </th>
             <td class="px-6 py-4">
                 <a href="{% url 'organization_user_list' organization.id %}">
-                {% with total_users=organization.users.all.count %}
-                   {{total_users}} member{{ total_users|pluralize }}
+                {% with total_users=organization.users.count %}
+                   {{ total_users }} member{{ total_users|pluralize }}
                 {% endwith %}
                 </a>
             </td>
             <td class="px-6 py-4">
+                {% if organization|is_admin:user %}
                 <a href="{% url 'organization_user_new' organization.id %}" class="font-medium">Add member</a>
                 <a href="{% url 'organization_edit' organization.id %}" class="font-medium">Edit</a>
                 <a href="{% url 'organization_delete' organization.id %}" class="font-medium">Delete</a>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
