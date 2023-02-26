@@ -117,6 +117,16 @@ class Metric(models.Model):
             logger.exception("Exception while calling `can_backfill`")
             return False
 
+    def can_edit(self, user: User):
+        return self.user == user
+
+    def can_view(self, user: User):
+        if self.user == user:
+            return True
+        # Check if user is member of any of the orgs that this
+        # metric belong to
+        return any([o.is_member(user) for o in self.organizations.all()])
+
     def __str__(self):
         return f"{self.name}"
 

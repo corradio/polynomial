@@ -9,8 +9,10 @@
       {% endwith %}
       {{ metric.metric_name }}
       {% if not page_user or user == page_user %}
+      {% if metric.can_edit %}
       [<a href="{% url 'metric-details' metric.metric_id %}">edit</a>]
       [<a href="{% url 'metric-duplicate' metric.metric_id %}">duplicate</a>]
+      {% endif %}
       {% endif %}
     </div>
     <div id="chart-{{ metric.metric_id }}" style="width: 100%; height: 250px;"></div>

@@ -10,6 +10,7 @@ from allauth.account.adapter import get_adapter
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.forms.models import model_to_dict
 from django.http import (
     HttpResponse,
@@ -63,7 +64,7 @@ from .mixins import (
 )
 
 
-def get_dashboard_context(request, metric_filter_kwargs=None):
+def get_dashboard_context(request, metric_filter_args=None, metric_filter_kwargs=None):
     start_date = None
     if "since" in request.GET:
         start_date = parse_date(request.GET["since"])
@@ -82,6 +83,7 @@ def get_dashboard_context(request, metric_filter_kwargs=None):
             "metric_id": metric.id,
             "metric_name": metric.name,
             "integration_id": metric.integration_id,
+            "can_edit": metric.can_edit(request.user),
             "measurements": [
                 {
                     "value": measurement.value,
@@ -92,7 +94,9 @@ def get_dashboard_context(request, metric_filter_kwargs=None):
                 ).order_by("date")
             ],
         }
-        for metric in Metric.objects.filter(**metric_filter_kwargs).order_by("name")
+        for metric in Metric.objects.filter(
+            *(metric_filter_args or []), **(metric_filter_kwargs or {})
+        ).order_by("name")
     ]
     context = {
         "measurements_by_metric": measurements_by_metric,
@@ -104,8 +108,12 @@ def get_dashboard_context(request, metric_filter_kwargs=None):
 
 @login_required
 def index(request):
+    organizations = Organization.objects.filter(users=request.user)
     context = get_dashboard_context(
-        request, metric_filter_kwargs={"user": request.user}
+        request,
+        metric_filter_args=[
+            (Q(user=request.user) | Q(organizations__in=organizations))
+        ],
     )
     return render(request, "mainapp/index.html", context)
 
