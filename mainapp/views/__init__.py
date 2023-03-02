@@ -4,7 +4,7 @@ import sys
 import traceback
 from datetime import date, datetime, timedelta
 from types import MethodType
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from allauth.account.adapter import get_adapter
 from django.contrib.auth.decorators import login_required
@@ -56,6 +56,9 @@ from ..models import (
     User,
 )
 from ..tasks import backfill_task
+
+# Re-export
+from . import dashboard
 from .mixins import (
     OrganizationAdminRequiredMixin,
     OrganizationMembershipRequiredMixin,
@@ -64,57 +67,23 @@ from .mixins import (
 )
 
 
-def get_dashboard_context(request, metric_filter_args=None, metric_filter_kwargs=None):
-    start_date = None
-    if "since" in request.GET:
-        start_date = parse_date(request.GET["since"])
-        if not start_date:
-            interval = parse_duration(request.GET["since"])  # e.g. "3 days"
-            if not interval:
-                return HttpResponseBadRequest(
-                    f"Invalid argument `since`: should be a date or a duration."
-                )
-            start_date = date.today() - interval
-    if start_date is None:
-        start_date = date.today() - timedelta(days=60)
-    end_date = date.today()
-    measurements_by_metric = [
-        {
-            "metric_id": metric.id,
-            "metric_name": metric.name,
-            "integration_id": metric.integration_id,
-            "can_edit": metric.can_edit(request.user),
-            "measurements": [
-                {
-                    "value": measurement.value,
-                    "date": measurement.date.isoformat(),
-                }
-                for measurement in Measurement.objects.filter(
-                    metric=metric, date__range=[start_date, end_date]
-                ).order_by("date")
-            ],
-        }
-        for metric in Metric.objects.filter(
-            *(metric_filter_args or []), **(metric_filter_kwargs or {})
-        ).order_by("name")
-    ]
-    context = {
-        "measurements_by_metric": measurements_by_metric,
-        "start_date": start_date,
-        "end_date": end_date,
-    }
-    return context
-
-
 @login_required
 def index(request):
-    organizations = Organization.objects.filter(users=request.user)
-    context = get_dashboard_context(
-        request,
-        metric_filter_args=[
-            (Q(user=request.user) | Q(organizations__in=organizations))
-        ],
-    )
+    user = request.user
+    organizations = Organization.objects.filter(users=user)
+    context: Dict[str, Any] = {}
+    if isinstance(user, User):
+        context["dashboards"] = (
+            Dashboard.objects.all()
+            .filter(Q(user=user) | Q(organization__in=organizations))
+            .order_by("name")
+        )
+        context["organizations"] = organizations.order_by("name")
+        context["metrics"] = (
+            Metric.objects.all()
+            .filter(Q(user=user) | Q(organizations__in=organizations))
+            .order_by("name")
+        )
     return render(request, "mainapp/index.html", context)
 
 
@@ -517,32 +486,33 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
                 return redirect(reverse("metric-new-with-state", args=[state]))
 
 
-def user_page(request, username):
-    user = get_object_or_404(User, username=username)
-    if user == request.user:
-        # Show all dashboards
-        dashboards = Dashboard.objects.filter(user=user)
-    else:
-        # Only public ones
-        dashboards = Dashboard.objects.filter(user=user, is_public=True)
+def page(request, username_or_org_slug):
+    try:
+        user = User.objects.get(username=username_or_org_slug)
+        page_name = user.name
+        id_query = Q(user=user)  # dashboards owned by user
+    except User.DoesNotExist:
+        # try org slug
+        organization = get_object_or_404(Organization, slug=username_or_org_slug)
+        page_name = organization.name
+        id_query = Q(organization=organization)  # owned by org
+
+    organizations = Organization.objects.filter(users=request.user)
+    dashboards = Dashboard.objects.filter(
+        id_query
+        # to able to list it, the dashboard needs to be
+        # either owned by visitor, public dashboard,
+        # or visitor needs to be member of dashboard org
+        & Q(user=request.user)
+        | Q(is_public=True)
+        | Q(organization__in=organizations)
+    )
+
     context = {
-        **get_dashboard_context(request, metric_filter_kwargs={"user": user}),
         "dashboards": dashboards,
-        "page_user": user,  # don't override `user` which is the logged in user
+        "page_name": page_name,
     }
-    return render(request, "mainapp/user_page.html", context)
-
-
-def dashboard(request, username, slug):
-    user = get_object_or_404(User, username=username)
-    dashboard = get_object_or_404(Dashboard, user=user, slug=slug)
-    if not dashboard.is_public and dashboard.user != request.user:
-        return HttpResponseNotFound()
-    context = {
-        **get_dashboard_context(request, metric_filter_kwargs={"dashboard": dashboard}),
-        "dashboard": dashboard,
-    }
-    return render(request, "mainapp/dashboard.html", context)
+    return render(request, "mainapp/page.html", context)
 
 
 class OrganizationListView(LoginRequiredMixin, ListView):

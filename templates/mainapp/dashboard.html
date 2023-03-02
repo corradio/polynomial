@@ -9,7 +9,7 @@
 
 {% block content %}
 {% if not measurements_by_metric %}
-  <h1>Welcome to Polynomial 👋</h1>
+  <h1>{{ dashboard.name }}</h1>
   You don't have a metric yet. Let's add one!
   <p>
     <a href="{% url 'integrations' %}">Add metric</a>

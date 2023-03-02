@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block head_title %}{{ page_user }}'s page{% endblock %}
+{% block head_title %}{{ page_name }}'s page{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.6.0"></script>
@@ -8,20 +8,11 @@
 {% endblock %}
 
 {% block content %}
-<h1>{{ page_user }}'s page</h1>
+<h1>{{ page_name }}'s page</h1>
 {% if dashboards %}
   <h2>Dashboards</h2>
   {% for dashboard in dashboards %}
     <a href="{% url 'dashboard' user dashboard.slug %}">{{ dashboard }}</a>
   {% endfor %}
-{% endif %}
-<h2>Metrics</h2>
-{% if not measurements_by_metric %}
-  You don't have a metric yet. Let's add one!
-  <p>
-    <a href="{% url 'integrations' %}">Add metric</a>
-  </p>
-{% else %}
-  {% include "mainapp/snippets/metric_mosaic.html" %}
 {% endif %}
 {% endblock %}

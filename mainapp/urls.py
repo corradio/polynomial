@@ -29,7 +29,7 @@ urlpatterns = [
     path(
         "metrics/<int:pk>/delete",
         views.MetricDeleteView.as_view(),
-        name="metric-delete",
+        name="metric_delete",
     ),
     path(
         "metrics/<int:pk>/authorize",
@@ -134,16 +134,39 @@ urlpatterns = [
         view=views.InvitationAcceptView.as_view(),
         name="invitation_accept",
     ),
+    # Dashboards
+    path(
+        "dashboards/",
+        include(
+            [
+                path(
+                    "",
+                    view=views.dashboard.DashboardListView.as_view(),
+                    name="dashboard_list",
+                ),
+                path(
+                    "new",
+                    view=views.dashboard.DashboardCreateView.as_view(),
+                    name="dashboard_new",
+                ),
+                path(
+                    "delete",
+                    view=views.dashboard.DashboardDeleteView.as_view(),
+                    name="dashboard_delete",
+                ),
+            ]
+        ),
+    ),
     # User pages
     path(
-        "<username>/",  # this one needs to be at the bottom
-        views.user_page,
-        name="user-page",
+        "<username_or_org_slug>/",  # this one needs to be at the bottom
+        views.page,
+        name="page",
     ),
     # Dashboards
     path(
-        "<username>/<slug>",  # this one needs to be at the bottom
-        views.dashboard,
+        "<username_or_org_slug>/<dashboard_slug>",  # this one needs to be at the bottom
+        views.dashboard.dashboard_view,
         name="dashboard",
     ),
 ]

@@ -8,12 +8,15 @@
         <img class="integration-icon" src="{% static icon_url %}" alt="">
       {% endwith %}
       {{ metric.metric_name }}
-      {% if not page_user or user == page_user %}
+      <span class="text-sm">
       {% if metric.can_edit %}
-      [<a href="{% url 'metric-details' metric.metric_id %}">edit</a>]
-      [<a href="{% url 'metric-duplicate' metric.metric_id %}">duplicate</a>]
+        [<a href="{% url 'metric-details' metric.metric_id %}">edit</a>]
+        [<a href="{% url 'metric-duplicate' metric.metric_id %}">duplicate</a>]
       {% endif %}
+      {% if can_edit %}
+        [<a href="">remove</a>]
       {% endif %}
+      </span>
     </div>
     <div id="chart-{{ metric.metric_id }}" style="width: 100%; height: 250px;"></div>
     {% with metric.metric_id|stringformat:"s" as metric_id_str %}
@@ -22,14 +25,13 @@
       {% endwith %}
     {% endwith %}
   </div>
-{% empty %}
-  <center>
-    You don't have a metric yet. Let's add one!
-    <p>
-      <a href="{% url 'integrations' %}">Add metric</a>
-    </p>
-  </center>
 {% endfor %}
+{% if can_edit %}
+  <div class="card flex items-center justify-center bg-slate-50" style="border: thin dotted lightgray; border-radius: 5px;">
+    <a href="#" class="btn">Add existing metric</a>
+    <a href="#" class="btn">Create new metric</a>
+  </div>
+{% endif %}
 
 <script
   type="text/javascript"

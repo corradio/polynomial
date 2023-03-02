@@ -43,6 +43,12 @@ class User(AbstractUser):
         except EmailAddress.DoesNotExist:
             raise User.DoesNotExist from None
 
+    @property
+    def name(self) -> str:
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.username
+
 
 class Metric(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -164,18 +170,53 @@ class Dashboard(models.Model):
     slug = models.SlugField()
     is_public = models.BooleanField(default=False)
     name = models.CharField(max_length=128)
+    organization = models.ForeignKey(
+        "Organization", null=True, on_delete=models.SET_NULL
+    )
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("dashboard", kwargs={"user": self.user, "slug": self.slug})
+        username_or_org_slug = (
+            self.organization.slug if self.organization else self.user.username
+        )
+        return reverse(
+            "dashboard",
+            kwargs={
+                "username_or_org_slug": username_or_org_slug,
+                "dashboard_slug": self.slug,
+            },
+        )
+
+    def can_edit(self, user: User):
+        if not self.organization:
+            return self.user == user
+        # Owner can edit
+        if self.user == user:
+            return True
+        # Anyone in the org can edit
+        return user in self.organization.users.all()
+
+    def can_delete(self, user: User):
+        return self.user == user
 
     class Meta:
+        # Remember that null values are not considered equals in the constraint
+        # meaning it will ignore the tuple if one field is NULL
+        # See https://www.postgresql.org/docs/13/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS
         constraints = [
+            # (org, slug) needs to be unique (will ignore if org or slug is NULL)
             models.UniqueConstraint(
-                fields=("user", "slug"), name="unique_dashboard_user_slug"
-            )
+                fields=("organization", "slug"), name="unique_dashboard_org_slug"
+            ),
+            # (user, slug) needs to be unique only when no org
+            # (will ignore if slug is NULL)
+            models.UniqueConstraint(
+                fields=("user", "slug"),
+                name="unique_dashboard_owner_slug",
+                condition=models.Q(organization__isnull=True),
+            ),
         ]
 
 

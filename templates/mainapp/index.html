@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block head_title %}Lightweight metrics engine for your most vital KPIs{% endblock %}
 {% block extra_head %}
@@ -8,13 +9,140 @@
 {% endblock %}
 
 {% block content %}
-{% if not measurements_by_metric %}
   <h1>Welcome to Polynomial 👋</h1>
-  You don't have a metric yet. Let's add one!
-  <p>
-    <a href="{% url 'integrations' %}">Add metric</a>
-  </p>
-{% else %}
-{% include "mainapp/snippets/metric_mosaic.html" %}
-{% endif %}
+
+  <h2>
+    Dashboards
+    <span class="text-sm">[<a href="{% url 'dashboard_new' %}">create new</a>]</span>
+  </h2>
+  {% if not dashboards %}
+    <p>
+      You have no dashboard yet. <a href="{% url 'dashboard_new' %}">Create one now</a>.
+    </p>
+  {% else %}
+    <table class="table">
+      <thead>
+        <th>Dashboard</th>
+        <th>Owner</th>
+        <th>Visibility</th>
+        <th>Actions</th>
+      </thead>
+      <tbody>
+        {% for dashboard in dashboards %}
+        <tr>
+          <th>
+            <a href="{{ dashboard.get_absolute_url }}">{{ dashboard.name }}</a>
+          </th>
+          <td>
+            {% if dashboard.user == user %}
+              Me
+            {% else %}
+              {{ dashboard.user.name }}
+            {% endif %}
+          </td>
+          <td>
+            {% if dashboard.is_public %}
+              Public
+            {% else %}
+              Private
+            {% endif %}
+          <td>
+            {% if organization.owner == user %}
+              <a href="{% url 'organization_delete' organization.id %}">Delete</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  <h2>
+    Organizations
+    <span class="text-sm">[<a href="{% url 'organization_new' %}">create new</a>]</span>
+  </h2>
+  {% if not organizations %}
+    <p>
+      You are not part of any organization. <a href="{% url 'organization_new' %}" class="btn">Create one now</a>.
+    </p>
+  {% else %}
+    <table class="table">
+      <thead>
+        <th>Organization</th>
+        <th>Owner</th>
+        <th>Actions</th>
+      </thead>
+      <tbody>
+        {% for organization in organizations %}
+        <tr>
+          <th>
+            {{ organization.name }}
+          </th>
+          <td>
+            {% if organization.owner == user %}
+              Me
+            {% else %}
+              {{ organization.owner.name }}
+            {% endif %}
+          </td>
+          <td>
+            {% if organization.owner == user %}
+              <a href="{% url 'organization_delete' organization.id %}">Delete</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  <h2>
+    Metrics
+    <span class="text-sm">[<a href="{% url 'integrations' %}">create new</a>]</span>
+  </h2>
+  {% if not metrics %}
+    You don't have a metric yet.
+    <p>
+      <a href="{% url 'integrations' %}" class="btn">Let's add one now</a>.
+    </p>
+  {% else %}
+    <table class="table">
+      <thead>
+        <th>Metric</th>
+        <th>Owner</th>
+        <th>Shared with</th>
+        <th>Used by</th>
+        <th>Actions</th>
+      </thead>
+      <tbody>
+        {% for metric in metrics %}
+        <tr>
+          <th>
+            <div>
+              {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
+                <img class="integration-icon" src="{% static icon_url %}" alt="">
+              {% endwith %}
+              {{ metric.name }}
+            </div>
+          </th>
+          <td>
+            {% if metric.user == user %}
+              Me
+            {% else %}
+              {{ metric.user.name }}
+            {% endif %}
+          </td>
+          <td>{{ metric.organizations.all|join:", " }}</td>
+          <td>{{ metric.dashboard_set.all|join:", " }}</td>
+          <td>
+            {% if metric.user == user %}
+              <a href="{% url 'metric-details' metric.id %}">Edit</a>
+              <a href="{% url 'metric_delete' metric.id %}">Delete</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
 {% endblock %}
