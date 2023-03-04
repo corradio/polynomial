@@ -58,6 +58,7 @@ class Metric(models.Model):
     )
     integration_credentials = models.JSONField(blank=True, null=True)
     organizations = models.ManyToManyField("Organization")
+    dashboards = models.ManyToManyField("Dashboard", through="dashboard_metrics")
 
     # The credentials can be saved either in db, or in cache, while the object
     # is temporarily being built. We therefore allow this to be changed later.

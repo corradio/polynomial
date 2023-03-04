@@ -2,6 +2,7 @@ import uuid
 
 from allauth.account.adapter import get_adapter
 from django import forms
+from django.db.models import Q
 from django.urls import reverse
 
 from mainapp.models import (
@@ -16,18 +17,47 @@ from mainapp.models import (
 
 class MetricForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
         # manually set the current instance on the widget
         # see https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         self.fields["integration_config"].widget.instance = self.instance
 
+        organizations_field = self.fields["organizations"]
+        assert isinstance(organizations_field, forms.ChoiceField)
+        dashboards_field = self.fields["dashboards"]
+        assert isinstance(dashboards_field, forms.ChoiceField)
+
+        organizations = Organization.objects.filter(users=user)
+        organizations_field.choices = [
+            (x.pk, str(x)) for x in Organization.objects.filter(users=user)
+        ]
+        organizations_field.help_text = "Sharing a metric with an organization will make it usable by all its members"
+        dashboards_field.choices = [
+            (x.pk, str(x))
+            for x in Dashboard.objects.all().filter(
+                Q(user=user) | Q(organization__in=organizations)
+            )
+        ]
+        dashboards_field.help_text = (
+            "Adding a metric to a dashboard will also add it to its organization"
+        )
+
     class Meta:
         model = Metric
-        fields = ["name", "integration_config", "integration_id"]
+        fields = [
+            "name",
+            "integration_config",
+            "integration_id",
+            "organizations",
+            "dashboards",
+        ]
 
         widgets = {
             # Make this field available to the form but invisible to user
             "integration_id": forms.HiddenInput(),
+            "dashboards": forms.CheckboxSelectMultiple(),
+            "organizations": forms.CheckboxSelectMultiple(),
         }
 
 
@@ -152,3 +182,36 @@ class DashboardUpdateForm(forms.ModelForm):
     class Meta:
         model = Dashboard
         fields = ["name", "slug", "is_public"]
+
+
+class DashboardMetricAddForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        organizations = Organization.objects.filter(users=user)
+        available_metrics = (
+            Metric.objects.all()
+            .filter(Q(user=user) | Q(organizations__in=organizations))
+            .order_by("name")
+        )
+        metrics_field = self.fields["metrics"]
+        assert isinstance(metrics_field, forms.ChoiceField)
+        metrics_field.choices = [(m.pk, str(m)) for m in available_metrics]
+        if self.instance.organization:
+            metrics_field.help_text = f"Note: metrics selected will automatically be added to {self.instance.organization}"
+
+    def save(self, *args, **kwargs):
+        dashboard = super().save(*args, **kwargs)
+        # Also make sure that every metric is moved to organization
+        # to keep ACL consistent
+        if dashboard.organization:
+            for metric in dashboard.metrics:
+                metric.organizations.add(dashboard.organization)
+        return dashboard
+
+    class Meta:
+        model = Dashboard
+        fields = ["metrics"]
+        widgets = {
+            "metrics": forms.CheckboxSelectMultiple(),
+        }

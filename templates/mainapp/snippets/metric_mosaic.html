@@ -28,8 +28,8 @@
 {% endfor %}
 {% if can_edit %}
   <div class="card flex items-center justify-center bg-slate-50" style="border: thin dotted lightgray; border-radius: 5px; min-height: 250px">
-    <a href="#" class="btn">Add existing metric</a>
-    <a href="#" class="btn">Create new metric</a>
+    <a href="{% url 'dashboardmetric_add' dashboard.pk %}" class="btn">Add existing metric</a>
+    <a href="{% url 'integrations' %}?dashboard_ids={{ dashboard.pk }}" class="btn">Create new metric</a>
   </div>
 {% endif %}
 

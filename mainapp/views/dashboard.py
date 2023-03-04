@@ -9,7 +9,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from ..forms import DashboardCreateForm, DashboardUpdateForm
+from ..forms import DashboardCreateForm, DashboardMetricAddForm, DashboardUpdateForm
 from ..models import Dashboard, Measurement, Metric, Organization, User
 
 
@@ -46,6 +46,23 @@ class DashboardUpdateView(LoginRequiredMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
 
+class DashboardMetricAddView(LoginRequiredMixin, UpdateView):
+    model = Dashboard
+    pk_url_kwarg = "dashboard_pk"
+    form_class = DashboardMetricAddForm
+
+    def dispatch(self, request, *args, **kwargs):
+        dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
+        if not dashboard.can_edit(request.user):
+            raise PermissionDenied("You don't have the rights to edit this dashboard")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+
 def dashboard_view(request, username_or_org_slug, dashboard_slug):
     try:
         user = User.objects.get(username=username_or_org_slug)
@@ -62,7 +79,9 @@ def dashboard_view(request, username_or_org_slug, dashboard_slug):
         Dashboard,
         id_query
         # Either owner, public dashboard, or member of dashboard org
-        & Q(user=request.user) | Q(is_public=True) | Q(organization__in=organizations),
+        & (
+            Q(user=request.user) | Q(is_public=True) | Q(organization__in=organizations)
+        ),
     )
 
     start_date = None

@@ -10,7 +10,7 @@
                 <img class="integration-icon" src="{% static icon_url %}" alt="">
               {% endwith %}
               {{ integration_id }}
-              <a href="{% url 'metric-new' %}?integration_id={{ integration_id }}">[configure]</a>
+              <a href="{% url 'metric_new' %}?integration_id={{ integration_id }}&{{ request.META.QUERY_STRING }}">[configure]</a>
             </li>
         {% endfor %}
     </ul>

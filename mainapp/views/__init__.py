@@ -67,6 +67,12 @@ from .mixins import (
 )
 
 
+def deserialize_list(arg: Optional[str]):
+    if not arg:
+        return []
+    return arg.split(",")
+
+
 @login_required
 def index(request):
     user = request.user
@@ -199,11 +205,6 @@ class MetricListView(LoginRequiredMixin, ListView):
     def post(self, request, *args, **kwargs):
         # Strictly speaking should be PATCH, but it's not supported
         # in html forms
-        def deserialize_list(arg: Optional[str]):
-            if not arg:
-                return []
-            return arg.split(",")
-
         organization_to_set = deserialize_list(
             self.request.POST.get("organization-on-list")
         )
@@ -244,9 +245,12 @@ def metric_duplicate(request, pk):
 def metric_new(request):
     # Generate a new state to uniquely identify this new creation
     state = secrets.token_urlsafe(32)
-    integration_id = request.GET["integration_id"]
     request.session[state] = {
-        "metric": {"integration_id": integration_id},
+        "metric": {
+            "integration_id": request.GET["integration_id"],
+            "dashboards": deserialize_list(request.GET.get("dashboard_ids")),
+            "organizations": deserialize_list(request.GET.get("organization_ids")),
+        },
         "user_id": request.user.id,
     }
     return redirect(reverse("metric-new-with-state", args=[state]))
@@ -281,7 +285,7 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
     def get_initial(self):
         data = self.request.session.get(self.state)
         if data is None:
-            return redirect(reverse("metric-new", args=[self.integration_id]))
+            return redirect(reverse("metric_new", args=[self.integration_id]))
         # Restore form
         initial = data.get("metric", {"integration_id": self.integration_id})
         assert initial["integration_id"] == self.integration_id
@@ -289,12 +293,20 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
         # The callable schema will require an initialised instance that will get
         # passed to it.
         # Furthermore, getting the schema from the form might cause credential
         # updates. We therefore need to pass an instance of a Metric
         # object which is capable of updating the cached credentials
-        kwargs["instance"] = Metric(**kwargs["initial"])
+        kwargs["instance"] = Metric(
+            # Note we have to exclude relations from initialization params
+            **{
+                k: v
+                for (k, v) in kwargs["initial"].items()
+                if k not in ["dashboards", "organizations"]
+            }
+        )
 
         def credentials_saver(metric_instance):
             metric = self.request.session[self.state]["metric"]
@@ -372,6 +384,11 @@ class MetricUpdateView(LoginRequiredMixin, UpdateView):
         metric = self.object
         context["can_web_auth"] = metric.can_web_auth
         return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 @login_required
@@ -503,9 +520,7 @@ def page(request, username_or_org_slug):
         # to able to list it, the dashboard needs to be
         # either owned by visitor, public dashboard,
         # or visitor needs to be member of dashboard org
-        & Q(user=request.user)
-        | Q(is_public=True)
-        | Q(organization__in=organizations)
+        & (Q(user=request.user) | Q(is_public=True) | Q(organization__in=organizations))
     )
 
     context = {

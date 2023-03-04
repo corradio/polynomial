@@ -50,7 +50,7 @@ urlpatterns = [
     path(
         "metrics/new",
         views.metric_new,
-        name="metric-new",
+        name="metric_new",
     ),
     path(
         "metrics/new/<state>/",
@@ -154,6 +154,16 @@ urlpatterns = [
                     view=views.dashboard.DashboardUpdateView.as_view(),
                     name="dashboard_edit",
                 ),
+                path(
+                    "<int:dashboard_pk>/metrics/add",
+                    view=views.dashboard.DashboardMetricAddView.as_view(),
+                    name="dashboardmetric_add",
+                ),
+                # path(
+                #     "<int:dashboard_pk>/metrics/remove",
+                #     view=...,
+                #     name="dashboardmetric_remove",
+                # ),
             ]
         ),
     ),
