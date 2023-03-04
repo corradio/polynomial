@@ -95,6 +95,7 @@
           </td>
           <td>
             {% if organization|is_admin:user %}
+              <a href="{% url 'organization_edit' organization.id %}">Edit</a>
               <a href="{% url 'organization_delete' organization.id %}">Delete</a>
             {% endif %}
           </td>
