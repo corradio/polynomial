@@ -259,7 +259,7 @@ def metric_new(request):
 class MetricCreateView(LoginRequiredMixin, CreateView):
     model = Metric
     form_class = MetricForm
-    success_url = reverse_lazy("metrics")
+    success_url = reverse_lazy("index")
 
     def dispatch(self, request, state, *args, **kwargs):
         self.state = state
@@ -363,7 +363,7 @@ def metric_new_authorize(request, state):
 class MetricDeleteView(LoginRequiredMixin, DeleteView):
     object: Metric
     model = Metric
-    success_url = reverse_lazy("metrics")
+    success_url = reverse_lazy("index")
 
     def get_queryset(self, *args, **kwargs):
         # Only show metric if user can access it
@@ -373,7 +373,7 @@ class MetricDeleteView(LoginRequiredMixin, DeleteView):
 class MetricUpdateView(LoginRequiredMixin, UpdateView):
     model = Metric
     form_class = MetricForm
-    success_url = reverse_lazy("metrics")
+    success_url = reverse_lazy("index")
 
     def get_queryset(self, *args, **kwargs):
         # Only show metric if user can access it
