@@ -10,13 +10,6 @@
 {% endblock %}
 
 {% block content %}
-{% if not measurements_by_metric %}
-  <h1>{{ dashboard.name }}</h1>
-  You don't have a metric yet. Let's add one!
-  <p>
-    <a href="{% url 'integrations' %}">Add metric</a>
-  </p>
-{% else %}
   <h1>
     {{ dashboard }}
     <span class="text-sm">
@@ -29,5 +22,4 @@
     </span>
   </h1>
   {% include "mainapp/snippets/metric_mosaic.html" %}
-{% endif %}
 {% endblock %}

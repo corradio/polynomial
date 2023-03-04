@@ -9,13 +9,16 @@ from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from ..forms import DashboardUpdateForm
+from ..forms import DashboardCreateForm, DashboardUpdateForm
 from ..models import Dashboard, Measurement, Metric, Organization, User
 
 
 class DashboardCreateView(LoginRequiredMixin, CreateView):
-    # TODO: ACL
     model = Dashboard
+    form_class = DashboardCreateForm
+
+    def get_initial(self):
+        return {"user": self.request.user}
 
 
 class DashboardDeleteView(LoginRequiredMixin, DeleteView):
