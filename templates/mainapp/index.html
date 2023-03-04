@@ -28,6 +28,7 @@
         <th>Dashboard</th>
         <th>Owner</th>
         <th>Visibility</th>
+        <th>Organization</th>
         <th>Actions</th>
       </thead>
       <tbody>
@@ -49,6 +50,12 @@
             {% else %}
               Private
             {% endif %}
+          </td>
+          <td>
+            {% if dashboard.organization %}
+              <a href="{{ dashboard.organization.get_absolute_url }}">{{ dashboard.organization }}</a>
+            {% endif %}
+          </td>
           <td>
             {% if dashboard|can_edit:user %}
               <a href="{% url 'dashboard_edit' dashboard.pk %}">Edit</a>

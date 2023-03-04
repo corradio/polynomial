@@ -24,21 +24,16 @@ class MetricForm(forms.ModelForm):
         self.fields["integration_config"].widget.instance = self.instance
 
         organizations_field = self.fields["organizations"]
-        assert isinstance(organizations_field, forms.ChoiceField)
+        assert isinstance(organizations_field, forms.ModelChoiceField)
         dashboards_field = self.fields["dashboards"]
-        assert isinstance(dashboards_field, forms.ChoiceField)
+        assert isinstance(dashboards_field, forms.ModelChoiceField)
 
         organizations = Organization.objects.filter(users=user)
-        organizations_field.choices = [
-            (x.pk, str(x)) for x in Organization.objects.filter(users=user)
-        ]
+        organizations_field.queryset = Organization.objects.filter(users=user)
         organizations_field.help_text = "Sharing a metric with an organization will make it usable by all its members"
-        dashboards_field.choices = [
-            (x.pk, str(x))
-            for x in Dashboard.objects.all().filter(
-                Q(user=user) | Q(organization__in=organizations)
-            )
-        ]
+        dashboards_field.queryset = Dashboard.objects.all().filter(
+            Q(user=user) | Q(organization__in=organizations)
+        )
         dashboards_field.help_text = (
             "Adding a metric to a dashboard will also add it to its organization"
         )
@@ -167,21 +162,28 @@ class OrganizationUserCreateForm(forms.ModelForm):
         labels = {"invitee_email": "Email"}
 
 
-class DashboardCreateForm(forms.ModelForm):
+class DashboardForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        request = kwargs.pop("request")
+        super().__init__(*args, **kwargs)
+
+        user = request.user
+        organizations = Organization.objects.filter(users=user)
+        organization_field = self.fields["organization"]
+        assert isinstance(organization_field, forms.ModelChoiceField)
+        organization_field.queryset = Organization.objects.filter(users=user)
+        organization_field.help_text = (
+            "Dashboard will be visible by all organization members"
+        )
+
     class Meta:
         model = Dashboard
-        fields = ["name", "slug", "is_public", "user"]
+        fields = ["name", "slug", "is_public", "user", "organization"]
 
         widgets = {
             # Make this field available to the form but invisible to user
             "user": forms.HiddenInput(),
         }
-
-
-class DashboardUpdateForm(forms.ModelForm):
-    class Meta:
-        model = Dashboard
-        fields = ["name", "slug", "is_public"]
 
 
 class DashboardMetricAddForm(forms.ModelForm):
@@ -195,8 +197,8 @@ class DashboardMetricAddForm(forms.ModelForm):
             .order_by("name")
         )
         metrics_field = self.fields["metrics"]
-        assert isinstance(metrics_field, forms.ChoiceField)
-        metrics_field.choices = [(m.pk, str(m)) for m in available_metrics]
+        assert isinstance(metrics_field, forms.ModelChoiceField)
+        metrics_field.queryset = available_metrics
         if self.instance.organization:
             metrics_field.help_text = f"Note: metrics selected will automatically be added to {self.instance.organization}"
 

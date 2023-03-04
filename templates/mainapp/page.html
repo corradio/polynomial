@@ -11,7 +11,7 @@
 <h1>{{ page_name }}'s page</h1>
 <h2>Dashboards</h2>
 {% for dashboard in dashboards %}
-  <a href="{% url 'dashboard' user dashboard.slug %}">{{ dashboard }}</a>
+  <a href="{{ dashboard.get_absolute_url }}">{{ dashboard }}</a>
 {% empty %}
   <p>
     There is no dashboard here yet. <a href="{% url 'dashboard_new' %}">Create one now</a>.

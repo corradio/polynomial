@@ -9,16 +9,21 @@ from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from ..forms import DashboardCreateForm, DashboardMetricAddForm, DashboardUpdateForm
+from ..forms import DashboardForm, DashboardMetricAddForm
 from ..models import Dashboard, Measurement, Metric, Organization, User
 
 
 class DashboardCreateView(LoginRequiredMixin, CreateView):
     model = Dashboard
-    form_class = DashboardCreateForm
+    form_class = DashboardForm
 
     def get_initial(self):
         return {"user": self.request.user}
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
 
 class DashboardDeleteView(LoginRequiredMixin, DeleteView):
@@ -37,13 +42,18 @@ class DashboardDeleteView(LoginRequiredMixin, DeleteView):
 class DashboardUpdateView(LoginRequiredMixin, UpdateView):
     model = Dashboard
     pk_url_kwarg = "dashboard_pk"
-    form_class = DashboardUpdateForm
+    form_class = DashboardForm
 
     def dispatch(self, request, *args, **kwargs):
         dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
         if not dashboard.can_edit(request.user):
             raise PermissionDenied("You don't have the rights to edit this dashboard")
         return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
 
 class DashboardMetricAddView(LoginRequiredMixin, UpdateView):
