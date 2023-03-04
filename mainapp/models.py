@@ -171,7 +171,7 @@ class Dashboard(models.Model):
     is_public = models.BooleanField(default=False)
     name = models.CharField(max_length=128)
     organization = models.ForeignKey(
-        "Organization", null=True, on_delete=models.SET_NULL
+        "Organization", null=True, blank=True, on_delete=models.SET_NULL
     )
 
     def __str__(self):

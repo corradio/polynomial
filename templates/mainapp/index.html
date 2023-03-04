@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% load dashboard_tags %}
+{% load organization_tags %}
+
 {% block head_title %}Lightweight metrics engine for your most vital KPIs{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
@@ -47,8 +50,11 @@
               Private
             {% endif %}
           <td>
-            {% if organization.owner == user %}
-              <a href="{% url 'organization_delete' organization.id %}">Delete</a>
+            {% if dashboard|can_edit:user %}
+              <a href="{% url 'dashboard_edit' dashboard.pk %}">Edit</a>
+            {% endif %}
+            {% if dashboard|can_delete:user %}
+              <a href="{% url 'dashboard_delete' dashboard.pk %}">Delete</a>
             {% endif %}
           </td>
         </tr>
@@ -86,7 +92,7 @@
             {% endif %}
           </td>
           <td>
-            {% if organization.owner == user %}
+            {% if organization|is_admin:user %}
               <a href="{% url 'organization_delete' organization.id %}">Delete</a>
             {% endif %}
           </td>

@@ -40,6 +40,9 @@
   form span.helptext {
     @apply mt-2 text-sm text-gray-500;
   }
+  form ul.errorlist {
+    @apply text-red-700 text-sm;
+  }
   form > p, form > div {
     /* Use django form.as_p or form.as_div when rendering */
     @apply mb-6;

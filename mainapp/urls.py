@@ -140,19 +140,19 @@ urlpatterns = [
         include(
             [
                 path(
-                    "",
-                    view=views.dashboard.DashboardListView.as_view(),
-                    name="dashboard_list",
-                ),
-                path(
                     "new",
                     view=views.dashboard.DashboardCreateView.as_view(),
                     name="dashboard_new",
                 ),
                 path(
-                    "delete",
+                    "<int:dashboard_pk>/delete",
                     view=views.dashboard.DashboardDeleteView.as_view(),
                     name="dashboard_delete",
+                ),
+                path(
+                    "<int:dashboard_pk>/edit",
+                    view=views.dashboard.DashboardUpdateView.as_view(),
+                    name="dashboard_edit",
                 ),
             ]
         ),

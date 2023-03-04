@@ -12,4 +12,7 @@ module.exports = {
     require('flowbite/plugin'),
     require('@tailwindcss/forms'),
   ],
+  safelist: [
+    'errorlist', // used by django form utils
+  ],
 }

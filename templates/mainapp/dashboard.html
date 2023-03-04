@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% load dashboard_tags %}
+
 {% block head_title %}{{ dashboard }}{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
@@ -15,7 +17,17 @@
     <a href="{% url 'integrations' %}">Add metric</a>
   </p>
 {% else %}
-  <h1>{{ dashboard }}</h1>
+  <h1>
+    {{ dashboard }}
+    <span class="text-sm">
+      {% if dashboard|can_edit:user %}
+        [<a href="{% url 'dashboard_edit' dashboard.pk %}">edit</a>]
+      {% endif %}
+      {% if dashboard|can_delete:user %}
+        [<a href="{% url 'dashboard_delete' dashboard.pk %}">delete</a>]
+      {% endif %}
+    </span>
+  </h1>
   {% include "mainapp/snippets/metric_mosaic.html" %}
 {% endif %}
 {% endblock %}

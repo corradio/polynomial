@@ -56,3 +56,11 @@ class OrganizationOwnerRequiredMixin(_Base):
         if organization.owner != request.user:
             raise PermissionDenied("You need to be an owner of this organization")
         return super().dispatch(request, *args, **kwargs)
+
+
+class DashboardEditRightsRequiredMixin(_Base):
+    def dispatch(self, request, *args, **kwargs):
+        dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
+        if not dashboard.can_edit(request.user):
+            raise PermissionDenied("You don't have the rights to edit this dashboard")
+        return super().dispatch(request, *args, **kwargs)

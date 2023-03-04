@@ -5,6 +5,7 @@ from django import forms
 from django.urls import reverse
 
 from mainapp.models import (
+    Dashboard,
     Metric,
     Organization,
     OrganizationInvitation,
@@ -134,3 +135,30 @@ class OrganizationUserCreateForm(forms.ModelForm):
             "inviter": forms.HiddenInput(),
         }
         labels = {"invitee_email": "Email"}
+
+
+# class DashboardCreateForm(forms.ModelForm):
+#     def save(self, commit=True):
+#         owner = self.cleaned_data["owner"]
+#         # Create the organization
+#         org = Organization.objects.create(**self.cleaned_data)
+#         # Create the owner
+#         OrganizationUser.objects.create(user=owner, organization=org, is_admin=True)
+#         # Make sure the owner is part of the members
+#         assert owner in org.users.all()
+#         return org
+
+#     class Meta:
+#         model = Organization
+#         fields = ["name", "owner", "slug"]
+
+#         widgets = {
+#             # Make this field available to the form but invisible to user
+#             "owner": forms.HiddenInput(),
+#         }
+
+
+class DashboardUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Dashboard
+        fields = ["name", "slug", "is_public"]

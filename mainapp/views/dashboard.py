@@ -5,33 +5,31 @@ from django.db.models import Q
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.dateparse import parse_date, parse_duration
-from django.views.generic import CreateView, DeleteView, ListView
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
+from ..forms import DashboardUpdateForm
 from ..models import Dashboard, Measurement, Metric, Organization, User
-
-
-class DashboardListView(LoginRequiredMixin, ListView):
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        user = self.request.user
-        assert isinstance(user, User)
-        organizations = Organization.objects.filter(users=user)
-        # context["metrics"] = [
-        #     {**metric, "can_edit": metric.can_edit(user)}
-        #     for metric in Dashboard.objects.all()
-        #     .filter(Q(user=user) | Q(organizations__in=organizations))
-        #     .order_by("name")
-        # ]
-        return context
+from .mixins import DashboardEditRightsRequiredMixin
 
 
 class DashboardCreateView(LoginRequiredMixin, CreateView):
+    # TODO: ACL
     model = Dashboard
 
 
 class DashboardDeleteView(LoginRequiredMixin, DeleteView):
+    # TODO: ACL
     model = Dashboard
+    pk_url_kwarg = "dashboard_pk"
     object: Dashboard
+
+
+class DashboardUpdateView(
+    LoginRequiredMixin, DashboardEditRightsRequiredMixin, UpdateView
+):
+    model = Dashboard
+    pk_url_kwarg = "dashboard_pk"
+    form_class = DashboardUpdateForm
 
 
 def dashboard_view(request, username_or_org_slug, dashboard_slug):
