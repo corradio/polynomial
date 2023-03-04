@@ -207,7 +207,7 @@ class DashboardMetricAddForm(forms.ModelForm):
         # Also make sure that every metric is moved to organization
         # to keep ACL consistent
         if dashboard.organization:
-            for metric in dashboard.metrics:
+            for metric in dashboard.metrics.all():
                 metric.organizations.add(dashboard.organization)
         return dashboard
 
