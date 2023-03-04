@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
@@ -71,6 +71,27 @@ class DashboardMetricAddView(LoginRequiredMixin, UpdateView):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+
+class DashboardMetricRemoveView(LoginRequiredMixin, DeleteView):
+    model = Metric
+    object: Metric
+    pk_url_kwarg = "metric_pk"
+    template_name = "mainapp/dashboardmetric_confirm_remove.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
+        if not self.dashboard.can_delete(request.user):
+            raise PermissionDenied("You don't have the rights to delete this dashboard")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return self.dashboard.get_absolute_url()
+
+    def form_valid(self, form):
+        success_url = self.get_success_url()
+        self.dashboard.metrics.remove(self.object)
+        return HttpResponseRedirect(success_url)
 
 
 def dashboard_view(request, username_or_org_slug, dashboard_slug):

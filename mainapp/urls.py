@@ -159,11 +159,11 @@ urlpatterns = [
                     view=views.dashboard.DashboardMetricAddView.as_view(),
                     name="dashboardmetric_add",
                 ),
-                # path(
-                #     "<int:dashboard_pk>/metrics/remove",
-                #     view=...,
-                #     name="dashboardmetric_remove",
-                # ),
+                path(
+                    "<int:dashboard_pk>/metrics/<int:metric_pk>/remove",
+                    view=views.dashboard.DashboardMetricRemoveView.as_view(),
+                    name="dashboardmetric_remove",
+                ),
             ]
         ),
     ),

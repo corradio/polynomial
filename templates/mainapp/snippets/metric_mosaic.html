@@ -14,7 +14,7 @@
         [<a href="{% url 'metric-duplicate' metric.metric_id %}">duplicate</a>]
       {% endif %}
       {% if can_edit %}
-        [<a href="">remove</a>]
+        [<a href="{% url 'dashboardmetric_remove' dashboard.pk metric.metric_id %}">remove</a>]
       {% endif %}
       </span>
     </div>
