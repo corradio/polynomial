@@ -82,7 +82,9 @@
         {% for organization in organizations %}
         <tr>
           <th>
-            {{ organization.name }}
+            <a href="{{ organization.get_absolute_url }}">
+              {{ organization.name }}
+            </a>
           </th>
           <td>
             {% if organization.owner == user %}

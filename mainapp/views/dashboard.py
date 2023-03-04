@@ -1,15 +1,16 @@
 from datetime import date, timedelta
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from ..forms import DashboardUpdateForm
 from ..models import Dashboard, Measurement, Metric, Organization, User
-from .mixins import DashboardEditRightsRequiredMixin
 
 
 class DashboardCreateView(LoginRequiredMixin, CreateView):
@@ -18,18 +19,28 @@ class DashboardCreateView(LoginRequiredMixin, CreateView):
 
 
 class DashboardDeleteView(LoginRequiredMixin, DeleteView):
-    # TODO: ACL
     model = Dashboard
     pk_url_kwarg = "dashboard_pk"
     object: Dashboard
+    success_url = reverse_lazy("index")
+
+    def dispatch(self, request, *args, **kwargs):
+        dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
+        if not dashboard.can_delete(request.user):
+            raise PermissionDenied("You don't have the rights to delete this dashboard")
+        return super().dispatch(request, *args, **kwargs)
 
 
-class DashboardUpdateView(
-    LoginRequiredMixin, DashboardEditRightsRequiredMixin, UpdateView
-):
+class DashboardUpdateView(LoginRequiredMixin, UpdateView):
     model = Dashboard
     pk_url_kwarg = "dashboard_pk"
     form_class = DashboardUpdateForm
+
+    def dispatch(self, request, *args, **kwargs):
+        dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
+        if not dashboard.can_edit(request.user):
+            raise PermissionDenied("You don't have the rights to edit this dashboard")
+        return super().dispatch(request, *args, **kwargs)
 
 
 def dashboard_view(request, username_or_org_slug, dashboard_slug):

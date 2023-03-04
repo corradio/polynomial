@@ -9,10 +9,12 @@
 
 {% block content %}
 <h1>{{ page_name }}'s page</h1>
-{% if dashboards %}
-  <h2>Dashboards</h2>
-  {% for dashboard in dashboards %}
-    <a href="{% url 'dashboard' user dashboard.slug %}">{{ dashboard }}</a>
-  {% endfor %}
-{% endif %}
+<h2>Dashboards</h2>
+{% for dashboard in dashboards %}
+  <a href="{% url 'dashboard' user dashboard.slug %}">{{ dashboard }}</a>
+{% empty %}
+  <p>
+    There is no dashboard here yet. <a href="{% url 'dashboard_new' %}">Create one now</a>.
+  </p>
+{% endfor %}
 {% endblock %}
