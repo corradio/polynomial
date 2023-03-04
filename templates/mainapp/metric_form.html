@@ -11,7 +11,7 @@
     <input type="button" id="button-authorize" value="Re-authorize">
     {% endif %}
     <input type="button" id="button-test" value="Test">
-    <input type="submit" id="button-submit" value="Save" disabled>
+    <input type="submit" id="button-submit" value="Save">
     <script>
       var testButton = document.getElementById("button-test");
       var authorizeButton = document.getElementById("button-authorize");
@@ -73,7 +73,6 @@
           document.querySelector('#integration-test-container').style.color = isError
             ? 'red'
             : 'green';
-          submitButton.disabled = isError;
           var testLabel = document.querySelector('#integration-test-container span.label');
           testLabel.innerText = '[' + (data.datetime || new Date()) + ']';
           if (isError) {
