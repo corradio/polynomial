@@ -182,9 +182,16 @@ class DashboardForm(forms.ModelForm):
         organization_field = self.fields["organization"]
         assert isinstance(organization_field, forms.ModelChoiceField)
         organization_field.queryset = Organization.objects.filter(users=user)
-        organization_field.help_text = (
-            "Dashboard will be visible by all organization members"
-        )
+        organization_field.help_text = "Dashboard and associated metrics will be made accessible by all organization members"
+
+    def save(self, *args, **kwargs):
+        dashboard = super().save(*args, **kwargs)
+        # Also make sure that every metric of this dashboard is moved
+        # to the organization to keep ACL consistent
+        if dashboard.organization:
+            for metric in dashboard.metrics.all():
+                metric.organizations.add(dashboard.organization)
+        return dashboard
 
     class Meta:
         model = Dashboard
@@ -210,7 +217,7 @@ class DashboardMetricAddForm(forms.ModelForm):
         assert isinstance(metrics_field, forms.ModelChoiceField)
         metrics_field.queryset = available_metrics
         if self.instance.organization:
-            metrics_field.help_text = f"Note: metrics selected will automatically be added to {self.instance.organization}"
+            metrics_field.help_text = f"Note: metrics selected will automatically be added to the {self.instance.organization} organization"
 
     def save(self, *args, **kwargs):
         dashboard = super().save(*args, **kwargs)
