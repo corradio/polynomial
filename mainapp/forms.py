@@ -38,6 +38,16 @@ class MetricForm(forms.ModelForm):
             "Adding a metric to a dashboard will also add it to its organization"
         )
 
+    def save(self, *args, **kwargs):
+        metric = super().save(*args, **kwargs)
+        # Also make sure that for each dashboard,
+        # the metric is moved to its organization if applicable
+        # to keep ACL consistent
+        for dashboard in metric.dashboards.all():
+            if dashboard.organization:
+                metric.organizations.add(dashboard.organization)
+        return metric
+
     class Meta:
         model = Metric
         fields = [
