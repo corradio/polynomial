@@ -76,13 +76,14 @@
   </h2>
   {% if not organizations %}
     <p>
-      You are not part of any organization. <a href="{% url 'organization_new' %}" class="btn">Create one now</a>.
+      You are not part of any organization. <a href="{% url 'organization_new' %}">Create one now</a>.
     </p>
   {% else %}
     <table class="table">
       <thead>
         <th>Organization</th>
         <th>Owner</th>
+        <th>Members</th>
         <th>Actions</th>
       </thead>
       <tbody>
@@ -101,7 +102,15 @@
             {% endif %}
           </td>
           <td>
+            <a href="{% url 'organization_user_list' organization.id %}">
+              {% with total_users=organization.users.count %}
+                 {{ total_users }} member{{ total_users|pluralize }}
+              {% endwith %}
+              </a>
+          </td>
+          <td>
             {% if organization|is_admin:user %}
+              <a href="{% url 'organization_user_new' organization.id %}">Invite</a>
               <a href="{% url 'organization_edit' organization.id %}">Edit</a>
               <a href="{% url 'organization_delete' organization.id %}">Delete</a>
             {% endif %}
@@ -117,10 +126,7 @@
     <span class="text-sm">[<a href="{% url 'integrations' %}">create new</a>]</span>
   </h2>
   {% if not metrics %}
-    You don't have a metric yet.
-    <p>
-      <a href="{% url 'integrations' %}" class="btn">Let's add one now</a>.
-    </p>
+    You don't have a metric yet. <a href="{% url 'integrations' %}">Add one now</a>.
   {% else %}
     <table class="table">
       <thead>

@@ -116,6 +116,7 @@ def dashboard_view(request, username_or_org_slug, dashboard_slug):
     )
 
     start_date = None
+    interval = None
     if "since" in request.GET:
         start_date = parse_date(request.GET["since"])
         if not start_date:
@@ -124,10 +125,10 @@ def dashboard_view(request, username_or_org_slug, dashboard_slug):
                 return HttpResponseBadRequest(
                     f"Invalid argument `since`: should be a date or a duration."
                 )
-            start_date = date.today() - interval
-    if start_date is None:
-        start_date = date.today() - timedelta(days=60)
+    if interval is None:
+        interval = timedelta(days=60)
     end_date = date.today()
+    start_date = end_date - interval
     measurements_by_metric = [
         {
             "metric_id": metric.id,
@@ -152,5 +153,6 @@ def dashboard_view(request, username_or_org_slug, dashboard_slug):
         "end_date": end_date,
         "dashboard": dashboard,
         "can_edit": dashboard.can_edit(request.user),
+        "days_since": interval.days,
     }
     return render(request, "mainapp/dashboard.html", context)
