@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
@@ -94,7 +94,7 @@ class DashboardMetricRemoveView(LoginRequiredMixin, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-def dashboard_view(request, username_or_org_slug, dashboard_slug):
+def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     try:
         user = User.objects.get(username=username_or_org_slug)
         page_name = user.name
@@ -105,15 +105,17 @@ def dashboard_view(request, username_or_org_slug, dashboard_slug):
         page_name = organization.name
         id_query = Q(organization=organization, slug=dashboard_slug)  # owned by org
 
-    organizations = Organization.objects.filter(users=request.user)
-    dashboard = get_object_or_404(
-        Dashboard,
-        id_query
-        # Either owner, public dashboard, or member of dashboard org
-        & (
-            Q(user=request.user) | Q(is_public=True) | Q(organization__in=organizations)
-        ),
-    )
+    if isinstance(request.user, User):
+        organizations = Organization.objects.filter(users=request.user)
+        dashboard = get_object_or_404(
+            Dashboard,
+            id_query
+            # Either owner, or member of dashboard org
+            & (Q(user=request.user) | Q(organization__in=organizations)),
+        )
+    else:
+        # Anonymous user
+        dashboard = get_object_or_404(Dashboard, id_query & Q(is_public=True))
 
     start_date = None
     interval = None

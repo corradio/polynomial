@@ -2,12 +2,12 @@ import json
 import logging
 import uuid
 from datetime import date, timedelta
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 
 from allauth.account.adapter import get_adapter
 from allauth.account.models import EmailAddress
 from allauth.account.utils import setup_user_email
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, AnonymousUser
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -126,10 +126,10 @@ class Metric(models.Model):
             logger.exception("Exception while calling `can_backfill`")
             return False
 
-    def can_edit(self, user: User):
+    def can_edit(self, user: Union[User, AnonymousUser]):
         return self.user == user
 
-    def can_view(self, user: User):
+    def can_view(self, user: Union[User, AnonymousUser]):
         if self.user == user:
             return True
         # Check if user is member of any of the orgs that this
@@ -192,7 +192,7 @@ class Dashboard(models.Model):
             },
         )
 
-    def can_edit(self, user: User):
+    def can_edit(self, user: Union[User, AnonymousUser]):
         if not self.organization:
             return self.user == user
         # Owner can edit
@@ -201,7 +201,7 @@ class Dashboard(models.Model):
         # Anyone in the org can edit
         return user in self.organization.users.all()
 
-    def can_delete(self, user: User):
+    def can_delete(self, user: Union[User, AnonymousUser]):
         return self.user == user
 
     class Meta:
@@ -325,10 +325,10 @@ class Organization(models.Model):
             else False
         )
 
-    def is_owner(self, user: User):
+    def is_owner(self, user: Union[User, AnonymousUser]):
         return self.owner == user
 
-    def is_member(self, user: User):
+    def is_member(self, user: Union[User, AnonymousUser]):
         return True if user in self.users.all() else False
 
     def get_absolute_url(self):
