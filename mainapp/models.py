@@ -294,6 +294,15 @@ class Organization(models.Model):
     )
     owner = models.ForeignKey(User, on_delete=models.PROTECT)
 
+    # Used for spreadsheet export
+    google_spreadsheet_export_credentials = models.JSONField(blank=True, null=True)
+    google_spreadsheet_export_spreadsheet_id = models.CharField(
+        max_length=128, blank=True, null=True
+    )
+    google_spreadsheet_export_sheet_name = models.CharField(
+        max_length=128, blank=True, null=True
+    )
+
     def __str__(self):
         return self.name
 
@@ -318,7 +327,9 @@ class Organization(models.Model):
         org_user = OrganizationUser.objects.get(user=user, organization=self)
         org_user.delete()
 
-    def is_admin(self, user: User):
+    def is_admin(self, user: Union[User, AnonymousUser]):
+        if isinstance(user, AnonymousUser):
+            return False
         return (
             True
             if self.organizationuser_set.filter(user=user, is_admin=True)

@@ -1,7 +1,7 @@
 import socket
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pprint import pformat
-from typing import Optional
+from typing import Optional, Union
 
 import requests
 from celery import shared_task
@@ -16,7 +16,8 @@ from oauthlib import oauth2
 from config.settings import CSRF_TRUSTED_ORIGINS
 from integrations.base import UserFixableError
 
-from .models import Measurement, Metric
+from .google_spreadsheet_export import spreadsheet_export
+from .models import Measurement, Metric, Organization
 
 BASE_URL = CSRF_TRUSTED_ORIGINS[0]
 
@@ -97,6 +98,32 @@ def backfill_task(metric_id: int, since: Optional[str]):
             defaults={
                 "value": measurement.value,
                 "metric": metric,
+            },
+        )
+
+
+@shared_task
+def spreadsheet_export_all():
+    required_fields = [
+        "google_spreadsheet_export_spreadsheet_id",
+        "google_spreadsheet_export_credentials",
+        "google_spreadsheet_export_sheet_name",
+    ]
+    for organization in Organization.objects.filter(
+        **{f"{f}__isnull": False for f in required_fields}
+    ):
+
+        def credentials_updater(new_credentials):
+            organization.google_spreadsheet_export_credentials = new_credentials
+            organization.save()
+
+        spreadsheet_export.delay(
+            spreadsheet_id=organization.google_spreadsheet_export_spreadsheet_id,
+            credentials=organization.google_spreadsheet_export_credentials,
+            credentials_updater=credentials_updater,
+            sheet_name=organization.google_spreadsheet_export_sheet_name,
+            measurement_filter_kwargs={
+                "metric__organizations": organization,
             },
         )
 

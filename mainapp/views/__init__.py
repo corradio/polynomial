@@ -13,6 +13,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.forms.models import model_to_dict
 from django.http import (
+    HttpRequest,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotAllowed,
@@ -40,12 +41,8 @@ from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import WebAuthIntegration
 
-from ..forms import (
-    MetricForm,
-    OrganizationCreateForm,
-    OrganizationUpdateForm,
-    OrganizationUserCreateForm,
-)
+from .. import google_spreadsheet_export
+from ..forms import MetricForm, OrganizationForm, OrganizationUserCreateForm
 from ..models import (
     Dashboard,
     Measurement,
@@ -468,7 +465,20 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
             cache_obj = self.request.session[state]
             # The cache object can have either:
             # - a metric_id (if it was called from /metrics/<pk>/authorize)
+            # - an organization id (if it was called from /organizations/<pk>/edit)
             # - Nothing (if it was called from /metrics/new/<state>/authorize)
+            if "organization_id" in cache_obj:
+                return redirect(
+                    google_spreadsheet_export.process_authorize_callback(
+                        organization_id=cache_obj["organization_id"],
+                        uri=request.build_absolute_uri(request.get_full_path()),
+                        authorize_callback_uri=request.build_absolute_uri(
+                            reverse("authorize-callback")
+                        ),
+                        state=state,
+                    )
+                )
+
             metric = None
             if "metric_id" in cache_obj:
                 # Get integration instance
@@ -540,7 +550,7 @@ class OrganizationListView(LoginRequiredMixin, ListView):
 
 class OrganizationCreateView(LoginRequiredMixin, CreateView):
     model = Organization
-    form_class = OrganizationCreateForm
+    form_class = OrganizationForm
     success_url = reverse_lazy("organization_list")
 
     def get_initial(self):
@@ -552,7 +562,7 @@ class OrganizationUpdateView(
 ):
     model = Organization
     pk_url_kwarg = "organization_pk"
-    form_class = OrganizationUpdateForm
+    form_class = OrganizationForm
 
 
 class OrganizationDeleteView(
@@ -629,6 +639,20 @@ class OrganizationUserDeleteView(
             "organization_user_list",
             kwargs={"organization_pk": self.object.organization.pk},
         )
+
+
+@login_required
+def authorize_google_spreadsheet_export(request: HttpRequest, organization_pk: int):
+    organization = get_object_or_404(Organization, pk=organization_pk)
+    if not organization.is_admin(request.user):
+        return HttpResponseNotFound()
+    uri, state = google_spreadsheet_export.authorize(request)
+    assert uri is not None
+    # Save parameters in session
+    request.session[state] = {
+        "organization_id": organization.id,
+    }
+    return HttpResponseRedirect(uri)
 
 
 class InvitationListView(LoginRequiredMixin, ListView):

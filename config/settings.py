@@ -232,6 +232,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "mainapp.tasks.collect_all_latest_task",
         "schedule": crontab(minute=0, hour=2),
     },
+    "export": {
+        "task": "mainapp.tasks.spreadsheet_export_all",
+        "schedule": crontab(minute=0, hour=4),
+    },
 }
 
 # Static deployment

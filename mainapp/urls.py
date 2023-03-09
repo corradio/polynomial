@@ -117,6 +117,11 @@ urlpatterns = [
                                 views.OrganizationUserDeleteView.as_view(),
                                 name="organization_user_delete",
                             ),
+                            path(
+                                "authorize_google_spreadsheet_export",
+                                views.authorize_google_spreadsheet_export,
+                                name="organization_authorize_google_spreadsheet_export",
+                            ),
                         ]
                     ),
                 ),

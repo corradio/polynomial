@@ -2,7 +2,33 @@
 {% block content %}
 <h1>{{ organization }}</h1>
 <form action="" method="post">{% csrf_token %}
-    {{ form.as_p }}
+    {{ form.errors }}
+    {% for field in form.visible_fields %}
+        <p>
+            {{ field.errors }}
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}
+              <span class="helptext">{{ field.help_text|safe }}</span>
+            {% endif %}
+        </p>
+    {% endfor %}
+    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+    <p>
+      {% if form.google_spreadsheet_export_spreadsheet_id.is_hidden %}
+        {% if object.pk %}
+          <a href={% url 'organization_authorize_google_spreadsheet_export' object.pk %}>
+            Activate Google spreadsheet export
+          </a>
+        {% endif %}
+      {% else %}
+        <a href={% url 'organization_authorize_google_spreadsheet_export' object.pk %}>
+          Re-authorize Google spreadsheet export
+        </a>
+      {% endif %}
+    </p>
+
     <input type="submit" value="submit">
 </form>
 {% endblock %}
