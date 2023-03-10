@@ -58,14 +58,17 @@ def process_authorize_callback(
 
 
 @shared_task()
-def spreadsheet_export(
-    spreadsheet_id,
-    sheet_name,
-    credentials,
-    credentials_updater,
-    measurement_filter_kwargs,
-):
-    measurements = Measurement.objects.filter(**measurement_filter_kwargs)
+def spreadsheet_export(organization_id):
+    organization = Organization.objects.get(pk=organization_id)
+    spreadsheet_id = organization.google_spreadsheet_export_spreadsheet_id
+    credentials = organization.google_spreadsheet_export_credentials
+    sheet_name = organization.google_spreadsheet_export_sheet_name
+
+    measurements = Measurement.objects.filter(metric__organizations=organization)
+
+    def credentials_updater(new_credentials):
+        organization.google_spreadsheet_export_credentials = new_credentials
+        organization.save()
 
     session = OAuth2Session(
         client_id,

@@ -112,19 +112,8 @@ def spreadsheet_export_all():
     for organization in Organization.objects.filter(
         **{f"{f}__isnull": False for f in required_fields}
     ):
-
-        def credentials_updater(new_credentials):
-            organization.google_spreadsheet_export_credentials = new_credentials
-            organization.save()
-
         spreadsheet_export.delay(
-            spreadsheet_id=organization.google_spreadsheet_export_spreadsheet_id,
-            credentials=organization.google_spreadsheet_export_credentials,
-            credentials_updater=credentials_updater,
-            sheet_name=organization.google_spreadsheet_export_sheet_name,
-            measurement_filter_kwargs={
-                "metric__organizations": organization,
-            },
+            organization_id=organization.pk,
         )
 
 
