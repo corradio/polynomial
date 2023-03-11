@@ -25,18 +25,19 @@ class MetricForm(forms.ModelForm):
 
         organizations_field = self.fields["organizations"]
         assert isinstance(organizations_field, forms.ModelChoiceField)
-        dashboards_field = self.fields["dashboards"]
-        assert isinstance(dashboards_field, forms.ModelChoiceField)
-
         organizations = Organization.objects.filter(users=user)
         organizations_field.queryset = Organization.objects.filter(users=user)
         organizations_field.help_text = "Sharing a metric with an organization will make it usable by all its members"
-        dashboards_field.queryset = Dashboard.objects.all().filter(
-            Q(user=user) | Q(organization__in=organizations)
-        )
-        dashboards_field.help_text = (
-            "Adding a metric to a dashboard will also add it to its organization"
-        )
+
+        if "dashboards" in self.fields:
+            dashboards_field = self.fields["dashboards"]
+            assert isinstance(dashboards_field, forms.ModelChoiceField)
+            dashboards_field.queryset = Dashboard.objects.all().filter(
+                Q(user=user) | Q(organization__in=organizations)
+            )
+            dashboards_field.help_text = (
+                "Adding a metric to a dashboard will also add it to its organization"
+            )
 
     def save(self, *args, **kwargs):
         metric = super().save(*args, **kwargs)
@@ -52,10 +53,9 @@ class MetricForm(forms.ModelForm):
         model = Metric
         fields = [
             "name",
+            "organizations",
             "integration_config",
             "integration_id",
-            "organizations",
-            "dashboards",
         ]
 
         widgets = {
