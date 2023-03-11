@@ -30,7 +30,9 @@ class DashboardDeleteView(LoginRequiredMixin, DeleteView):
     model = Dashboard
     pk_url_kwarg = "dashboard_pk"
     object: Dashboard
-    success_url = reverse_lazy("index")
+
+    def get_success_url(self):
+        return self.request.GET.get("next") or reverse_lazy("index")
 
     def dispatch(self, request, *args, **kwargs):
         dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
@@ -86,7 +88,7 @@ class DashboardMetricRemoveView(LoginRequiredMixin, DeleteView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
-        return self.dashboard.get_absolute_url()
+        return self.request.GET.get("next") or self.dashboard.get_absolute_url()
 
     def form_valid(self, form):
         success_url = self.get_success_url()

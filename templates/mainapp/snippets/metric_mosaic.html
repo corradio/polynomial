@@ -24,11 +24,11 @@
       {{ metric.metric_name }}
       <span class="text-sm">
       {% if metric.can_edit %}
-        [<a href="{% url 'metric-details' metric.metric_id %}">edit</a>]
+        [<a href="{% url 'metric-details' metric.metric_id %}?next={{ request.path | urlencode }}">edit</a>]
         [<a href="{% url 'metric-duplicate' metric.metric_id %}">duplicate</a>]
       {% endif %}
       {% if can_edit %}
-        [<a href="{% url 'dashboardmetric_remove' dashboard.pk metric.metric_id %}">remove</a>]
+        [<a href="{% url 'dashboardmetric_remove' dashboard.pk metric.metric_id %}?next={{ request.path | urlencode }}">remove</a>]
       {% endif %}
       </span>
     </div>

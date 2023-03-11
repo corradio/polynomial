@@ -14,7 +14,7 @@
     {{ dashboard }}
     <span class="text-sm">
       {% if dashboard|can_edit:user %}
-        [<a href="{% url 'dashboard_edit' dashboard.pk %}">edit</a>]
+        [<a href="{% url 'dashboard_edit' dashboard.pk %}?next={{ request.path | urlencode }}">edit</a>]
       {% endif %}
       {% if dashboard|can_delete:user %}
         [<a href="{% url 'dashboard_delete' dashboard.pk %}">delete</a>]
