@@ -226,6 +226,8 @@ def metric_duplicate(request, pk):
     # Copy object
     metric_object = model_to_dict(metric)
     metric_object["name"] = f"Copy of {metric_object['name']}"
+    metric_object["dashboards"] = [d.pk for d in metric.dashboards.all()]
+    metric_object["organizations"] = [o.pk for o in metric.organizations.all()]
     del metric_object["id"]
     del metric_object["user"]
 
