@@ -132,6 +132,7 @@ def metric_new_test(request, state):
     integration_class = INTEGRATION_CLASSES[integration_id]
     # Save the config in the cache so a page reload keeps it
     metric_cache["integration_config"] = config
+    metric_cache["name"] = data.get("name")
     request.session.modified = True
 
     def credentials_updater(arg):
@@ -147,7 +148,13 @@ def metric_new_test(request, state):
             measurement = inst.collect_latest()
             return JsonResponse(
                 {
-                    "measurement": measurement,
+                    # Circumvent NaNs
+                    "measurement": [
+                        measurement.date,
+                        str(measurement.value)
+                        if measurement.value != measurement.value
+                        else measurement.value,
+                    ],
                     "datetime": datetime.now(),
                     "canBackfill": inst.can_backfill(),
                     "status": "ok",
@@ -442,7 +449,13 @@ def metric_test(request, pk):
             measurement = inst.collect_latest()
             return JsonResponse(
                 {
-                    "measurement": measurement,
+                    # Circumvent NaNs
+                    "measurement": [
+                        measurement.date,
+                        str(measurement.value)
+                        if measurement.value != measurement.value
+                        else measurement.value,
+                    ],
                     "datetime": datetime.now(),
                     "canBackfill": inst.can_backfill(),
                     "status": "ok",
