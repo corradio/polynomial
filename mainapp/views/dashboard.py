@@ -63,6 +63,9 @@ class DashboardMetricAddView(LoginRequiredMixin, UpdateView):
     pk_url_kwarg = "dashboard_pk"
     form_class = DashboardMetricAddForm
 
+    def get_success_url(self):
+        return self.request.GET.get("next") or super().get_success_url()
+
     def dispatch(self, request, *args, **kwargs):
         dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
         if not dashboard.can_edit(request.user):

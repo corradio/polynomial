@@ -65,7 +65,21 @@ class GooglePlayStore(OAuth2Integration):
         month_end = date_end.month
 
         if not (year_start == year_end and month_start == month_end):
-            raise NotImplementedError()
+            # Generate monthly ranges
+            df = pd.DataFrame(index=pd.date_range(start=date_start, end=date_end))
+            assert isinstance(df.index, pd.DatetimeIndex)
+            df["year"] = df.index.year
+            df["month"] = df.index.month
+            df["day"] = df.index.day
+            batches = df.groupby(["year", "month"]).agg(["first", "last"])["day"]
+            return [
+                measurement
+                for index, row in batches.iterrows()
+                for measurement in self.collect_past_range(
+                    date_start=date(index[0], index[1], row["first"]),
+                    date_end=date(index[0], index[1], row["last"]),
+                )
+            ]
 
         yearmonth = f"{year_start}{month_start:02}"
         bucket = f"pubsite_prod_{self.config['developer_id']}"
