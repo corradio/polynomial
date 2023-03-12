@@ -60,7 +60,7 @@ class Integration:
         pass
 
     def earliest_backfill(self) -> date:
-        return date(2022, 1, 1)
+        return date(2016, 1, 1)
 
     def collect_latest(self) -> MeasurementTuple:
         # Default implementation uses `collect_past` through `collect_past_range`,

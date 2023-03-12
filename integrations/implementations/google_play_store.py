@@ -103,6 +103,9 @@ class GooglePlayStore(OAuth2Integration):
                 # Try to explain to the user
                 data = e.response.json()
                 raise requests.HTTPError(data["error"]["message"]) from None
+            if e.response.status_code == 404:
+                # No data, simply return empty list
+                return []
             else:
                 raise
         df = pd.read_csv(
@@ -111,9 +114,7 @@ class GooglePlayStore(OAuth2Integration):
         df_filtered = df[
             (df.index >= date_start.isoformat()) & (df.index <= date_end.isoformat())
         ].sort_index()
-        # Drop NaNs (i.e. no measurements)
-        df_filtered = df_filtered.dropna()
         return [
             MeasurementTuple(date=index.to_pydatetime().date(), value=value)  # type: ignore[attr-defined]
-            for index, value in df_filtered[column].items()
+            for index, value in df_filtered[column].dropna().items()
         ]
