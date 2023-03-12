@@ -6,8 +6,9 @@ from typing import Dict, List, final
 import requests
 
 from ..base import MeasurementTuple, OAuth2Integration
-from ..utils import get_secret
+from ..utils import batch_range_by_max_batch, get_secret
 
+MAX_DAYS = 300  # Maximum number of days per paginated query
 ROW_LIMIT = 10000  # Number of rows to fetch at a time
 # See https://developers.google.com/analytics/devguides/reporting/core/dimsmets
 METRICS = sorted(["ga:users", "ga:sessions"])
@@ -142,6 +143,16 @@ class GoogleAnalytics(OAuth2Integration):
     def collect_past_range(
         self, date_start: date, date_end: date
     ) -> List[MeasurementTuple]:
+
+        print(f"{date_start} -> {date_end}")
+        if (date_end - date_start).days > MAX_DAYS:
+            return batch_range_by_max_batch(
+                date_start=date_start,
+                date_end=date_end,
+                max_days=MAX_DAYS,
+                callable=self.collect_past_range,
+            )
+
         # Parameters
         view_id = self.config["view_id"]
         metric = self.config["metric"]
@@ -160,6 +171,7 @@ class GoogleAnalytics(OAuth2Integration):
                         },
                     ],
                     "dimensions": [{"name": "ga:date"}],
+                    "samplingLevel": "LARGE",
                     "dimensionFilterClauses": [
                         {
                             "operator": "and",

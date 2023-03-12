@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 
 from ..base import MeasurementTuple, OAuth2Integration, UserFixableError
-from ..utils import get_secret
+from ..utils import batch_range_per_month, get_secret
 
 """
 https://support.google.com/googleplay/android-developer/answer/139628?hl=en-GB&co=GENIE.Platform%3DDesktop#zippy=%2Cinstall-related-statistics
@@ -66,20 +66,11 @@ class GooglePlayStore(OAuth2Integration):
 
         if not (year_start == year_end and month_start == month_end):
             # Generate monthly ranges
-            df = pd.DataFrame(index=pd.date_range(start=date_start, end=date_end))
-            assert isinstance(df.index, pd.DatetimeIndex)
-            df["year"] = df.index.year
-            df["month"] = df.index.month
-            df["day"] = df.index.day
-            batches = df.groupby(["year", "month"]).agg(["first", "last"])["day"]
-            return [
-                measurement
-                for index, row in batches.iterrows()
-                for measurement in self.collect_past_range(
-                    date_start=date(index[0], index[1], row["first"]),
-                    date_end=date(index[0], index[1], row["last"]),
-                )
-            ]
+            return batch_range_per_month(
+                date_start=date_start,
+                date_end=date_end,
+                callable=self.collect_past_range,
+            )
 
         yearmonth = f"{year_start}{month_start:02}"
         bucket = f"pubsite_prod_{self.config['developer_id']}"

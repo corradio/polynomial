@@ -5,7 +5,9 @@ from zoneinfo import ZoneInfo
 import requests
 
 from ..base import Integration, MeasurementTuple
-from ..utils import get_secret
+from ..utils import batch_range_by_max_batch, get_secret
+
+MAX_DAYS = 500
 
 
 @final
@@ -45,6 +47,15 @@ class Grafana(Integration):
     def collect_past_range(
         self, date_start: date, date_end: date
     ) -> List[MeasurementTuple]:
+
+        if (date_end - date_start).days > MAX_DAYS:
+            return batch_range_by_max_batch(
+                date_start=date_start,
+                date_end=date_end,
+                max_days=MAX_DAYS,
+                callable=self.collect_past_range,
+            )
+
         expression = self.config["expression"]
         datasource_uid = self.config["datasource_uid"]
         # Grafana returns dates that represent the end of the day,
@@ -61,7 +72,7 @@ class Grafana(Integration):
                     "expr": expression,
                     "refId": "A",
                     "interval": "1d",
-                    "maxDataPoints": 5000,  # Will error if we query more than can be returned
+                    "maxDataPoints": MAX_DAYS,  # Will error if we query more than can be returned
                     "format": "time_series",
                 },
             ],
