@@ -530,7 +530,7 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
                 return redirect(reverse("metric-new-with-state", args=[state]))
 
 
-def page(request, username_or_org_slug):
+def page(request: HttpRequest, username_or_org_slug: str):
     try:
         user = User.objects.get(username=username_or_org_slug)
         page_name = user.name
@@ -541,14 +541,22 @@ def page(request, username_or_org_slug):
         page_name = organization.name
         id_query = Q(organization=organization)  # owned by org
 
-    organizations = Organization.objects.filter(users=request.user)
-    dashboards = Dashboard.objects.filter(
-        id_query
-        # to able to list it, the dashboard needs to be
-        # either owned by visitor, public dashboard,
-        # or visitor needs to be member of dashboard org
-        & (Q(user=request.user) | Q(is_public=True) | Q(organization__in=organizations))
-    )
+    if isinstance(request.user, User):
+        organizations = Organization.objects.filter(users=request.user)
+        dashboards = Dashboard.objects.filter(
+            id_query
+            # to able to list it, the dashboard needs to be
+            # either owned by visitor, public dashboard,
+            # or visitor needs to be member of dashboard org
+            & (
+                Q(user=request.user)
+                | Q(is_public=True)
+                | Q(organization__in=organizations)
+            )
+        )
+    else:
+        # Anonymous user
+        dashboards = Dashboard.objects.filter(id_query & Q(is_public=True))
 
     context = {
         "dashboards": dashboards,
