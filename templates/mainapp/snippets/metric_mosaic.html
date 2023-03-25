@@ -64,8 +64,9 @@
 >
   // due to the way javascript parses dates, we must take some care here
   // see https://stackoverflow.com/questions/64319836/date-parsing-and-when-to-use-utc-timeunits-in-vega-lite
-  var startDate = document.currentScript.dataset.startDate + 'T00:00:00';
-  var endDate = document.currentScript.dataset.endDate + 'T00:00:00';
+  var startDate = new Date(document.currentScript.dataset.startDate + 'T00:00:00');
+  var endDate = new Date(document.currentScript.dataset.endDate + 'T00:00:00');
+  var daySpan = (endDate-startDate) / 1000 / 3600 / 24;
   var vlSpec = {
     $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
     width: "container",
@@ -109,19 +110,19 @@
           title: null,
           labelAngle: 0,
           // https://github.com/d3/d3-time-format#locale_format
-          labelExpr: "[timeFormat(datum.value, '%d'), (timeFormat(datum.value, '%d') == '01' || datum.index == 0) ? timeFormat(datum.value, '%b') : '']",
+          labelExpr: "[timeFormat(datum.value, '%b'), timeFormat(datum.value, '%m') == '01' ? timeFormat(datum.value, '%Y') : '']",
           labelColor: 'gray',
           domainColor: 'black',
+          tickCount: 'month',
           tickSize: 3,
-          grid: false,
+          gridDash: [2, 2],
         },
+
         scale: {
           domain: [
-            // new Date(new Date().setDate(new Date().getDate() - 60)).getTime(),
-            // new Date().getTime(),
-            new Date(startDate).getTime(),
-            new Date(endDate).getTime(),
-          ]
+            startDate.getTime(),
+            endDate.getTime(),
+          ],
         },
       },
       y: {
@@ -143,18 +144,7 @@
       // Line
       {
         "name": "line",
-        "mark": { "type": "line", "opacity": 1.0 }
-      },
-      // Points
-      {
-        "name": "points",
-        "mark": { "type": "circle", tooltip: true },
-        "encoding": {
-          "size": {
-            "condition": { "param": "highlight", "empty": false, "value": 200 },
-            "value": 20 // default value
-          }
-        }
+        "mark": { "type": "line" }
       },
       // Moving average
       {
@@ -166,6 +156,32 @@
       },
     ],
   };
+
+  if (daySpan > 365) { // Multi-year graph
+    // Ticks per year
+    vlSpec.encoding.x.axis.tickCount = "year";
+    vlSpec.encoding.x.axis.labelExpr = "timeFormat(datum.value, '%Y')";
+    // Style
+    vlSpec.layer[0].mark.opacity = 0.5;
+    vlSpec.layer[0].mark.strokeWidth = 1.5;
+  } else if (daySpan > 150) { // Year graph
+  } else { // Quarter / Month graph
+    // Add points
+    vlSpec.layer.push(
+      // Points
+      {
+        "name": "points",
+        "mark": { "type": "circle", tooltip: true },
+        "encoding": {
+          "size": {
+            "condition": { "param": "highlight", "empty": false, "value": 200 },
+            "value": 20 // default value
+          }
+        }
+      }
+    );
+  }
+
   var values;
   {% for metric in measurements_by_metric %}
     values = JSON.parse(document.getElementById('metric-{{ metric.metric_id }}').textContent.replace(/\bNaN\b/g, 'null')).measurements

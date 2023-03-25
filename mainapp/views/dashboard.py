@@ -142,7 +142,7 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
                 month=current_q_start_date.month - 3,
                 day=1,
             )
-        end_date = current_q_start_date - timedelta(days=1)
+        end_date = current_q_start_date
     else:
         # No quarter was passed
         end_date = date.today()
