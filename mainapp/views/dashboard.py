@@ -1,3 +1,4 @@
+import math
 from datetime import date, timedelta
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -122,20 +123,40 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         # Anonymous user
         dashboard = get_object_or_404(Dashboard, id_query & Q(is_public=True))
 
+    since = request.GET.get("since", "60 days")
+
     start_date = None
-    interval = None
-    if "since" in request.GET:
-        start_date = parse_date(request.GET["since"])
+
+    # Check if end_date needs to be set to something else than today()
+    if since == "last-quarter":
+        # Calculate current quarter start
+        current_q_start_date = date(
+            year=date.today().year, month=math.ceil(date.today().month / 3), day=1
+        )
+        # Last quarter start
+        if current_q_start_date.month <= 3:
+            start_date = date(year=current_q_start_date.year - 1, month=10, day=1)
+        else:
+            start_date = date(
+                year=current_q_start_date.year,
+                month=current_q_start_date.month - 3,
+                day=1,
+            )
+        end_date = current_q_start_date - timedelta(days=1)
+    else:
+        # No quarter was passed
+        end_date = date.today()
+        start_date = parse_date(since)
         if not start_date:
-            interval = parse_duration(request.GET["since"])  # e.g. "3 days"
+            interval = parse_duration(since)  # e.g. "3 days"
             if not interval:
                 return HttpResponseBadRequest(
                     f"Invalid argument `since`: should be a date or a duration."
                 )
-    if interval is None:
-        interval = timedelta(days=60)
-    end_date = date.today()
-    start_date = end_date - interval
+        if interval is None:
+            interval = timedelta(days=60)
+        start_date = end_date - interval
+
     measurements_by_metric = [
         {
             "metric_id": metric.id,
@@ -160,6 +181,6 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         "end_date": end_date,
         "dashboard": dashboard,
         "can_edit": dashboard.can_edit(request.user),
-        "days_since": interval.days,
+        "since": since,
     }
     return render(request, "mainapp/dashboard.html", context)
