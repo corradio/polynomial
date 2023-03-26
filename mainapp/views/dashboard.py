@@ -1,5 +1,5 @@
 import math
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -119,6 +119,10 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             # Either owner, or member of dashboard org
             & (Q(user=request.user) | Q(organization__in=organizations)),
         )
+
+        # User is not anonymous, record activity
+        request.user.last_dashboard_visit = datetime.now()
+        request.user.save()
     else:
         # Anonymous user
         dashboard = get_object_or_404(Dashboard, id_query & Q(is_public=True))

@@ -26,6 +26,8 @@ class User(AbstractUser):
 
         emailaddress_set: RelatedManager[EmailAddress]
 
+    last_dashboard_visit = models.DateTimeField(null=True)
+
     @classmethod
     def get_by_email(cls, email, only_verified=True):
         try:
