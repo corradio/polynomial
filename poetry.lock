@@ -331,7 +331,7 @@ rjsmin = "1.2.1"
 
 [[package]]
 name = "django-jsonform"
-version = "2.15.0"
+version = "2.16.0"
 description = "A user-friendly JSON editing form for Django admin."
 category = "main"
 optional = false
