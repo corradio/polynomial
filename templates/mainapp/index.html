@@ -159,6 +159,7 @@
           <td>
             {% if metric.user == user %}
               <a href="{% url 'metric-details' metric.id %}">Edit</a>
+              <a href="{% url 'metric-duplicate' metric.id %}">Duplicate</a>
               <a href="{% url 'metric_delete' metric.id %}">Delete</a>
             {% endif %}
           </td>

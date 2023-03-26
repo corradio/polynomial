@@ -128,21 +128,30 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     start_date = None
 
     # Check if end_date needs to be set to something else than today()
-    if since == "last-quarter":
+    if since in ["current-quarter", "last-quarter"]:
         # Calculate current quarter start
         current_q_start_date = date(
             year=date.today().year, month=math.ceil(date.today().month / 3), day=1
         )
-        # Last quarter start
-        if current_q_start_date.month <= 3:
-            start_date = date(year=current_q_start_date.year - 1, month=10, day=1)
+        if since == "last-quarter":
+            # Last quarter start
+            if current_q_start_date.month <= 3:
+                start_date = date(year=current_q_start_date.year - 1, month=10, day=1)
+            else:
+                start_date = date(
+                    year=current_q_start_date.year,
+                    month=current_q_start_date.month - 3,
+                    day=1,
+                )
+            end_date = current_q_start_date
+        elif since == "current-quarter":
+            start_date = current_q_start_date
+            if start_date.month >= 10:
+                end_date = date(year=start_date.year + 1, month=1, day=1)
+            else:
+                end_date = date(year=start_date.year, month=start_date.month + 3, day=1)
         else:
-            start_date = date(
-                year=current_q_start_date.year,
-                month=current_q_start_date.month - 3,
-                day=1,
-            )
-        end_date = current_q_start_date
+            raise NotImplementedError
     else:
         # No quarter was passed
         end_date = date.today()

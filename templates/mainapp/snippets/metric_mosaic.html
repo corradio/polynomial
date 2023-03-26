@@ -18,6 +18,11 @@
             </a>
         </li>
         <li class="mr-2">
+            <a href="?since=current-quarter" class="inline-block px-3 py-2 rounded-lg {% if since == 'current-quarter' %}text-white bg-blue-600 active {% else %} hover:text-gray-900 hover:bg-gray-100 {% endif %}">
+              current quarter
+            </a>
+        </li>
+        <li class="mr-2">
             <a href="?since=60%20days" class="inline-block px-3 py-2 rounded-lg {% if since == '60 days' %}text-white bg-blue-600 active {% else %} hover:text-gray-900 hover:bg-gray-100 {% endif %}">
               60 days
             </a>
