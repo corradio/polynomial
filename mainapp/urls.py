@@ -10,62 +10,74 @@ urlpatterns = [
         name="authorize-callback",
     ),
     # Metrics
-    path("metrics/", views.MetricListView.as_view(), name="metrics"),
     path(
-        "metrics/<int:pk>/",
-        views.MetricUpdateView.as_view(),
-        name="metric-details",
-    ),
-    path(
-        "metrics/<int:pk>/backfill",
-        views.metric_backfill,
-        name="metric-backfill",
-    ),
-    path(
-        "metrics/<int:pk>/collect_latest",
-        views.metric_collect_latest,
-        name="metric-collect-latest",
-    ),
-    path(
-        "metrics/<int:pk>/delete",
-        views.MetricDeleteView.as_view(),
-        name="metric_delete",
-    ),
-    path(
-        "metrics/<int:pk>/authorize",
-        views.metric_authorize,
-        name="metric-authorize",
-    ),
-    path(
-        "metrics/<int:pk>/test",
-        views.metric_test,
-        name="metric-test",
-    ),
-    path(
-        "metrics/<int:pk>/duplicate",
-        views.metric_duplicate,
-        name="metric-duplicate",
-    ),
-    # These are metric creation routes, which use the cache as backend
-    path(
-        "metrics/new",
-        views.metric_new,
-        name="metric_new",
-    ),
-    path(
-        "metrics/new/<state>/",
-        views.MetricCreateView.as_view(),
-        name="metric-new-with-state",
-    ),
-    path(
-        "metrics/new/<state>/authorize",
-        views.metric_new_authorize,
-        name="metric-new-with-state-authorize",
-    ),
-    path(
-        "metrics/new/<state>/test",
-        views.metric_new_test,
-        name="metric-new-with-state-test",
+        "metrics/",
+        include(
+            [
+                path("", views.metric.MetricListView.as_view(), name="metrics"),
+                path(
+                    "<int:pk>/",
+                    views.metric.MetricUpdateView.as_view(),
+                    name="metric-details",
+                ),
+                path(
+                    "<int:pk>/backfill",
+                    views.metric.metric_backfill,
+                    name="metric-backfill",
+                ),
+                path(
+                    "<int:pk>/collect_latest",
+                    views.metric.metric_collect_latest,
+                    name="metric-collect-latest",
+                ),
+                path(
+                    "<int:pk>/delete",
+                    views.metric.MetricDeleteView.as_view(),
+                    name="metric_delete",
+                ),
+                path(
+                    "<int:pk>/authorize",
+                    views.metric.metric_authorize,
+                    name="metric-authorize",
+                ),
+                path(
+                    "<int:pk>/test",
+                    views.metric.metric_test,
+                    name="metric-test",
+                ),
+                path(
+                    "<int:pk>/duplicate",
+                    views.metric.metric_duplicate,
+                    name="metric-duplicate",
+                ),
+                # path(
+                #     "<int:pk>/import",
+                #     views.metric.metric_import,
+                #     name="metric-import",
+                # ),
+                # These are metric creation routes, which use the cache as backend
+                path(
+                    "new",
+                    views.metric.metric_new,
+                    name="metric_new",
+                ),
+                path(
+                    "new/<state>/",
+                    views.metric.MetricCreateView.as_view(),
+                    name="metric-new-with-state",
+                ),
+                path(
+                    "new/<state>/authorize",
+                    views.metric.metric_new_authorize,
+                    name="metric-new-with-state-authorize",
+                ),
+                path(
+                    "new/<state>/test",
+                    views.metric.metric_new_test,
+                    name="metric-new-with-state-test",
+                ),
+            ]
+        ),
     ),
     # Integrations (i.e. metric, and thus, db independent)
     path(
@@ -80,12 +92,12 @@ urlpatterns = [
             [
                 path(
                     "",
-                    views.OrganizationListView.as_view(),
+                    views.organization.OrganizationListView.as_view(),
                     name="organization_list",
                 ),
                 path(
                     "new",
-                    views.OrganizationCreateView.as_view(),
+                    views.organization.OrganizationCreateView.as_view(),
                     name="organization_new",
                 ),
                 path(
@@ -94,32 +106,32 @@ urlpatterns = [
                         [
                             path(
                                 "edit",
-                                views.OrganizationUpdateView.as_view(),
+                                views.organization.OrganizationUpdateView.as_view(),
                                 name="organization_edit",
                             ),
                             path(
                                 "delete",
-                                views.OrganizationDeleteView.as_view(),
+                                views.organization.OrganizationDeleteView.as_view(),
                                 name="organization_delete",
                             ),
                             path(
                                 "orgusers/",
-                                views.OrganizationUserListView.as_view(),
+                                views.organization.OrganizationUserListView.as_view(),
                                 name="organization_user_list",
                             ),
                             path(
                                 "orgusers/new",
-                                views.OrganizationUserCreateView.as_view(),
+                                views.organization.OrganizationUserCreateView.as_view(),
                                 name="organization_user_new",
                             ),
                             path(
                                 "orgusers/<int:organization_user_pk>/delete",
-                                views.OrganizationUserDeleteView.as_view(),
+                                views.organization.OrganizationUserDeleteView.as_view(),
                                 name="organization_user_delete",
                             ),
                             path(
                                 "authorize_google_spreadsheet_export",
-                                views.authorize_google_spreadsheet_export,
+                                views.organization.authorize_google_spreadsheet_export,
                                 name="organization_authorize_google_spreadsheet_export",
                             ),
                         ]
