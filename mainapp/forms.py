@@ -1,12 +1,19 @@
+import csv
 import uuid
+from datetime import date, datetime
+from io import TextIOWrapper
+from typing import IO, List
 
 from allauth.account.adapter import get_adapter
 from django import forms
+from django.core.validators import FileExtensionValidator
+from django.db import transaction
 from django.db.models import Q
 from django.urls import reverse
 
 from mainapp.models import (
     Dashboard,
+    Measurement,
     Metric,
     Organization,
     OrganizationInvitation,
@@ -64,6 +71,61 @@ class MetricForm(forms.ModelForm):
             "dashboards": forms.CheckboxSelectMultiple(),
             "organizations": forms.CheckboxSelectMultiple(),
         }
+
+
+class MetricImportForm(forms.ModelForm):
+    file = forms.FileField(validators=[FileExtensionValidator(["csv"])])
+    date_field = forms.CharField(required=True, initial="datetime")
+    value_field = forms.CharField(required=True, initial="value")
+
+    def save(self, commit=True):
+        date_field = self.data["date_field"]
+        value_field = self.data["value_field"]
+
+        f = self.files["file"]
+        reader = csv.DictReader(TextIOWrapper(f))  # type: ignore[arg-type]
+        assert reader.fieldnames is not None
+        for key in [date_field, value_field]:
+            if key not in reader.fieldnames:
+                raise forms.ValidationError(f"CSV file is missing '{key}' column")
+
+        metric = self.instance
+        num_rows = 0
+
+        def parse_date(s: str) -> date:
+            try:
+                d = datetime.fromisoformat(s)
+            except ValueError as e:
+                # Try another method
+                try:
+                    d = datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+                except:
+                    # Try another method
+                    try:
+                        d = datetime.strptime(s, "%m/%d/%Y %H:%M:%S")
+                    except ValueError as e:
+                        raise forms.ValidationError(
+                            f"Error while parsing date: '{e}'"
+                        ) from None
+            return d.date()
+
+        with transaction.atomic():
+            for row in reader:
+                Measurement.objects.update_or_create(
+                    metric=metric,
+                    date=parse_date(row[date_field]),
+                    defaults={
+                        "value": float(row[value_field]),
+                    },
+                )
+                num_rows += 1
+
+        # Start transaction and insert into db
+        self.cleaned_data["num_rows"] = num_rows
+
+    class Meta:
+        model = Metric
+        fields: List[str] = []
 
 
 class OrganizationForm(forms.ModelForm):

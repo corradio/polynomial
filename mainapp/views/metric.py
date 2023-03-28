@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 from allauth.account.adapter import get_adapter
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.forms.models import model_to_dict
@@ -41,7 +42,7 @@ from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import WebAuthIntegration
 
-from .. import google_spreadsheet_export
+from .. import forms
 from ..forms import MetricForm, OrganizationForm, OrganizationUserCreateForm
 from ..models import (
     Dashboard,
@@ -430,3 +431,17 @@ def metric_test(request, pk):
         return JsonResponse(
             {"error": error_str, "datetime": datetime.now(), "status": "error"}
         )
+
+
+class MetricImportView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Metric
+    form_class = forms.MetricImportForm
+    success_message = "%(num_rows)s values imported"
+    template_name = "mainapp/metric_import.html"
+
+    def get_success_url(self):
+        return self.request.GET.get("next") or reverse_lazy("index")
+
+    def get_queryset(self, *args, **kwargs):
+        # Only show metric if user can access it
+        return super().get_queryset(*args, **kwargs).filter(user=self.request.user)

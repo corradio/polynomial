@@ -50,11 +50,11 @@ urlpatterns = [
                     views.metric.metric_duplicate,
                     name="metric-duplicate",
                 ),
-                # path(
-                #     "<int:pk>/import",
-                #     views.metric.metric_import,
-                #     name="metric-import",
-                # ),
+                path(
+                    "<int:pk>/import",
+                    views.metric.MetricImportView.as_view(),
+                    name="metric-import",
+                ),
                 # These are metric creation routes, which use the cache as backend
                 path(
                     "new",

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form action="" method="post" enctype="multipart/form-data">{% csrf_token %}
+      <p>Import CSV data to the "{{ object }}" metric</p>
+      {{ form.as_p }}
+      <input type="submit" value="Confirm">
+  </form>
+{% endblock %}

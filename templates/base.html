@@ -13,6 +13,23 @@
     {% block extra_head %}
     {% endblock %}
   </head>
+
+  {% if messages %}
+  <ul>
+      {% for message in messages %}
+      <li
+        class="border px-4 py-3 rounded relative
+          {% if message.tags == "success" %}bg-green-100 border-green-400 text-green-700
+          {% elif message.tags == "error" %}bg-red-100 border-red-400 text-red-700
+          {% elif message.tags == "warning" %}bg-orange-100 border-orange-400 text-orange-700
+          {% elif message.tags == "info" %}bg-blue-100 border-blue-400 text-blue-700
+          {% endif %}">
+        {{ message }}
+      </li>
+      {% endfor %}
+  </ul>
+  {% endif %}
+
   <body>
     <nav class="bg-white border-gray-200 px-2 sm:px-4 py-2.5 rounded dark:bg-gray-900">
       <div class="container flex flex-wrap items-center justify-between mx-auto">
