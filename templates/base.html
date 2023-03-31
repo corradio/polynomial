@@ -39,7 +39,7 @@
         </a>
         <div class="flex items-center md:order-2">
           {% if user.is_authenticated %}
-          <a href="{% url 'integrations' %}" class="btn">Add new metric</a>
+          <a href="{% url 'integrations' %}" class="btn">New metric</a>
           <button type="button" class="flex mr-3 text-sm bg-gray-100 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600 overflow-hidden w-8 h-8 inline-flex items-center justify-center" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom">
             <span class="sr-only">Open user menu</span>
               {% if user.socialaccount_set.all.0.get_avatar_url %}
@@ -58,7 +58,7 @@
             </div>
             <ul class="py-2" aria-labelledby="user-menu-button">
               <li>
-                <a href="{% url 'metrics' %}" class="no-underline hover:no-underline block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Settings</a>
+                <a href="{% url 'metrics' %}" class="no-underline hover:no-underline block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Metrics</a>
               </li>
               <li>
                 <a href="{% url 'organization_list' %}" class="no-underline hover:no-underline block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Organizations</a>
