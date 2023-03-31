@@ -305,3 +305,30 @@ class DashboardMetricAddForm(forms.ModelForm):
         widgets = {
             "metrics": forms.CheckboxSelectMultiple(),
         }
+
+
+class MetricIntegrationForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request")
+        self.state = kwargs.pop("state")
+        super().__init__(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        if self.has_changed():
+            # Reset other fields as well
+            if self.instance.pk:
+                # Update
+                self.instance.integration_credentials = None
+                self.instance.integration_config = None
+                return super().save(*args, **kwargs)
+            else:
+                # Creating metric, i.e. use the cache
+                metric_cache = self.request.session[self.state]["metric"]
+                metric_cache["integration_credentials"] = None
+                metric_cache["integration_config"] = None
+                metric_cache["integration_id"] = self.cleaned_data["integration_id"]
+                self.request.session.modified = True
+
+    class Meta:
+        model = Metric
+        fields = ["integration_id"]

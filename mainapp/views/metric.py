@@ -445,3 +445,56 @@ class MetricImportView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     def get_queryset(self, *args, **kwargs):
         # Only show metric if user can access it
         return super().get_queryset(*args, **kwargs).filter(user=self.request.user)
+
+
+class MetricIntegrationUpdateView(LoginRequiredMixin, UpdateView):
+    model = Metric
+    form_class = forms.MetricIntegrationForm
+    template_name = "mainapp/metric_select_integration.html"
+
+    def get_success_url(self):
+        if self.object.can_web_auth and not self.object.integration_credentials:
+            return reverse("metric-authorize", args=[self.object.pk])
+        return self.request.GET.get("next") or reverse_lazy(self.object)
+
+    def get_queryset(self, *args, **kwargs):
+        # Only show metric if user can access it
+        return super().get_queryset(*args, **kwargs).filter(user=self.request.user)
+
+
+class NewMetricIntegrationCreateView(LoginRequiredMixin, CreateView):
+    # Use a create view as form will not be able to fetch existing model
+    model = Metric
+    form_class = forms.MetricIntegrationForm
+    template_name = "mainapp/metric_select_integration.html"
+
+    def dispatch(self, request, state, *args, **kwargs):
+        self.state = state
+        # Make sure someone with the link can't impersonate a user
+        if request.session.get(self.state, {}).get("user_id") != request.user.id:
+            raise PermissionDenied
+        metric_data = request.session.get(self.state, {}).get("metric", {})
+        self.integration_id = metric_data.get("integration_id")
+        self.integration_credentials = metric_data.get("integration_credentials")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        metric_data = self.request.session.get(self.state, {}).get("metric", {})
+        integration_id = metric_data.get("integration_id")
+        can_web_auth = issubclass(
+            INTEGRATION_CLASSES[integration_id], WebAuthIntegration
+        )
+        if can_web_auth and not self.integration_credentials:
+            return reverse("metric-new-with-state-authorize", args=[self.state])
+        return self.request.GET.get("next") or reverse(
+            "metric-new-with-state", args=[self.state]
+        )
+
+    def get_initial(self):
+        return {"integration_id": self.integration_id}
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        kwargs["state"] = self.state
+        return kwargs

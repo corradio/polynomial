@@ -41,6 +41,11 @@ urlpatterns = [
                     name="metric-authorize",
                 ),
                 path(
+                    "<int:pk>/select-integration",
+                    views.metric.MetricIntegrationUpdateView.as_view(),
+                    name="metric-select-integration",
+                ),
+                path(
                     "<int:pk>/test",
                     views.metric.metric_test,
                     name="metric-test",
@@ -70,6 +75,11 @@ urlpatterns = [
                     "new/<state>/authorize",
                     views.metric.metric_new_authorize,
                     name="metric-new-with-state-authorize",
+                ),
+                path(
+                    "new/<state>/select-integration",
+                    views.metric.NewMetricIntegrationCreateView.as_view(),
+                    name="metric-new-with-state-select-integration",
                 ),
                 path(
                     "new/<state>/test",
