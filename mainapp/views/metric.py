@@ -7,6 +7,7 @@ from types import MethodType
 from typing import Any, Dict, List, Optional, Union
 
 from allauth.account.adapter import get_adapter
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -65,8 +66,15 @@ def deserialize_list(arg: Optional[str]):
 @login_required
 def metric_backfill(request, pk):
     metric = get_object_or_404(Metric, pk=pk, user=request.user)
-    backfill_task.delay(metric_id=pk, since=request.POST.get("since"))
-    return HttpResponse(f"Task dispatched")
+    if request.method == "POST":
+        backfill_task.delay(metric_id=pk, since=request.POST.get("since"))
+        messages.success(request, f"Data will be fetched in the background")
+        return redirect(request.GET.get("next") or reverse("index"))
+    elif request.method == "GET":
+        return render(
+            request, "mainapp/metric_confirm_backfill.html", {"object": metric}
+        )
+    return HttpResponseNotAllowed(["POST", "GET"])
 
 
 @login_required
@@ -225,7 +233,6 @@ def metric_new(request):
 class MetricCreateView(LoginRequiredMixin, CreateView):
     model = Metric
     form_class = MetricForm
-    success_url = reverse_lazy("index")
 
     def dispatch(self, request, state, *args, **kwargs):
         self.state = state
@@ -256,6 +263,14 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
         initial = data.get("metric", {"integration_id": self.integration_id})
         assert initial["integration_id"] == self.integration_id
         return initial
+
+    def get_success_url(self):
+        final_destination = self.request.GET.get("next") or reverse("index")
+        assert self.object is not None
+        if not self.object.measurement_set.count():
+            # Metric has no measurements, propose user to backfill
+            return f'{reverse("metric-backfill", args=[self.object.pk])}?{urlencode({"next": final_destination})}'
+        return final_destination
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -341,7 +356,11 @@ class MetricUpdateView(LoginRequiredMixin, UpdateView):
     form_class = MetricForm
 
     def get_success_url(self):
-        return self.request.GET.get("next") or reverse_lazy("index")
+        final_destination = self.request.GET.get("next") or reverse("index")
+        if not self.object.measurement_set.count():
+            # Metric has no measurements, propose user to backfill
+            return f'{reverse("metric-backfill", args=[self.object.pk])}?{urlencode({"next": final_destination})}'
+        return final_destination
 
     def get_queryset(self, *args, **kwargs):
         # Only show metric if user can access it

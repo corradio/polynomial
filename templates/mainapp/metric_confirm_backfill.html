@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form method="post">{% csrf_token %}
+      <p>This metric is able to fetch past data, would you like to fetch it?</p>
+      {{ form }}
+      {% if request.GET.next %}
+      <input type="button" value="Skip" onclick="location.href='{{ request.GET.next }}';">
+      {% endif %}
+      <input type="submit" value="Confirm">
+  </form>
+{% endblock %}
