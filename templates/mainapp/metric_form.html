@@ -21,7 +21,7 @@
       if (authorizeButton) {
         authorizeButton.onclick = function(e) {
           // Note: this will lose all unsaved settings
-          location.href = location.href + 'authorize';
+          location.pathname += 'authorize';
         }
       }
       // Test

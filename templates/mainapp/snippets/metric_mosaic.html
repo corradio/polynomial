@@ -40,7 +40,7 @@
       <span class="text-sm">
       {% if metric.can_edit %}
         [<a href="{% url 'metric-details' metric.metric_id %}?next={{ request.get_full_path | urlencode }}">edit</a>]
-        [<a href="{% url 'metric-duplicate' metric.metric_id %}">duplicate</a>]
+        [<a href="{% url 'metric-duplicate' metric.metric_id %}?next={{ request.get_full_path | urlencode }}">duplicate</a>]
       {% endif %}
       {% if can_edit %}
         [<a href="{% url 'dashboardmetric_remove' dashboard.pk metric.metric_id %}?next={{ request.get_full_path | urlencode }}">remove</a>]
@@ -57,8 +57,8 @@
 {% endfor %}
 {% if can_edit %}
   <div class="card flex items-center justify-center bg-slate-50" style="border: thin dotted lightgray; border-radius: 5px; min-height: 250px">
-    <a href="{% url 'dashboardmetric_add' dashboard.pk %}?next={{ request.get_full_path | urlencode }}" class="btn">Add existing metric</a>
-    <a href="{% url 'integrations' %}?dashboard_ids={{ dashboard.pk }}" class="btn">Create new metric</a>
+    <a href="{% url 'dashboardmetric_add' dashboard.pk %}" class="btn">Add existing metric</a>
+    <a href="{% url 'integrations' %}?dashboard_ids={{ dashboard.pk }}&next={{ request.get_full_path | urlencode }}" class="btn">Create new metric</a>
   </div>
 {% endif %}
 

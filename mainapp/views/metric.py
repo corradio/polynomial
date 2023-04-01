@@ -55,6 +55,7 @@ from ..models import (
     User,
 )
 from ..tasks import backfill_task
+from .utils import add_next
 
 
 def deserialize_list(arg: Optional[str]):
@@ -212,7 +213,11 @@ def metric_duplicate(request, pk):
         "metric": metric_object,
         "user_id": request.user.id,
     }
-    return redirect(reverse("metric-new-with-state", args=[state]))
+    return redirect(
+        add_next(
+            reverse("metric-new-with-state", args=[state]), request.GET.get("next")
+        )
+    )
 
 
 @login_required
@@ -227,7 +232,11 @@ def metric_new(request):
         },
         "user_id": request.user.id,
     }
-    return redirect(reverse("metric-new-with-state", args=[state]))
+    return redirect(
+        add_next(
+            reverse("metric-new-with-state", args=[state]), request.GET.get("next")
+        )
+    )
 
 
 class MetricCreateView(LoginRequiredMixin, CreateView):
@@ -337,6 +346,7 @@ def metric_new_authorize(request, state):
     request.session[state] = {
         **request.session[state],
         "code_verifier": code_verifier,
+        "next": request.GET.get("next"),
     }
     return HttpResponseRedirect(uri)
 
@@ -398,6 +408,7 @@ def metric_authorize(request, pk):
     request.session[state] = {
         "metric_id": metric.id,
         "code_verifier": code_verifier,
+        "next": request.GET.get("next"),
     }
     return HttpResponseRedirect(uri)
 

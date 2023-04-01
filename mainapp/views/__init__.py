@@ -56,6 +56,7 @@ from ..tasks import backfill_task
 
 # Re-export
 from . import dashboard, metric, organization
+from .utils import add_next
 
 
 @login_required
@@ -103,13 +104,16 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
             # - Nothing (if it was called from /metrics/new/<state>/authorize)
             if "organization_id" in cache_obj:
                 return redirect(
-                    google_spreadsheet_export.process_authorize_callback(
-                        organization_id=cache_obj["organization_id"],
-                        uri=request.build_absolute_uri(request.get_full_path()),
-                        authorize_callback_uri=request.build_absolute_uri(
-                            reverse("authorize-callback")
+                    add_next(
+                        google_spreadsheet_export.process_authorize_callback(
+                            organization_id=cache_obj["organization_id"],
+                            uri=request.build_absolute_uri(request.get_full_path()),
+                            authorize_callback_uri=request.build_absolute_uri(
+                                reverse("authorize-callback")
+                            ),
+                            state=state,
                         ),
-                        state=state,
+                        next=cache_obj.get("next"),
                     )
                 )
 
@@ -140,11 +144,18 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
                 metric.save()
                 # Clean up session as it won't be used anymore
                 del self.request.session[state]
-                return redirect(metric)
+                return redirect(
+                    add_next(metric.get_absolute_url(), next=cache_obj.get("next"))
+                )
             else:
                 cache_obj["metric"]["integration_credentials"] = integration_credentials
                 request.session.modified = True
-                return redirect(reverse("metric-new-with-state", args=[state]))
+                return redirect(
+                    add_next(
+                        reverse("metric-new-with-state", args=[state]),
+                        next=cache_obj.get("next"),
+                    )
+                )
 
 
 def page(request: HttpRequest, username_or_org_slug: str):
