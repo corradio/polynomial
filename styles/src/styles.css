@@ -12,7 +12,7 @@
   h3 {
     @apply text-lg mb-1 mt-4;
   }
-  a {
+  a:not(:has(input)) {
     @apply text-blue-600 no-underline hover:underline;
   }
   /* forms */

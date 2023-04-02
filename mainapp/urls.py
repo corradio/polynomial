@@ -60,6 +60,11 @@ urlpatterns = [
                     views.metric.MetricImportView.as_view(),
                     name="metric-import",
                 ),
+                path(
+                    "<int:pk>/dashboards/add",
+                    views.metric.MetricDashboardAddView.as_view(),
+                    name="metricdashboard_add",
+                ),
                 # These are metric creation routes, which use the cache as backend
                 path(
                     "new",

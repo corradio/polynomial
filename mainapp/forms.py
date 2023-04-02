@@ -332,3 +332,35 @@ class MetricIntegrationForm(forms.ModelForm):
     class Meta:
         model = Metric
         fields = ["integration_id"]
+
+
+class MetricDashboardAddForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        organizations = Organization.objects.filter(users=user)
+        if "dashboards" in self.fields:
+            dashboards_field = self.fields["dashboards"]
+            assert isinstance(dashboards_field, forms.ModelChoiceField)
+            dashboards_field.queryset = Dashboard.objects.all().filter(
+                Q(user=user) | Q(organization__in=organizations)
+            )
+            dashboards_field.help_text = "Note: adding a metric to a dashboard will also add it to its organization"
+            dashboards_field.required = True
+
+    def save(self, *args, **kwargs):
+        metric = super().save(*args, **kwargs)
+        # Also make sure that for each dashboard,
+        # the metric is moved to its organization if applicable
+        # to keep ACL consistent
+        for dashboard in metric.dashboards.all():
+            if dashboard.organization:
+                metric.organizations.add(dashboard.organization)
+        return metric
+
+    class Meta:
+        model = Metric
+        fields = ["dashboards"]
+        widgets = {
+            "dashboards": forms.CheckboxSelectMultiple(),
+        }

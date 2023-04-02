@@ -274,12 +274,23 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
         return initial
 
     def get_success_url(self):
-        final_destination = self.request.GET.get("next") or reverse("index")
         assert self.object is not None
+        next_destination = self.request.GET.get("next") or reverse("index")
+        if not self.object.dashboard_set.count():
+            # Make sure we ask if we should add to dashboard at the end
+            next_destination = add_next(
+                reverse("metricdashboard_add", args=[self.object.pk]),
+                next=next_destination,
+                encode=True,
+            )
         if not self.object.measurement_set.count():
-            # Metric has no measurements, propose user to backfill
-            return f'{reverse("metric-backfill", args=[self.object.pk])}?{urlencode({"next": final_destination})}'
-        return final_destination
+            # Metric has no measurements, first propose user to backfill
+            next_destination = add_next(
+                reverse("metric-backfill", args=[self.object.pk]),
+                next=next_destination,
+                encode=True,
+            )
+        return next_destination
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -366,11 +377,22 @@ class MetricUpdateView(LoginRequiredMixin, UpdateView):
     form_class = MetricForm
 
     def get_success_url(self):
-        final_destination = self.request.GET.get("next") or reverse("index")
+        next_destination = self.request.GET.get("next") or reverse("index")
+        if not self.object.dashboard_set.count():
+            # Make sure we ask if we should add to dashboard at the end
+            next_destination = add_next(
+                reverse("metricdashboard_add", args=[self.object.pk]),
+                next=next_destination,
+                encode=True,
+            )
         if not self.object.measurement_set.count():
-            # Metric has no measurements, propose user to backfill
-            return f'{reverse("metric-backfill", args=[self.object.pk])}?{urlencode({"next": final_destination})}'
-        return final_destination
+            # Metric has no measurements, first propose user to backfill
+            next_destination = add_next(
+                reverse("metric-backfill", args=[self.object.pk]),
+                next=next_destination,
+                encode=True,
+            )
+        return next_destination
 
     def get_queryset(self, *args, **kwargs):
         # Only show metric if user can access it
@@ -527,4 +549,22 @@ class NewMetricIntegrationCreateView(LoginRequiredMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         kwargs["state"] = self.state
+        return kwargs
+
+
+class MetricDashboardAddView(LoginRequiredMixin, UpdateView):
+    model = Metric
+    form_class = forms.MetricDashboardAddForm
+    template_name = "mainapp/metricdashboard_add.html"
+
+    def get_success_url(self):
+        return self.request.GET.get("next") or super().get_success_url()
+
+    def get_queryset(self, *args, **kwargs):
+        # Only show metric if user can access it
+        return super().get_queryset(*args, **kwargs).filter(user=self.request.user)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
         return kwargs
