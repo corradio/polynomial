@@ -11,6 +11,7 @@ from django.contrib.auth.models import AbstractUser, AnonymousUser
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
+from django.utils.text import slugify
 from django_jsonform.models.fields import JSONField
 
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS, Integration
@@ -205,6 +206,11 @@ class Dashboard(models.Model):
 
     def can_delete(self, user: Union[User, AnonymousUser]):
         return self.user == user
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
     class Meta:
         # Remember that null values are not considered equals in the constraint

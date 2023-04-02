@@ -335,27 +335,40 @@ class MetricIntegrationForm(forms.ModelForm):
 
 
 class MetricDashboardAddForm(forms.ModelForm):
+    dashboard_new = forms.CharField(required=False, label="Or create a new dashboard")
+
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop("user")
+        self.user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
-        organizations = Organization.objects.filter(users=user)
+        organizations = Organization.objects.filter(users=self.user)
         if "dashboards" in self.fields:
             dashboards_field = self.fields["dashboards"]
             assert isinstance(dashboards_field, forms.ModelChoiceField)
             dashboards_field.queryset = Dashboard.objects.all().filter(
-                Q(user=user) | Q(organization__in=organizations)
+                Q(user=self.user) | Q(organization__in=organizations)
             )
             dashboards_field.help_text = "Note: adding a metric to a dashboard will also add it to its organization"
-            dashboards_field.required = True
+
+    def clean(self):
+        super().clean()
+        if not self.data.get("dashboards") and not self.data.get("dashboard_new"):
+            raise forms.ValidationError(f"Dashboard is missing")
 
     def save(self, *args, **kwargs):
-        metric = super().save(*args, **kwargs)
-        # Also make sure that for each dashboard,
-        # the metric is moved to its organization if applicable
-        # to keep ACL consistent
-        for dashboard in metric.dashboards.all():
-            if dashboard.organization:
-                metric.organizations.add(dashboard.organization)
+        with transaction.atomic():
+            metric = super().save(*args, **kwargs)
+            if self.data["dashboard_new"]:
+                new_dashboard = Dashboard(
+                    name=self.data["dashboard_new"], user=self.user
+                )
+                new_dashboard.save()
+                metric.dashboard_set.add(new_dashboard)
+            # Also make sure that for each dashboard,
+            # the metric is moved to its organization if applicable
+            # to keep ACL consistent
+            for dashboard in metric.dashboards.all():
+                if dashboard.organization:
+                    metric.organizations.add(dashboard.organization)
         return metric
 
     class Meta:
