@@ -283,7 +283,7 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
                 next=next_destination,
                 encode=True,
             )
-        if not self.object.measurement_set.count():
+        if not self.object.measurement_set.count() and self.object.can_backfill:
             # Metric has no measurements, first propose user to backfill
             next_destination = add_next(
                 reverse("metric-backfill", args=[self.object.pk]),
@@ -385,7 +385,7 @@ class MetricUpdateView(LoginRequiredMixin, UpdateView):
                 next=next_destination,
                 encode=True,
             )
-        if not self.object.measurement_set.count():
+        if not self.object.measurement_set.count() and self.object.can_backfill:
             # Metric has no measurements, first propose user to backfill
             next_destination = add_next(
                 reverse("metric-backfill", args=[self.object.pk]),
