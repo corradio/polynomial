@@ -507,7 +507,7 @@ class MetricIntegrationUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         if self.object.can_web_auth and not self.object.integration_credentials:
             return reverse("metric-authorize", args=[self.object.pk])
-        return self.request.GET.get("next") or reverse_lazy(self.object)
+        return self.request.GET.get("next") or self.object.get_absolute_url()
 
     def get_queryset(self, *args, **kwargs):
         # Only show metric if user can access it

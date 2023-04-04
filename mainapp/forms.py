@@ -309,8 +309,10 @@ class DashboardMetricAddForm(forms.ModelForm):
 
 class MetricIntegrationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request")
-        self.state = kwargs.pop("state")
+        if "request" in kwargs:
+            self.request = kwargs.pop("request")
+        if "state" in kwargs:
+            self.state = kwargs.pop("state")
         super().__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
