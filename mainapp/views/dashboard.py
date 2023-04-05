@@ -134,8 +134,9 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     # Check if end_date needs to be set to something else than today()
     if since in ["current-quarter", "last-quarter"]:
         # Calculate current quarter start
+        current_quarter = math.ceil(date.today().month / 3)
         current_q_start_date = date(
-            year=date.today().year, month=math.ceil(date.today().month / 3), day=1
+            year=date.today().year, month=(current_quarter - 1) * 3 + 1, day=1
         )
         if since == "last-quarter":
             # Last quarter start
@@ -147,13 +148,17 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
                     month=current_q_start_date.month - 3,
                     day=1,
                 )
-            end_date = current_q_start_date
+            end_date = current_q_start_date - timedelta(days=1)
         elif since == "current-quarter":
             start_date = current_q_start_date
             if start_date.month >= 10:
-                end_date = date(year=start_date.year + 1, month=1, day=1)
+                end_date = date(year=start_date.year + 1, month=1, day=1) - timedelta(
+                    days=1
+                )
             else:
-                end_date = date(year=start_date.year, month=start_date.month + 3, day=1)
+                end_date = date(
+                    year=start_date.year, month=start_date.month + 3, day=1
+                ) - timedelta(days=1)
         else:
             raise NotImplementedError
     else:
