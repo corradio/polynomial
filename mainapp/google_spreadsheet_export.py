@@ -1,5 +1,8 @@
+import gzip
+import json
 import secrets
 from datetime import date, datetime
+from itertools import islice
 from typing import Tuple, Union
 
 import requests
@@ -19,6 +22,8 @@ token_url = "https://oauth2.googleapis.com/token"
 refresh_url = "https://oauth2.googleapis.com/token"
 scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 authorize_extras = {"access_type": "offline", "prompt": "consent"}
+
+BATCH_SIZE = 5000
 
 
 def authorize(request: HttpRequest) -> Tuple[str, str]:
@@ -57,14 +62,26 @@ def process_authorize_callback(
     return reverse("organization_edit", args=[organization_id])
 
 
+def sheet_row_key(measurement: Measurement):
+    return measurement.metric.name
+
+
+def sheet_datetime(dt: Union[date, datetime]):
+    # This will format time in whatever timezone is given by the db
+    return datetime.strftime(dt, "%Y-%m-%dT%H:%M:%S")
+
+
+def sheet_value(value: float) -> str:
+    # Return empty string if value is not finite
+    return "" if value != value else str(value)
+
+
 @shared_task()
 def spreadsheet_export(organization_id):
     organization = Organization.objects.get(pk=organization_id)
     spreadsheet_id = organization.google_spreadsheet_export_spreadsheet_id
     credentials = organization.google_spreadsheet_export_credentials
     sheet_name = organization.google_spreadsheet_export_sheet_name
-
-    measurements = Measurement.objects.filter(metric__organizations=organization)
 
     def credentials_updater(new_credentials):
         organization.google_spreadsheet_export_credentials = new_credentials
@@ -116,7 +133,7 @@ def spreadsheet_export(organization_id):
         pass
 
     # Clear sheet
-    request_url = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/{sheet_name}:clear"
+    request_url = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/'{sheet_name}':clear"
     response = session.post(request_url)
     process_response(response)
 
@@ -127,30 +144,37 @@ def spreadsheet_export(organization_id):
         "includeValuesInResponse": False,
     }
 
-    def sheet_row_key(measurement: Measurement):
-        return measurement.metric.name
+    fields_to_fetch = ["metric__name", "date", "updated_at", "value"]
+    measurements = (
+        Measurement.objects.filter(metric__organizations=organization)
+        .select_related("metric")
+        .only(*fields_to_fetch)
+    )
 
-    def sheet_datetime(dt: Union[date, datetime]):
-        # This will format time in whatever timezone is given by the db
-        return datetime.strftime(dt, "%Y-%m-%dT%H:%M:%S")
-
-    def sheet_value(value: float) -> str:
-        # Return empty string if value is not finite
-        return "" if value != value else str(value)
-
-    # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values#ValueRange
-    update_values_body = {
-        "values": [["updated_at", "datetime", "key", "value"]]
-        + [
+    n_start = 1
+    update_values_body = {"values": [["updated_at", "datetime", "key", "value"]]}
+    while batch := islice(
+        measurements.order_by("-updated_at", "-date", "metric__name"), BATCH_SIZE
+    ):
+        # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values#ValueRange
+        update_values_body["values"] += [
             [
                 sheet_datetime(m.updated_at),
                 sheet_datetime(m.date),
                 sheet_row_key(m),
                 sheet_value(m.value),
             ]
-            for m in measurements.order_by("-updated_at", "-date", "metric__name")
+            for m in batch
         ]
-    }
-    request_url = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/{sheet_name}"
-    response = session.put(request_url, params=params, json=update_values_body)
-    process_response(response)
+        data = gzip.compress(json.dumps(update_values_body).encode("utf-8"))
+        request_url = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/'{sheet_name}':append"
+        response = session.post(
+            request_url,
+            params=params,
+            data=data,
+            headers={"Content-Type": "application/json", "Content-Encoding": "gzip"},
+        )
+        process_response(response)
+        # Next
+        n_start += BATCH_SIZE
+        update_values_body["values"] = []
