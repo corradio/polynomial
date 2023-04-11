@@ -24,6 +24,7 @@ scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 authorize_extras = {"access_type": "offline", "prompt": "consent"}
 
 BATCH_SIZE = 5000
+ROW_LIMIT = int(1e5)  # Limit is 1e6 cells per workbook
 
 
 def authorize(request: HttpRequest) -> Tuple[str, str]:
@@ -108,7 +109,7 @@ def spreadsheet_export(organization_id):
             if e.response.status_code in [400, 403]:
                 # Try to explain to the user
                 data = e.response.json()
-                raise requests.HTTPError(data["error"]["message"]) from None
+                raise requests.HTTPError(data["error"]["message"]) from e
             else:
                 raise
 
@@ -145,16 +146,17 @@ def spreadsheet_export(organization_id):
     }
 
     fields_to_fetch = ["metric__name", "date", "updated_at", "value"]
-    measurements = (
+    measurements = iter(
         Measurement.objects.filter(metric__organizations=organization)
         .select_related("metric")
         .only(*fields_to_fetch)
+        .order_by("-updated_at", "-date", "metric__name")[:ROW_LIMIT]
     )
 
-    n_start = 1
     update_values_body = {"values": [["updated_at", "datetime", "key", "value"]]}
     while batch := islice(
-        measurements.order_by("-updated_at", "-date", "metric__name"), BATCH_SIZE
+        measurements,
+        BATCH_SIZE,
     ):
         # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values#ValueRange
         update_values_body["values"] += [
@@ -166,6 +168,8 @@ def spreadsheet_export(organization_id):
             ]
             for m in batch
         ]
+        if not update_values_body["values"]:
+            return
         data = gzip.compress(json.dumps(update_values_body).encode("utf-8"))
         request_url = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/'{sheet_name}':append"
         response = session.post(
@@ -174,7 +178,13 @@ def spreadsheet_export(organization_id):
             data=data,
             headers={"Content-Type": "application/json", "Content-Encoding": "gzip"},
         )
-        process_response(response)
+        try:
+            process_response(response)
+        except requests.HTTPError as e:
+            if (
+                "This action would increase the number of cells in the workbook above the limit of"
+                in str(e)
+            ):
+                return
         # Next
-        n_start += BATCH_SIZE
         update_values_body["values"] = []
