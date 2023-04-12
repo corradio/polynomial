@@ -49,7 +49,7 @@
           integration_config: configElement.value,
           name: document.getElementById('id_name').value,
         });
-        fetch(location.href + 'test', {
+        fetch(location.origin + location.pathname + 'test', {
           method: 'POST', headers: {
             'X-CSRFToken': csrftoken,
             'Accept': 'application/json',
