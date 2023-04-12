@@ -24,6 +24,8 @@
       bg-blue-700 hover:bg-blue-800
       dark:bg-blue-600 dark:hover:bg-blue-700
       dark:focus:ring-blue-800;
+    /* make sure the sizing of a and input are equal */
+    line-height: initial;
   }
   input:disabled {
     @apply
@@ -134,6 +136,12 @@
       invalid:border-pink-500 invalid:text-pink-600
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
   }
+}
+
+.btn-delete {
+  @apply text-red-600 focus:ring-red-300
+    bg-transparent
+    border border-red-600 hover:bg-red-100;
 }
 
 img.integration-icon {
