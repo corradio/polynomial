@@ -2,6 +2,7 @@ from datetime import date
 from io import StringIO
 from typing import List, final
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -102,10 +103,12 @@ class GooglePlayStore(OAuth2Integration):
         df = pd.read_csv(
             StringIO(response.text), parse_dates=["Date"], index_col="Date"
         )
+        # Replace "0" by np.nan
+        df = df.replace(0, np.nan)
         df_filtered = df[
             (df.index >= date_start.isoformat()) & (df.index <= date_end.isoformat())
         ].sort_index()
         return [
             MeasurementTuple(date=index.to_pydatetime().date(), value=value)  # type: ignore[attr-defined]
-            for index, value in df_filtered[column].dropna().items()
+            for index, value in df_filtered[column].items()
         ]
