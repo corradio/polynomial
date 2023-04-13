@@ -6,7 +6,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Polynomial | {% block head_title %}{% endblock %}</title>
+    <title>Polynomial | Lightweight metrics engine for your most vital KPIs</title>
     {% compress css %}
     <link rel="stylesheet" href="{% static 'dist/styles.css' %}">
     {% endcompress %}
@@ -39,7 +39,7 @@
         </a>
         <div class="flex items-center md:order-2">
           {% if user.is_authenticated %}
-          <a href="{% url 'integrations' %}" class="btn">New metric</a>
+          <a href="{% url 'integrations' %}" class="btn mr-2">New metric</a>
           <button type="button" class="flex mr-3 text-sm bg-gray-100 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600 overflow-hidden w-8 h-8 inline-flex items-center justify-center" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom">
             <span class="sr-only">Open user menu</span>
               {% if user.socialaccount_set.all.0.get_avatar_url %}
@@ -98,6 +98,8 @@
         </div> -->
       </div>
     </nav>
+
+    {% block before_content %}{% endblock %}
 
     <div class="container mx-auto mt-4 px-4">
       {% block content %}{% endblock %}

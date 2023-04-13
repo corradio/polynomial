@@ -11,6 +11,7 @@ module.exports = {
   plugins: [
     require('flowbite/plugin'),
     require('@tailwindcss/forms'),
+    require('tailwind-scrollbar-hide'),
   ],
   safelist: [
     'errorlist', // used by django form utils

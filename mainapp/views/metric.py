@@ -175,26 +175,6 @@ class MetricListView(LoginRequiredMixin, ListView):
         )
         return context
 
-    def post(self, request, *args, **kwargs):
-        # Strictly speaking should be PATCH, but it's not supported
-        # in html forms
-        organization_to_set = deserialize_list(
-            self.request.POST.get("organization-on-list")
-        )
-        organization_to_unset = deserialize_list(
-            self.request.POST.get("organization-off-list")
-        )
-        for metric_id in deserialize_list(self.request.POST.get("metric_ids")):
-            metric = Metric.objects.get(pk=metric_id)
-            if metric.user != self.request.user:
-                raise PermissionDenied
-            for organization_pk in organization_to_set:
-                metric.organizations.add(organization_pk)
-            for organization_pk in organization_to_unset:
-                metric.organizations.remove(organization_pk)
-
-        return redirect(reverse("metrics"))
-
 
 @login_required
 def metric_duplicate(request, pk):

@@ -350,9 +350,6 @@ class Organization(models.Model):
     def is_member(self, user: Union[User, AnonymousUser]):
         return True if user in self.users.all() else False
 
-    def get_absolute_url(self):
-        return reverse("page", args=[self.slug])
-
 
 class OrganizationInvitation(OrganizationUser):
     class Meta:

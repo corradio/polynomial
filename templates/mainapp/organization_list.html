@@ -3,23 +3,17 @@
 {% block content %}
 <h1>My organizations</h1>
 
-<table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+<table class="table">
+    <thead>
         <tr>
-            <th scope="col" class="px-6 py-3">
-                Name
-            </th>
-            <th scope="col" class="px-6 py-3">
-                Members
-            </th>
-            <th scope="col" class="px-6 py-3">
-                Actions
-            </th>
+            <th scope="col">Name</th>
+            <th scope="col">Members</th>
+            <th scope="col">Actions</th>
         </tr>
     </thead>
     <tbody>
         {% for organization in organization_list %}
-        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+        <tr>
             <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
                 <!-- <img class="w-10 h-10 rounded-full" src="/docs/images/people/profile-picture-1.jpg" alt="Jese image"> -->
                 <div class="pl-3">
@@ -28,18 +22,18 @@
                     </div>
                 </div>
             </th>
-            <td class="px-6 py-4">
+            <td>
                 <a href="{% url 'organization_user_list' organization.id %}">
                 {% with total_users=organization.users.count %}
                    {{ total_users }} member{{ total_users|pluralize }}
                 {% endwith %}
                 </a>
             </td>
-            <td class="px-6 py-4">
+            <td>
                 {% if organization|is_admin:user %}
-                <a href="{% url 'organization_user_new' organization.id %}" class="font-medium">Add member</a>
-                <a href="{% url 'organization_edit' organization.id %}" class="font-medium">Edit</a>
-                <a href="{% url 'organization_delete' organization.id %}" class="font-medium">Delete</a>
+                <a href="{% url 'organization_user_new' organization.id %}">Add member</a>
+                <a href="{% url 'organization_edit' organization.id %}">Edit</a>
+                <a href="{% url 'organization_delete' organization.id %}">Delete</a>
                 {% endif %}
             </td>
         </tr>

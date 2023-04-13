@@ -19,7 +19,7 @@
   input[type='submit'], button[type='submit'], button.primaryAction, .btn {
     /* note button.primaryAction is used in django-allauth */
     @apply no-underline hover:no-underline
-      text-white font-medium rounded-lg text-sm px-4 py-2 mr-2
+      text-white font-medium rounded-lg text-sm px-4 py-2
       focus:ring-4 focus:ring-blue-300 focus:outline-none
       bg-blue-700 hover:bg-blue-800
       dark:bg-blue-600 dark:hover:bg-blue-700
@@ -165,7 +165,7 @@ table.table {
   @apply w-full text-sm text-left text-gray-500 dark:text-gray-400;
 }
 table.table thead {
-  @apply text-xs text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400;
+  @apply uppercase text-xs text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400;
 }
 table.table thead th {
   @apply px-6 py-3;
@@ -174,7 +174,7 @@ table.table tbody tr {
   @apply bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600;
 }
 table.table tbody th {
-  @apply flex items-center px-6 py-1 text-gray-900 whitespace-nowrap dark:text-white;
+  @apply flex items-center px-6 text-gray-900 whitespace-nowrap dark:text-white;
 }
 table.table tbody td {
   @apply px-6;

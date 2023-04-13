@@ -63,20 +63,15 @@ from .utils import add_next
 def index(request):
     user = request.user
     organizations = Organization.objects.filter(users=user)
-    context: Dict[str, Any] = {}
-    if isinstance(user, User):
-        context["dashboards"] = (
-            Dashboard.objects.all()
-            .filter(Q(user=user) | Q(organization__in=organizations))
-            .order_by("name")
-        )
-        context["organizations"] = organizations.order_by("name")
-        context["metrics"] = (
-            Metric.objects.all()
-            .filter(Q(user=user) | Q(organizations__in=organizations))
-            .order_by("name")
-        )
-    return render(request, "mainapp/index.html", context)
+    dashboard = (
+        Dashboard.objects.all()
+        .filter(Q(user=user) | Q(organization__in=organizations))
+        .order_by("name")
+    ).first()
+    if dashboard:
+        return redirect(dashboard.get_absolute_url())
+
+    return render(request, "mainapp/index.html", {})
 
 
 class IntegrationListView(ListView):
@@ -156,41 +151,6 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
                         next=cache_obj.get("next"),
                     )
                 )
-
-
-def page(request: HttpRequest, username_or_org_slug: str):
-    try:
-        user = User.objects.get(username=username_or_org_slug)
-        page_name = user.name
-        id_query = Q(user=user)  # dashboards owned by user
-    except User.DoesNotExist:
-        # try org slug
-        organization = get_object_or_404(Organization, slug=username_or_org_slug)
-        page_name = organization.name
-        id_query = Q(organization=organization)  # owned by org
-
-    if isinstance(request.user, User):
-        organizations = Organization.objects.filter(users=request.user)
-        dashboards = Dashboard.objects.filter(
-            id_query
-            # to able to list it, the dashboard needs to be
-            # either owned by visitor, public dashboard,
-            # or visitor needs to be member of dashboard org
-            & (
-                Q(user=request.user)
-                | Q(is_public=True)
-                | Q(organization__in=organizations)
-            )
-        )
-    else:
-        # Anonymous user
-        dashboards = Dashboard.objects.filter(id_query & Q(is_public=True))
-
-    context = {
-        "dashboards": dashboards,
-        "page_name": page_name,
-    }
-    return render(request, "mainapp/page.html", context)
 
 
 class InvitationListView(LoginRequiredMixin, ListView):

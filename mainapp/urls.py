@@ -199,12 +199,6 @@ urlpatterns = [
             ]
         ),
     ),
-    # User pages
-    path(
-        "<username_or_org_slug>/",  # this one needs to be at the bottom
-        views.page,
-        name="page",
-    ),
     # Dashboards
     path(
         "<username_or_org_slug>/<dashboard_slug>",  # this one needs to be at the bottom

@@ -9,17 +9,84 @@
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
 {% endblock %}
 
+{% block before_content %}
+  {% if not user.is_authenticated %}
+    <div class="container mx-auto px-4">
+      <h1>{% firstof dashboard.organization dashboard.user %} public dashboards</h1>
+    </div>
+  {% endif %}
+
+  <div class="text-sm font-medium text-center border-b border-gray-200 mb-1">
+    <ul class="flex items-stretch overflow-x-auto scrollbar-hide -mb-px container mx-auto px-4">
+      {% for d in dashboards %}
+      <li class="flex items-center whitespace-nowrap mr-3 border-b-2 rounded-t-lg {% if d == dashboard %}border-blue-600{% else %}border-transparent hover:border-gray-300{% endif %}">
+        <a href="{{ d.get_absolute_url }}" class="inline-block px-1 py-2 hover:no-underline {% if d == dashboard %}text-blue-600{% else %}text-gray-600{% endif %}">
+          {{ d }}
+          {% if d.organization %}
+          <div class="text-xs font-light">{{ d.organization }}</div>
+          {% endif %}
+        </a>
+      </li>
+      {% endfor %}
+      {% if user.is_authenticated %}
+      <li class="flex items-center whitespace-nowrap mr-3 font-light">
+        <a href="{% url 'dashboard_new' %}" class="inline-block px-1 py-2 hover:no-underline text-gray-600">
+          <span class="inline-flex">
+            <svg width="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            &nbsp;new
+          </span>
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <div class="container mx-auto px-4 text-xs py-1">
+    <a href="#" id="sinceDropdownButton" data-dropdown-toggle="since-dropdown" class="font-medium text-gray-500 bg-white focus:outline-none focus:z-10 focus:ring-4 focus:ring-gray-200">
+      <span class="chevron-after">{{ since_label }}&nbsp;</span>
+    </a>
+    <div id="since-dropdown" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
+        <ul class="py-2 text-gray-700 dark:text-gray-200" aria-labelledby="sinceDropdownButton">
+          {% for s in since_options %}
+          <li class="mr-2">
+              <a href="?since={{ s.value | urlencode }}" class="block px-4 py-2 hover:bg-gray-100 {% if s.value == since %}text-white bg-blue-600 active {% else %} hover:text-gray-900 hover:bg-gray-100 {% endif %}">
+                {{ s.label }}
+              </a>
+          </li>
+          {% endfor %}
+        </ul>
+    </div>
+  </div>
+{% endblock %}
+
 {% block content %}
-  <h1>
-    {{ dashboard }}
-    <span class="text-sm">
-      {% if dashboard|can_edit:user %}
-        [<a href="{% url 'dashboard_edit' dashboard.pk %}?next={{ request.get_full_path | urlencode }}">edit</a>]
-      {% endif %}
-      {% if dashboard|can_delete:user %}
-        [<a href="{% url 'dashboard_delete' dashboard.pk %}">delete</a>]
-      {% endif %}
-    </span>
-  </h1>
   {% include "mainapp/snippets/metric_mosaic.html" %}
+
+  <div class="flex justify-center mt-8 gap-8">
+    {% for d in dashboards %}
+      {% if forloop.counter0 == dashboard_index|add:"-1" %}
+        <a href="{{ d.get_absolute_url }}">
+          <span class="inline-flex items-center">
+            <svg class="w-4 h-4" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+            {{ d }}
+          </span>
+        </a>
+      {% endif %}
+      {% if forloop.counter0 == dashboard_index|add:"1" %}
+        <a href="{{ d.get_absolute_url }}">
+          <span class="inline-flex items-center">
+            {{ d }}
+            <svg class="w-4 h-4" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+          </span>
+        </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+  
+  {% if dashboard|can_edit:user %}
+    <a href="{% url 'dashboard_edit' dashboard.pk %}?next={{ request.get_full_path | urlencode }}">dashboard settings</a>
+  {% endif %}
+
 {% endblock %}

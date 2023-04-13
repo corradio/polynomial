@@ -103,22 +103,27 @@ class DashboardMetricRemoveView(LoginRequiredMixin, DeleteView):
 def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     try:
         user = User.objects.get(username=username_or_org_slug)
-        page_name = user.name
-        id_query = Q(user=user, slug=dashboard_slug)  # owned by user
+        # This is a user page
+        is_org_page = False
+        id_query = Q(user=user, organization=None, slug=dashboard_slug)  # owned by user
     except User.DoesNotExist:
-        # try org slug
         organization = get_object_or_404(Organization, slug=username_or_org_slug)
-        page_name = organization.name
+        # This is an org page
+        is_org_page = True
         id_query = Q(organization=organization, slug=dashboard_slug)  # owned by org
 
     if isinstance(request.user, User):
+        # User is logged in
         organizations = Organization.objects.filter(users=request.user)
+        # List of other tabs will be all other dashboards
+        # user has access to.
+        # To have access, user must either own dashboard, or be member of dashboard org
+        access_query = Q(user=request.user) | Q(organization__in=organizations)
         dashboard = get_object_or_404(
             Dashboard,
-            id_query
-            # Either owner, or member of dashboard org
-            & (Q(user=request.user) | Q(organization__in=organizations)),
+            id_query & access_query,
         )
+        dashboards = Dashboard.objects.all().filter(access_query).order_by("name")
 
         # User is not anonymous, record activity
         request.user.last_dashboard_visit = datetime.now()
@@ -126,6 +131,17 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     else:
         # Anonymous user
         dashboard = get_object_or_404(Dashboard, id_query & Q(is_public=True))
+        # List of other tabs to show will be other public dashboards
+        # of same user/org
+        if is_org_page:
+            others_query = Q(organization=organization)
+        else:
+            others_query = Q(user=user, organization=None)
+        dashboards = (
+            Dashboard.objects.all()
+            .filter(Q(is_public=True) & others_query)
+            .order_by("name")
+        )
 
     since = request.GET.get("since", "60 days")
 
@@ -193,12 +209,26 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         }
         for metric in Metric.objects.filter(dashboard=dashboard).order_by("name")
     ]
+    since_options = [
+        {"label": "last 10 years", "value": "3650 days"},
+        {"label": "last year", "value": "365 days"},
+        {"label": "last quarter", "value": "last-quarter"},
+        {"label": "current quarter", "value": "current-quarter"},
+        {"label": "last 60 days", "value": "60 days"},
+    ]
+    dashboards_list = list(dashboards)
     context = {
         "measurements_by_metric": measurements_by_metric,
         "start_date": start_date,
         "end_date": end_date,
         "dashboard": dashboard,
+        "dashboards": dashboards_list,
+        "dashboard_index": -1
+        if not dashboards_list
+        else dashboards_list.index(dashboard),
         "can_edit": dashboard.can_edit(request.user),
+        "since_options": since_options,
         "since": since,
+        "since_label": [s["label"] for s in since_options if s["value"] == since][0],
     }
     return render(request, "mainapp/dashboard.html", context)
