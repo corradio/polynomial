@@ -345,7 +345,9 @@ def metric_new_authorize(request, state):
 class MetricDeleteView(LoginRequiredMixin, DeleteView):
     object: Metric
     model = Metric
-    success_url = reverse_lazy("index")
+
+    def get_success_url(self):
+        return self.request.GET.get("next") or reverse("index")
 
     def get_queryset(self, *args, **kwargs):
         # Only show metric if user can access it
