@@ -1,0 +1,29 @@
+{% extends "account/base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Create account" %}{% endblock %}
+
+{% block content %}
+
+
+<div class="w-full mx-auto sm:max-w-lg xl:p-0 shadow mb-4">
+  <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+    <h1>{% trans "Create account" %}</h1>
+
+    <form class="space-y-4 md:space-y-6 signup" id="signup_form" method="POST">
+      {% csrf_token %}
+      {{ form.as_p }}
+
+      {% if redirect_field_value %}
+      <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+      {% endif %}
+      <button class="btn cta w-full" type="submit">{% trans "Create account" %}</button>
+      <p class="text-sm font-light text-gray-500 mt-6">
+          Already have an account? Then please <a href="{{ login_url }}" class="font-medium text-primary-600 hover:underline dark:text-primary-500">log in</a>
+      </p>
+    </form>
+
+  </div>
+</div>
+{% endblock %}
