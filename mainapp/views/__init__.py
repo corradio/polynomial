@@ -181,7 +181,7 @@ class InvitationAcceptView(SingleObjectMixin, View):
             get_adapter().stash_verified_email(request, invitation.invitee_email)
             # Return here once we're signed up
             return redirect(
-                f"{reverse('account_signup')}?{urlencode({'next': request.path})}"
+                f"{reverse('account_login')}?{urlencode({'next': request.path})}"
             )
         else:
             # User is authenticated
