@@ -63,6 +63,7 @@ class DashboardMetricAddView(LoginRequiredMixin, UpdateView):
     model = Dashboard
     pk_url_kwarg = "dashboard_pk"
     form_class = DashboardMetricAddForm
+    template_name = "mainapp/dashboardmetric_add.html"
 
     def get_success_url(self):
         return self.request.GET.get("next") or super().get_success_url()

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+{% load debug_tags %}
+
+{% block content %}
+<h1>Metrics added to {{object}}:</h1>
+<form method="post">{% csrf_token %}
+  {{ form.non_field_errors }}
+  <div id="id_{{ form.metrics.name }}">
+    {% for checkbox in form.metrics %}
+    <div>
+        <label for="{{ checkbox.id_for_label }}">
+          {{ checkbox.tag }}
+          {% with "integrations/icons/"|add:checkbox.data.value.instance.integration_id|add:".png" as icon_url %}
+            <img class="integration-icon" src="{% static icon_url %}" alt="">
+          {% endwith %}
+          {{ checkbox.choice_label }}
+        </label>
+    </div>
+    {% endfor %}
+  </div>
+  <input type="submit" value="Confirm">
+</form>
+{% endblock %}
