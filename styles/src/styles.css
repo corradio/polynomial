@@ -16,7 +16,7 @@
     @apply text-blue-600 no-underline hover:underline;
   }
   /* forms */
-  input[type='submit'], button[type='submit'], button.primaryAction, .btn {
+  input[type='submit'], button[type='submit'], input[type='button'], button.primaryAction, .btn {
     /* note button.primaryAction is used in django-allauth */
     @apply no-underline hover:no-underline
       text-black font-medium text-sm px-4 py-2
@@ -25,7 +25,7 @@
     line-height: initial;
   }
   /* CTA */
-  input[type='submit'], button[type='submit'], button.primaryAction, .btn.cta {
+  input[type='submit'], button.primaryAction, .btn.cta {
     @apply
       text-white
       focus:ring-4 focus:ring-blue-300 focus:outline-none
@@ -35,10 +35,6 @@
   input:disabled {
     @apply
       disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none;
-  }
-  input[type='button'] {
-    @apply
-      py-1 px-2 rounded border border-gray-300 hover:bg-gray-100;
   }
   form > div > label, form > p > label {
     @apply block mb-2 text-sm font-medium text-gray-900;

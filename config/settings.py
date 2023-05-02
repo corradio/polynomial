@@ -183,10 +183,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
-        "SCOPE": [
-            "profile",
-            "email",
-        ],
+        "SCOPE": ["profile"],
         "AUTH_PARAMS": {
             "access_type": "online",
         },
@@ -196,7 +193,7 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     },
     "linkedin_oauth2": {
-        "SCOPE": ["r_liteprofile", "r_emailaddress"],
+        "SCOPE": ["r_liteprofile"],
         "PROFILE_FIELDS": [
             "id",
             "first-name",
@@ -211,6 +208,7 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     },
 }
+SOCIALACCOUNT_QUERY_EMAIL = True
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 # See https://django-allauth.readthedocs.io/en/latest/configuration.html
