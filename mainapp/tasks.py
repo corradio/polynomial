@@ -120,6 +120,8 @@ def spreadsheet_export_all():
 @task_failure.connect()
 def celery_task_failure_email(sender, *args, **kwargs):
     exception = kwargs["exception"]
+    subject = None
+    message = ""
 
     if sender == collect_latest_task:
         metric_pk = kwargs["args"][0]
@@ -156,12 +158,13 @@ The error was: {exception}
 To fix this error, you might have to reconfigure your metric by following the link below:
 {BASE_URL}{reverse('metric-details', args=[metric_pk])}
 """
-        return send_mail(
-            subject,
-            message,
-            from_email="olivier@polynomial.so",
-            recipient_list=[metric.user.email],
-        )
+        if subject and message:
+            return send_mail(
+                subject,
+                message,
+                from_email="olivier@polynomial.so",
+                recipient_list=[metric.user.email],
+            )
 
     # Generic handler
     extras = {}
