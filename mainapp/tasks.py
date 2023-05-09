@@ -139,13 +139,11 @@ It seems like the authorization expired.
 To fix the error, you will have to re-authorize by following the link below:
 {BASE_URL}{reverse('metric-authorize', args=[metric_pk])}
 """
-        elif isinstance(exception, UserFixableError) or isinstance(
-            exception, requests.HTTPError
-        ):
-            # If it's an HTTPError, only handle 400 and 403
+        elif isinstance(exception, (UserFixableError, requests.HTTPError)):
+            # If it's an HTTPError, only handle certain error codes
             if not isinstance(
                 exception, requests.HTTPError
-            ) or exception.response.status_code in [400, 403]:
+            ) or exception.response.status_code in [400, 401, 403]:
                 # Handler for exceptions that can be fixed by the user
                 subject = (
                     f"Aw snap, collecting data for the {metric.name} metric failed 😟"

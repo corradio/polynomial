@@ -90,6 +90,10 @@ class Metric(models.Model):
                     or model_instance.integration_credentials
                 ):
                     with model_instance.integration_instance as inst:
+                        # Note: the call might crash for some reason.
+                        # We don't want to have a fallback here as there
+                        # is no way the user can recover from this
+                        # (it could be any error!)
                         return inst.callable_config_schema()
             # There's no callable schema
             return instance_class.config_schema

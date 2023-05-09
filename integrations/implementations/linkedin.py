@@ -83,17 +83,22 @@ class LinkedIn(OAuth2Integration):
         response = self.session.get(
             "https://api.linkedin.com/rest/organizationAcls", params=request_params
         )
-        response.raise_for_status()
-        org_choices = sorted(
-            [
-                {
-                    "title": f'{e["organization~"]["localizedName"]} ({e["organization"].split(":")[-1]})',
-                    "value": e["organization"].split(":")[-1],
-                }
-                for e in response.json()["elements"]
-            ],
-            key=lambda d: d["title"],
-        )
+        if response.status_code == 401:
+            # Could e.g. be
+            # {"status":401,"serviceErrorCode":65601,"code":"REVOKED_ACCESS_TOKEN","message":"The token used in the request has been revoked by the user"}
+            org_choices = []
+        else:
+            response.raise_for_status()
+            org_choices = sorted(
+                [
+                    {
+                        "title": f'{e["organization~"]["localizedName"]} ({e["organization"].split(":")[-1]})',
+                        "value": e["organization"].split(":")[-1],
+                    }
+                    for e in response.json()["elements"]
+                ],
+                key=lambda d: d["title"],
+            )
 
         # Use https://bhch.github.io/react-json-form/playground
         return {
