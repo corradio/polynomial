@@ -98,6 +98,8 @@ class Grafana(Integration):
             return []
         assert len(frames) == 1, f"{len(frames)} returned series (expected only one)"
         frame = frames[0]
+        if not frame["data"]["values"]:
+            return []
         timestamps, values = frame["data"]["values"]
         measurements = [
             MeasurementTuple(
