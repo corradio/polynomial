@@ -112,7 +112,12 @@ class GoogleSheets(OAuth2Integration):
                 raise ValueError(
                     f"Unknown column {column_name}. Detected columns: {header}"
                 )
-            return row[header.index(column_name)]
+            try:
+                return row[header.index(column_name)]
+            except IndexError:
+                # This can happen if a row only has the first column but rest is empty values:
+                # the row vector will be shorter. We simply mark this as empty.
+                return ""
 
         def try_convert_cell_to_float(cell_value, row_index):
             try:
