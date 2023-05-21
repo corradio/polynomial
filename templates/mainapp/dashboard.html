@@ -86,7 +86,7 @@
   </div>
   
   {% if dashboard|can_edit:user %}
-    <a href="{% url 'dashboard_edit' dashboard.pk %}?next={{ request.get_full_path | urlencode }}">dashboard settings</a>
+    <a href="{% url 'dashboard_edit' dashboard.pk %}">dashboard settings</a>
   {% endif %}
 
 {% endblock %}
