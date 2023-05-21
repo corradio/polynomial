@@ -10,6 +10,7 @@ from allauth.account.utils import setup_user_email
 from django.contrib.auth.models import AbstractUser, AnonymousUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.text import slugify
 from django_jsonform.models.fields import JSONField
@@ -199,6 +200,17 @@ class Dashboard(models.Model):
             },
         )
 
+    def can_view(self, user: Union[User, AnonymousUser]):
+        # To have access, we must either:
+        # - dashboard be public
+        # - user own dashboard
+        # - user be member of dashboard org
+        if isinstance(user, AnonymousUser):
+            return self.is_public
+        if not self.organization:
+            return self.user == user
+        return user in self.organization.users.all()
+
     def can_edit(self, user: Union[User, AnonymousUser]):
         if not self.organization:
             return self.user == user
@@ -215,6 +227,22 @@ class Dashboard(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+
+    @classmethod
+    def get_all_viewable_by(cls, user: Union[User, AnonymousUser]):
+        # To have access, we must either:
+        # - dashboard be public
+        # - user own dashboard
+        # - user be member of dashboard org
+        if isinstance(user, User):
+            # User is logged in
+            organizations = Organization.objects.filter(users=user)
+            access_query = Q(user=user) | Q(organization__in=organizations)
+            # Note: public dashboards that are not of one's org/user
+            # are not included here, which differs from `self.can_view`
+            return Dashboard.objects.all().filter(access_query)
+        # User is anonymous
+        return Dashboard.objects.all().filter(is_public=True)
 
     class Meta:
         # Remember that null values are not considered equals in the constraint

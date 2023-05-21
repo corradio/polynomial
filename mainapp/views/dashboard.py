@@ -115,36 +115,32 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         is_org_page = True
         id_query = Q(organization=organization, slug=dashboard_slug)  # owned by org
 
-    if isinstance(request.user, User):
-        # User is logged in
-        organizations = Organization.objects.filter(users=request.user)
-        # List of other tabs will be all other dashboards
-        # user has access to.
-        # To have access, user must either own dashboard, or be member of dashboard org
-        access_query = Q(user=request.user) | Q(organization__in=organizations)
-        dashboard = get_object_or_404(
-            Dashboard,
-            id_query & access_query,
+    # Get dashboard, will raise 404 if it does not exist
+    dashboard = get_object_or_404(Dashboard, id_query)
+    # Check access
+    if not dashboard.can_view(request.user):
+        return render(
+            request,
+            "mainapp/dashboard_forbidden.html",
+            {"dashboard": dashboard},
+            status=403,
         )
-        dashboards = Dashboard.objects.all().filter(access_query).order_by("name")
-
+    # Query other accessible dashboards
+    # if logged in: show all dashboards of one's org + user
+    # if anonymous: show all public dashboards of same `username_or_org_slug` prefix
+    dashboards = Dashboard.get_all_viewable_by(request.user).order_by("name")
+    if isinstance(request.user, User):
         # User is not anonymous, record activity
         request.user.last_dashboard_visit = datetime.now()
         request.user.save()
     else:
-        # Anonymous user
-        dashboard = get_object_or_404(Dashboard, id_query & Q(is_public=True))
-        # List of other tabs to show will be other public dashboards
-        # of same user/org
+        # Anonymous user: don't show all public dashboard
+        # ..only those who match the url prefix
         if is_org_page:
             others_query = Q(organization=organization)
         else:
             others_query = Q(user=user, organization=None)
-        dashboards = (
-            Dashboard.objects.all()
-            .filter(Q(is_public=True) & others_query)
-            .order_by("name")
-        )
+        dashboards = dashboards.filter(others_query)
 
     since = request.GET.get("since", "60 days")
 
