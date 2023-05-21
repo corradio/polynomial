@@ -4,6 +4,7 @@
 {% load widget_tweaks %}
 
 {% block content %}
+
 <h1>{{ dashboard }}</h1>
 <form action="" method="post">{% csrf_token %}
     {% for field in form.visible_fields %}
@@ -12,7 +13,7 @@
             {{ field.label_tag }}
             {% if field.name == 'slug' %}
               <div class="flex">
-                <span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">polynomial.so/</span>
+                <span id="id_slug_prefix" class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">polynomial.so/</span>
                 {{ field|add_class:"!rounded-none !rounded-r-lg"|append_attr:"placeholder:my-dashboard-name" }}
               </div>
             {% else %}
@@ -30,5 +31,35 @@
     {% endif %}
     <input type="submit" value="submit">
 </form>
+
+{{ form.org_slugs | json_script:"org_slugs" }}
+<script data-username="{{ user.username }}">
+  var username = document.currentScript.dataset.username;
+  var orgSlugs = JSON.parse(document.getElementById('org_slugs').textContent);
+
+  function onOrgChange(e) {
+    var prefix = orgSlugs[e.target.value] || username;
+    document.getElementById('id_slug_prefix').innerText = 'polynomial.so/' + prefix + '/';
+  }
+  var elOrganization = document.getElementById('id_organization');
+  elOrganization.addEventListener('change', onOrgChange);
+  onOrgChange({'target': elOrganization});
+
+  function slugify(s) {
+    return s.toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+  function onNameChange(e) {
+    var slugEl = document.getElementById('id_slug');
+    if (!slugEl.value) {
+      slugEl.value = slugify(e.target.value);
+    }
+  }
+  document.getElementById('id_name').addEventListener('change', onNameChange);
+
+</script>
 
 {% endblock %}
