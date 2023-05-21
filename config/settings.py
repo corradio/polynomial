@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.linkedin_oauth2",
     "compressor",
+    "widget_tweaks",
     "mainapp",
 ]
 

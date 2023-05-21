@@ -1,11 +1,30 @@
 {% extends "base.html" %}
 
 {% load dashboard_tags %}
+{% load widget_tweaks %}
 
 {% block content %}
 <h1>{{ dashboard }}</h1>
 <form action="" method="post">{% csrf_token %}
-    {{ form.as_p }}
+    {% for field in form.visible_fields %}
+        <p>
+            {{ field.errors }}
+            {{ field.label_tag }}
+            {% if field.name == 'slug' %}
+              <div class="flex">
+                <span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">polynomial.so/</span>
+                {{ field|add_class:"!rounded-none !rounded-r-lg"|append_attr:"placeholder:my-dashboard-name" }}
+              </div>
+            {% else %}
+              {{ field }}
+            {% endif %}
+            {% if field.help_text %}
+              <span class="helptext">{{ field.help_text|safe }}</span>
+            {% endif %}
+        </p>
+    {% endfor %}
+    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
     {% if dashboard|can_delete:user %}
     <a class="btn btn-delete" href="{% url 'dashboard_delete' object.pk %}?next={{ request.GET.next }}">delete</a>
     {% endif %}

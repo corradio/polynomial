@@ -253,7 +253,7 @@ class DashboardForm(forms.ModelForm):
         organization_field = self.fields["organization"]
         assert isinstance(organization_field, forms.ModelChoiceField)
         organization_field.queryset = Organization.objects.filter(users=user)
-        organization_field.help_text = "Dashboard and associated metrics will be made accessible by all organization members"
+        organization_field.help_text = "Dashboard and associated metrics will be made accessible to all organization members"
 
     def save(self, *args, **kwargs):
         dashboard = super().save(*args, **kwargs)
