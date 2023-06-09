@@ -89,7 +89,17 @@ class Twitter(Integration):
                     "end_time": end_time_utc_iso,
                 },
             )
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if (
+                    e.response.status_code == 403
+                    and e.response.json()["reason"] == "client-not-enrolled"
+                ):
+                    # This is a backend error due to insufficient privileges of the API token
+                    raise Exception("Inappropriate level of API access")
+                # Other problems
+                raise
             data = response.json()
             mentions = data["meta"]["total_tweet_count"]
         else:
