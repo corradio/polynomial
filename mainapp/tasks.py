@@ -1,3 +1,4 @@
+import json
 import socket
 from datetime import date, datetime, timedelta
 from pprint import pformat
@@ -141,6 +142,8 @@ To fix the error, you will have to re-authorize by following the link below:
 """
         elif isinstance(exception, (UserFixableError, requests.HTTPError)):
             # If it's an HTTPError, only handle certain error codes
+            # - 401 Unauthorized: client provides no credentials or invalid credentials
+            # - 403 Forbidden: has valid credentials but not enough privileges
             if not isinstance(
                 exception, requests.HTTPError
             ) or exception.response.status_code in [400, 401, 403]:
@@ -160,12 +163,19 @@ To fix this error, you might have to reconfigure your metric by following the li
             return send_mail(
                 subject,
                 message,
-                from_email="olivier@polynomial.so",
+                from_email="Polynomial <olivier@polynomial.so>",
                 recipient_list=[metric.user.email],
             )
 
     # Generic handler
     extras = {}
+
+    # Add some details if this is a HTTPError
+    if isinstance(exception, requests.HTTPError):
+        try:
+            extras["response_json"] = exception.response.json()
+        except json.decoder.JSONDecodeError:
+            pass
 
     subject = "[{queue_name}@{host}] Error: {exception}:".format(
         queue_name="celery",  # `sender.queue` doesn't exist in 4.1?
