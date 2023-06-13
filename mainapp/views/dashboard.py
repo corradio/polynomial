@@ -3,6 +3,7 @@ from datetime import date, datetime, timedelta
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.db import connection
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -103,6 +104,28 @@ class DashboardMetricRemoveView(LoginRequiredMixin, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
+def query_measurements_without_gaps(start_date: date, end_date: date, metric: Metric):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT s.date, value
+            FROM (
+               SELECT generate_series(timestamp %s,
+                                      timestamp %s,
+                                      interval  '1 day')::date
+               AS date
+            ) s
+            LEFT JOIN (
+                SELECT * FROM mainapp_measurement WHERE metric_id = %s
+            ) m
+            ON m.date = s.date
+            ORDER BY date;
+        """,
+            [start_date, end_date, metric.pk],
+        )
+        return cursor.fetchall()
+
+
 def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     try:
         user = User.objects.get(username=username_or_org_slug)
@@ -198,12 +221,12 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             "can_edit": metric.can_edit(request.user),
             "measurements": [
                 {
-                    "value": measurement.value,
-                    "date": measurement.date.isoformat(),
+                    "value": value,
+                    "date": date.isoformat(),
                 }
-                for measurement in Measurement.objects.filter(
-                    metric=metric, date__range=[start_date, end_date]
-                ).order_by("date")
+                for date, value in query_measurements_without_gaps(
+                    start_date, end_date, metric
+                )
             ],
         }
         for metric in Metric.objects.filter(dashboard=dashboard).order_by("name")
