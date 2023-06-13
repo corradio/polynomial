@@ -8,6 +8,20 @@ from ..base import Integration, MeasurementTuple
 from ..utils import get_secret
 
 
+def validate_http_response(response: requests.models.Response):
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if (
+            e.response.status_code == 403
+            and e.response.json()["reason"] == "client-not-enrolled"
+        ):
+            # This is a backend error due to insufficient privileges of the API token
+            raise Exception("Inappropriate level of API access")
+        # Other problems
+        raise
+
+
 @final
 class Twitter(Integration):
     # Twitter uses the "app-only" credential mode
@@ -55,7 +69,7 @@ class Twitter(Integration):
             response = self.session.get(
                 f"https://api.twitter.com/2/users/by/username/{account}?user.fields=public_metrics"
             )
-            response.raise_for_status()
+            validate_http_response(response)
             data = response.json()["data"]
             mentions = data["public_metrics"]["followers_count"]
             return MeasurementTuple(date=date.today(), value=mentions)
@@ -89,17 +103,7 @@ class Twitter(Integration):
                     "end_time": end_time_utc_iso,
                 },
             )
-            try:
-                response.raise_for_status()
-            except requests.HTTPError as e:
-                if (
-                    e.response.status_code == 403
-                    and e.response.json()["reason"] == "client-not-enrolled"
-                ):
-                    # This is a backend error due to insufficient privileges of the API token
-                    raise Exception("Inappropriate level of API access")
-                # Other problems
-                raise
+            validate_http_response(response)
             data = response.json()
             mentions = data["meta"]["total_tweet_count"]
         else:

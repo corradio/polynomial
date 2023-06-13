@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from types import MethodType
 from typing import Any, Dict, List, Optional, Union
 
+import requests
 from allauth.account.adapter import get_adapter
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -62,6 +63,21 @@ def deserialize_list(arg: Optional[str]):
     if not arg:
         return []
     return arg.split(",")
+
+
+def format_exception(e: Exception) -> str:
+    if True:
+        exc_info = sys.exc_info()
+        error_str = "\n".join(traceback.format_exception(*exc_info))
+    else:
+        error_str = f"{type(e).__name__}: {str(e)}"
+
+    if isinstance(e, requests.HTTPError):
+        try:
+            error_str += f"\nAdditional JSON response:\n{e.response.json()}"
+        except json.decoder.JSONDecodeError:
+            pass
+    return error_str
 
 
 @login_required
@@ -143,13 +159,12 @@ def metric_new_test(request, state):
                 }
             )
     except Exception as e:
-        if False:
-            exc_info = sys.exc_info()
-            error_str = "\n".join(traceback.format_exception(*exc_info))
-        else:
-            error_str = f"{type(e).__name__}: {str(e)}"
         return JsonResponse(
-            {"error": error_str, "datetime": datetime.now(), "status": "error"}
+            {
+                "error": format_exception(e),
+                "datetime": datetime.now(),
+                "status": "error",
+            }
         )
 
 
@@ -457,13 +472,12 @@ def metric_test(request, pk):
                 }
             )
     except Exception as e:
-        if True:
-            exc_info = sys.exc_info()
-            error_str = "\n".join(traceback.format_exception(*exc_info))
-        else:
-            error_str = f"{type(e).__name__}: {str(e)}"
         return JsonResponse(
-            {"error": error_str, "datetime": datetime.now(), "status": "error"}
+            {
+                "error": format_exception(e),
+                "datetime": datetime.now(),
+                "status": "error",
+            }
         )
 
 
