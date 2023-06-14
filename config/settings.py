@@ -184,7 +184,6 @@ AUTHENTICATION_BACKENDS = [
 ]
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
-        "SCOPE": ["profile"],
         "AUTH_PARAMS": {
             "access_type": "online",
         },
@@ -194,7 +193,6 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     },
     "linkedin_oauth2": {
-        "SCOPE": ["r_liteprofile"],
         "PROFILE_FIELDS": [
             "id",
             "first-name",
