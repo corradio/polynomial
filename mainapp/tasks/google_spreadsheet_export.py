@@ -13,7 +13,7 @@ from requests_oauthlib import OAuth2Session
 
 from integrations.utils import get_secret
 
-from .models import Measurement, Metric, Organization
+from ..models import Measurement, Metric, Organization
 
 client_id = get_secret("GOOGLE_CLIENT_ID")
 client_secret = get_secret("GOOGLE_CLIENT_SECRET")

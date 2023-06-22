@@ -41,7 +41,6 @@ from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import WebAuthIntegration
 
-from .. import google_spreadsheet_export
 from ..forms import MetricForm, OrganizationForm, OrganizationUserCreateForm
 from ..models import (
     Dashboard,
@@ -52,7 +51,7 @@ from ..models import (
     OrganizationUser,
     User,
 )
-from ..tasks import backfill_task
+from ..tasks import backfill_task, google_spreadsheet_export
 
 # Re-export
 from . import dashboard, metric, organization

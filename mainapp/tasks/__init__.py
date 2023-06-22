@@ -17,8 +17,8 @@ from oauthlib import oauth2
 from config.settings import CSRF_TRUSTED_ORIGINS
 from integrations.base import UserFixableError
 
+from ..models import Measurement, Metric, Organization
 from .google_spreadsheet_export import spreadsheet_export
-from .models import Measurement, Metric, Organization
 
 BASE_URL = CSRF_TRUSTED_ORIGINS[0]
 
@@ -62,6 +62,9 @@ def collect_latest_task(metric_id: int):
             "value": measurement.value,
         },
     )
+
+    # Check notify
+    check_notify_metric_update.delay(metric_id)
 
 
 @shared_task()
@@ -116,6 +119,11 @@ def spreadsheet_export_all():
         spreadsheet_export.delay(
             organization_id=organization.pk,
         )
+
+
+@shared_task
+def check_notify_metric_update(metric_id: int):
+    pass
 
 
 @task_failure.connect()
