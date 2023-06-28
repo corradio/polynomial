@@ -1,5 +1,5 @@
 import math
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -104,7 +104,7 @@ class DashboardMetricRemoveView(LoginRequiredMixin, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-def query_measurements_without_gaps(start_date: date, end_date: date, metric: Metric):
+def query_measurements_without_gaps(start_date: date, end_date: date, metric_id: int):
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -121,7 +121,7 @@ def query_measurements_without_gaps(start_date: date, end_date: date, metric: Me
             ON m.date = s.date
             ORDER BY date;
         """,
-            [start_date, end_date, metric.pk],
+            [start_date, end_date, metric_id],
         )
         return cursor.fetchall()
 
@@ -154,7 +154,7 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     dashboards = Dashboard.get_all_viewable_by(request.user).order_by("name")
     if isinstance(request.user, User):
         # User is not anonymous, record activity
-        request.user.last_dashboard_visit = datetime.now()
+        request.user.last_dashboard_visit = datetime.now(timezone.utc)
         request.user.save()
     else:
         # Anonymous user: don't show all public dashboard
@@ -225,7 +225,7 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
                     "date": date.isoformat(),
                 }
                 for date, value in query_measurements_without_gaps(
-                    start_date, end_date, metric
+                    start_date, end_date, metric.pk
                 )
             ],
         }
