@@ -27,7 +27,7 @@ BASE_URL = CSRF_TRUSTED_ORIGINS[0]
 logger = get_task_logger(__name__)
 
 
-@shared_task(max_retries=3, autoretry_for=(RequestException,), retry_backoff=True)
+@shared_task(max_retries=5, autoretry_for=(RequestException,), retry_backoff=10)
 def collect_latest_task(metric_id: int):
     metric = Metric.objects.get(pk=metric_id)
     integration_instance = metric.integration_instance
@@ -76,7 +76,7 @@ def collect_all_latest_task():
         verify_inactive_task.delay(metric.id)
 
 
-@shared_task(max_retries=3, autoretry_for=(RequestException,), retry_backoff=True)
+@shared_task(max_retries=5, autoretry_for=(RequestException,), retry_backoff=10)
 def backfill_task(metric_id: int, since: Optional[str]):
     metric = Metric.objects.get(pk=metric_id)
     if since is None:
@@ -91,9 +91,15 @@ def backfill_task(metric_id: int, since: Optional[str]):
                 )
             start_date = date.today() - interval
     assert start_date is not None
+    # Backfill assumes no previous data is present when it was first run
+    #  and will thus resume from last collected data
+    last_measurement = (
+        Measurement.objects.filter(metric=metric_id).order_by("-date").first()
+    )
+    last_measurement_date = last_measurement.date if last_measurement else date.min
     with metric.integration_instance as inst:
         measurements_iterator = inst.collect_past_range(
-            date_start=max(start_date, inst.earliest_backfill()),
+            date_start=max(last_measurement_date, start_date, inst.earliest_backfill()),
             date_end=date.today() - timedelta(days=1),
         )
         # Save

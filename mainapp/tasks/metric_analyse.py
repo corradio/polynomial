@@ -4,7 +4,8 @@ from typing import List
 import pandas as pd
 
 from mainapp.models import Measurement
-from mainapp.views.dashboard import query_measurements_without_gaps
+
+from ..queries import query_measurements_without_gaps
 
 LOOKBACK_DAYS = 30
 MIN_POINTS_PERCENTAGE = 0.5
