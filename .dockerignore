@@ -10,3 +10,4 @@ celerybeat-schedule
 static/dist
 static_root/CACHE
 node_modules
+.ipynb_checkpoints

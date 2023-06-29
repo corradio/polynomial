@@ -1,7 +1,7 @@
 import os
 import urllib.parse
 from datetime import date, datetime, timedelta
-from typing import Dict, List, final
+from typing import Dict, Iterable, final
 
 import requests
 
@@ -119,7 +119,7 @@ class Youtube(OAuth2Integration):
 
     def collect_past_range(
         self, date_start: date, date_end: date
-    ) -> List[MeasurementTuple]:
+    ) -> Iterable[MeasurementTuple]:
         # Parameters
         channel = self.config["channel"]
         metric = self.config["metric"]
@@ -138,13 +138,13 @@ class Youtube(OAuth2Integration):
 
         request_url = f"https://youtubeanalytics.googleapis.com/v2/reports"
         rows = self._paginated_query(request_url, date_start, date_end, request_data)
-        return [
+        return (
             MeasurementTuple(
                 date=datetime.strptime(row[0], "%Y-%m-%d").date(),
                 value=float(row[1]),
             )
             for row in rows
-        ]
+        )
 
     def collect_latest(self) -> MeasurementTuple:
         # API returns delayed results
@@ -155,4 +155,4 @@ class Youtube(OAuth2Integration):
             date_start=date.today() - timedelta(days=max_delay),
             date_end=date.today() - timedelta(days=1),
         )
-        return results[-1]
+        return list(results)[-1]

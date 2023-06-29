@@ -20,6 +20,8 @@ django-allauth = "^0.52.0"
 whitenoise = {extras = ["brotli"], version = "^6.3.0"}
 django-compressor = "^4.3.1"
 django-widget-tweaks = "^1.4.12"
+django-extensions = "^3.2.3"
+matplotlib = "^3.7.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.0"
@@ -32,6 +34,10 @@ types-psycopg2 = "^2.9.21"
 types-oauthlib = "^3.2.0"
 pandas-stubs = "^1.5.2"
 honcho = "^1.1.0"
+
+[tool.poetry.group.dev.dependencies]
+jupyter = "^1.0.0"
+ipython = "^8.14.0"
 
 [tool.isort]
 profile = "black"

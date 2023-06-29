@@ -47,3 +47,6 @@ runbeat:
 
 runtasks:
 	DEBUG=1 poetry run celery -A config call mainapp.tasks.collect_all_latest_task
+
+notebook:
+	$(MANAGE) shell_plus --notebook

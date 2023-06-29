@@ -1,7 +1,7 @@
 import os
 import urllib.parse
 from datetime import date, datetime, timedelta
-from typing import Dict, List, final
+from typing import Dict, Iterable, List, final
 
 import requests
 
@@ -142,7 +142,7 @@ class GoogleAnalytics(OAuth2Integration):
 
     def collect_past_range(
         self, date_start: date, date_end: date
-    ) -> List[MeasurementTuple]:
+    ) -> Iterable[MeasurementTuple]:
 
         print(f"{date_start} -> {date_end}")
         if (date_end - date_start).days > MAX_DAYS:

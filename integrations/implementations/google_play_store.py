@@ -1,6 +1,6 @@
 from datetime import date
 from io import StringIO
-from typing import List, final
+from typing import Iterable, final
 
 import numpy as np
 import pandas as pd
@@ -58,7 +58,7 @@ class GooglePlayStore(OAuth2Integration):
 
     def collect_past_range(
         self, date_start: date, date_end: date
-    ) -> List[MeasurementTuple]:
+    ) -> Iterable[MeasurementTuple]:
 
         year_start = date_start.year
         year_end = date_end.year
@@ -108,7 +108,7 @@ class GooglePlayStore(OAuth2Integration):
         df_filtered = df[
             (df.index >= date_start.isoformat()) & (df.index <= date_end.isoformat())
         ].sort_index()
-        return [
+        return (
             MeasurementTuple(date=index.to_pydatetime().date(), value=value)  # type: ignore[attr-defined]
             for index, value in df_filtered[column].items()
-        ]
+        )

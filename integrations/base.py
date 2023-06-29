@@ -9,6 +9,7 @@ from typing import (
     Callable,
     ClassVar,
     Dict,
+    Iterable,
     List,
     Literal,
     NamedTuple,
@@ -43,7 +44,7 @@ class Integration:
     def __init__(self, config: Optional[Dict], *args, **kwargs):
         self.config = config or {}
 
-    def __enter__(self):
+    def __enter__(self) -> "Integration":
         # Database connections can be done here
         return self
 
@@ -71,7 +72,7 @@ class Integration:
             )
         # Try to collect the last day
         day = date.today() - timedelta(days=1)
-        results = self.collect_past_range(date_start=day, date_end=day)
+        results = list(self.collect_past_range(date_start=day, date_end=day))
         if results:
             assert len(results) == 1, "More than one result was returned"
             return results[-1]
@@ -83,7 +84,9 @@ class Integration:
             date_start = date_end - timedelta(
                 days=7
             )  # this is the max delay we'll allow on the data
-            results = self.collect_past_range(date_start=date_start, date_end=date_end)
+            results = list(
+                self.collect_past_range(date_start=date_start, date_end=date_end)
+            )
             if not results:
                 raise Exception("No results returned")
             return results[-1]
@@ -93,7 +96,7 @@ class Integration:
 
     def collect_past_range(
         self, date_start: date, date_end: date
-    ) -> List[MeasurementTuple]:
+    ) -> Iterable[MeasurementTuple]:
         # Default implementation uses `collect_past` for each date,
         # and thus assumes integration can backfill
         assert self.can_backfill()
@@ -104,7 +107,8 @@ class Integration:
                 break
             else:
                 dates.append(new_date)
-        return [self.collect_past(dt) for dt in dates]
+        # Return a generator that won't take up memory
+        return (self.collect_past(dt) for dt in reversed(dates))
 
 
 class WebAuthIntegration(Integration):

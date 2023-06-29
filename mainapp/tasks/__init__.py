@@ -1,6 +1,6 @@
 import json
 import socket
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pprint import pformat
 from typing import Optional, Union
 
@@ -13,11 +13,13 @@ from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.dateparse import parse_date, parse_duration
 from oauthlib import oauth2
+from requests.exceptions import RequestException
 
 from config.settings import CSRF_TRUSTED_ORIGINS
 from integrations.base import UserFixableError
 
 from ..models import Measurement, Metric, Organization
+from . import metric_analyse
 from .google_spreadsheet_export import spreadsheet_export
 
 BASE_URL = CSRF_TRUSTED_ORIGINS[0]
@@ -25,7 +27,7 @@ BASE_URL = CSRF_TRUSTED_ORIGINS[0]
 logger = get_task_logger(__name__)
 
 
-@shared_task()
+@shared_task(max_retries=3, autoretry_for=(RequestException,), retry_backoff=True)
 def collect_latest_task(metric_id: int):
     metric = Metric.objects.get(pk=metric_id)
     integration_instance = metric.integration_instance
@@ -38,18 +40,18 @@ def collect_latest_task(metric_id: int):
         if last_measurement:
             with integration_instance as inst:
                 date_end = date.today() - timedelta(days=1)
-                measurements = inst.collect_past_range(
+                measurements_iterator = inst.collect_past_range(
                     date_start=min(last_measurement.date + timedelta(days=1), date_end),
                     date_end=date_end,
                 )
-            for measurement in measurements:
-                Measurement.objects.update_or_create(
-                    metric=metric,
-                    date=measurement.date,
-                    defaults={
-                        "value": measurement.value,
-                    },
-                )
+                for measurement in measurements_iterator:
+                    Measurement.objects.update_or_create(
+                        metric=metric,
+                        date=measurement.date,
+                        defaults={
+                            "value": measurement.value,
+                        },
+                    )
             return
 
     # For integration that can't backfill
@@ -64,16 +66,17 @@ def collect_latest_task(metric_id: int):
     )
 
     # Check notify
-    check_notify_metric_update.delay(metric_id)
+    check_notify_metric_update_task.delay(metric_id)
 
 
 @shared_task()
 def collect_all_latest_task():
     for metric in Metric.objects.all():
         collect_latest_task.delay(metric.id)
+        verify_inactive_task.delay(metric.id)
 
 
-@shared_task()
+@shared_task(max_retries=3, autoretry_for=(RequestException,), retry_backoff=True)
 def backfill_task(metric_id: int, since: Optional[str]):
     metric = Metric.objects.get(pk=metric_id)
     if since is None:
@@ -89,21 +92,20 @@ def backfill_task(metric_id: int, since: Optional[str]):
             start_date = date.today() - interval
     assert start_date is not None
     with metric.integration_instance as inst:
-        measurements = inst.collect_past_range(
+        measurements_iterator = inst.collect_past_range(
             date_start=max(start_date, inst.earliest_backfill()),
             date_end=date.today() - timedelta(days=1),
         )
-    logger.info(f"Collected {len(measurements)} measurements")
-    # Save
-    for measurement in measurements:
-        Measurement.objects.update_or_create(
-            metric=metric,
-            date=measurement.date,
-            defaults={
-                "value": measurement.value,
-                "metric": metric,
-            },
-        )
+        # Save
+        for measurement in measurements_iterator:
+            Measurement.objects.update_or_create(
+                metric=metric,
+                date=measurement.date,
+                defaults={
+                    "value": measurement.value,
+                    "metric": metric,
+                },
+            )
 
 
 @shared_task
@@ -122,8 +124,47 @@ def spreadsheet_export_all():
 
 
 @shared_task
-def check_notify_metric_update(metric_id: int):
-    pass
+def check_notify_metric_update_task(metric_id: int):
+    metric = Metric.objects.get(pk=metric_id)
+    if metric_analyse.detected_spike(metric.pk):
+        send_mail(
+            f"The {metric.name} metric changed 📈",
+            f"Go check it out. Unfortunately can't link here as we're not sure there's a dashboard.",
+            # {BASE_URL}{metric.dashboards.first?.get_absolute_url()}
+            from_email="Polynomial <olivier@polynomial.so>",
+            # recipient_list=[metric.user.email],
+            recipient_list=["olivier.corradi@gmail.com"],
+        )
+
+
+@shared_task
+def verify_inactive_task(metric_id: int):
+    metric = Metric.objects.get(pk=metric_id)
+    # How long since last successful collect?
+    last_non_nan_measurement = (
+        Measurement.objects.exclude(value=float("nan"))
+        .filter(metric=metric_id)
+        .order_by("updated_at")
+        .last()
+    )
+    if last_non_nan_measurement:
+        # Reminder after a week
+        for reminder_days in [7, 30]:
+            if (
+                datetime.now(timezone.utc) - last_non_nan_measurement.updated_at
+            ).days == reminder_days:
+                # On the nth day, send out a reminder
+                message = f"""
+    To fix this error, you might have to reconfigure your metric by following the link below:
+    {BASE_URL}{reverse('metric-details', args=[metric_id])}
+    """
+                send_mail(
+                    subject=f"Metric {metric.name} hasn't collected new data in {reminder_days} days",
+                    message=message,
+                    from_email="Polynomial <olivier@polynomial.so>",
+                    # recipient_list=[metric.user.email],
+                    recipient_list=["olivier.corradi@gmail.com"],
+                )
 
 
 @task_failure.connect()

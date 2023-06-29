@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.linkedin_oauth2",
     "compressor",
     "widget_tweaks",
+    "django_extensions",
     "mainapp",
 ]
 

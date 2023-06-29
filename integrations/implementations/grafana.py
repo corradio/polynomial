@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
-from typing import List, final
+from typing import Iterable, final
 from zoneinfo import ZoneInfo
 
 import requests
@@ -46,7 +46,7 @@ class Grafana(Integration):
 
     def collect_past_range(
         self, date_start: date, date_end: date
-    ) -> List[MeasurementTuple]:
+    ) -> Iterable[MeasurementTuple]:
 
         if (date_end - date_start).days > MAX_DAYS:
             return batch_range_by_max_batch(
