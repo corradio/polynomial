@@ -16,7 +16,6 @@ class Plausible(Integration):
             "site_id": {
                 "type": "string",
                 "required": True,
-                "helpText": "This is a help text",
             },
             "metric": {
                 "type": "string",
