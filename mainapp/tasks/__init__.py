@@ -7,7 +7,6 @@ from typing import Optional, Union
 import requests
 from celery import shared_task
 from celery.signals import task_failure
-from celery.utils.log import get_task_logger
 from django.core.mail import mail_admins, send_mail
 from django.forms.models import model_to_dict
 from django.urls import reverse
@@ -23,8 +22,6 @@ from . import metric_analyse
 from .google_spreadsheet_export import spreadsheet_export
 
 BASE_URL = CSRF_TRUSTED_ORIGINS[0]
-
-logger = get_task_logger(__name__)
 
 
 @shared_task(max_retries=5, autoretry_for=(RequestException,), retry_backoff=10)
