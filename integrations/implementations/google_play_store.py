@@ -103,8 +103,9 @@ class GooglePlayStore(OAuth2Integration):
         df = pd.read_csv(
             StringIO(response.text), parse_dates=["Date"], index_col="Date"
         )
-        # Replace "0" by np.nan
-        df = df.replace(0, np.nan)
+        if "Rating" in self.config["metric"]:
+            # Replace "0" by np.nan
+            df = df.replace(0, np.nan)
         df_filtered = df[
             (df.index >= date_start.isoformat()) & (df.index <= date_end.isoformat())
         ].sort_index()

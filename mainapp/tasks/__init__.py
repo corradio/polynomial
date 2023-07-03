@@ -76,7 +76,7 @@ def collect_all_latest_task():
 @shared_task(max_retries=5, autoretry_for=(RequestException,), retry_backoff=10)
 def backfill_task(metric_id: int, since: Optional[str]):
     metric = Metric.objects.get(pk=metric_id)
-    if since is None:
+    if not since:
         start_date: Optional[date] = date.min
     else:
         start_date = parse_date(since)

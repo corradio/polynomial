@@ -84,7 +84,8 @@ def format_exception(e: Exception) -> str:
 def metric_backfill(request, pk):
     metric = get_object_or_404(Metric, pk=pk, user=request.user)
     if request.method == "POST":
-        backfill_task.delay(metric_id=pk, since=request.POST.get("since"))
+        since = request.POST.get("since")
+        backfill_task.delay(metric_id=pk, since=since)
         messages.success(request, f"Data will be fetched in the background")
         return redirect(request.GET.get("next") or reverse("index"))
     elif request.method == "GET":

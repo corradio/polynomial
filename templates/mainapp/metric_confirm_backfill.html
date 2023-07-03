@@ -2,11 +2,20 @@
 
 {% block content %}
     <form method="post">{% csrf_token %}
-      <p>This metric is able to fetch past data, would you like to fetch it?</p>
+      <p>This metric is able to collect past data, would you like to collect it?</p>
       {{ form }}
+      <p>
+        <label for="pet-select">How far back to collect old data:</label>
+        <select name="since" id="since">
+          <option value="7 days" selected>A week</option>
+          <option value="31 days">A month</option>
+          <option value="365 days">A year</option>
+          <option value="">As far back as possible</option>
+        </select>
+      </p>
       {% if request.GET.next %}
       <a href="{{ request.GET.next }}"><input type="button" value="Skip"/></a>
       {% endif %}
-      <input type="submit" value="Confirm">
+      <input type="submit" value="Collect">
   </form>
 {% endblock %}
