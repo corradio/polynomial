@@ -19,6 +19,7 @@ from django.http import (
     HttpRequest,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
     HttpResponseNotAllowed,
     HttpResponseNotFound,
     HttpResponseRedirect,
@@ -82,7 +83,10 @@ def format_exception(e: Exception) -> str:
 
 @login_required
 def metric_backfill(request, pk):
-    metric = get_object_or_404(Metric, pk=pk, user=request.user)
+    # Check if user has access to metric
+    metric = get_object_or_404(Metric, pk=pk)
+    if not metric.can_be_backfilled_by(request.user):
+        return HttpResponseForbidden()
     if request.method == "POST":
         since = request.POST.get("since")
         backfill_task.delay(metric_id=pk, since=since)

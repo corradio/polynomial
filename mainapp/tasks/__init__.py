@@ -89,14 +89,17 @@ def backfill_task(metric_id: int, since: Optional[str]):
             start_date = date.today() - interval
     assert start_date is not None
     # Backfill assumes no previous data is present when it was first run
-    #  and will thus resume from last collected data
+    #  and will thus resume from the earliest of last collected data or start date
+    #  to ensure we have full data coverage
     last_measurement = (
         Measurement.objects.filter(metric=metric_id).order_by("-date").first()
     )
-    last_measurement_date = last_measurement.date if last_measurement else date.min
+    last_measurement_date = last_measurement.date if last_measurement else date.max
     with metric.integration_instance as inst:
         measurements_iterator = inst.collect_past_range(
-            date_start=max(last_measurement_date, start_date, inst.earliest_backfill()),
+            date_start=max(
+                min(last_measurement_date, start_date), inst.earliest_backfill()
+            ),
             date_end=date.today() - timedelta(days=1),
         )
         # Save

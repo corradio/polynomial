@@ -138,11 +138,18 @@ class Metric(models.Model):
         return self.user == user
 
     def can_view(self, user: Union[User, AnonymousUser]):
-        if self.user == user:
+        if self.can_edit(user):
             return True
         # Check if user is member of any of the orgs that this
         # metric belong to
         return any([o.is_member(user) for o in self.organizations.all()])
+
+    def can_be_backfilled_by(self, user: Union[User, AnonymousUser]):
+        if self.can_edit(user):
+            return True
+        # Check if user is admin of any of the orgs that this
+        # metric belong to
+        return any([o.is_admin(user) for o in self.organizations.all()])
 
     def __str__(self):
         return f"{self.name}"
