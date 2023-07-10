@@ -155,21 +155,23 @@ def verify_inactive_task(metric_id: int):
     )
     if last_non_nan_measurement:
         # Reminder after a week
-        for reminder_days in [7, 30]:
+        for reminder_days in [15, 30, 90]:
             if (
                 datetime.now(timezone.utc) - last_non_nan_measurement.updated_at
             ).days == reminder_days:
                 # On the nth day, send out a reminder
-                message = f"""
-    To fix this error, you might have to reconfigure your metric by following the link below:
-    {BASE_URL}{reverse('metric-details', args=[metric_id])}
+                message = f"""Hello {metric.user.first_name} 👋
+
+It seems like your metric "{metric.name}" hasn't collected any new data in the last {reminder_days}.
+
+To fix this error, you might have to reconfigure your metric by following the link below:
+{BASE_URL}{reverse('metric-details', args=[metric_id])}
     """
                 send_mail(
-                    subject=f"Metric {metric.name} hasn't collected new data in {reminder_days} days",
+                    subject=f"Your metric {metric.name} hasn't collected new data in {reminder_days} days",
                     message=message,
                     from_email="Polynomial <olivier@polynomial.so>",
-                    # recipient_list=[metric.user.email],
-                    recipient_list=["olivier.corradi@gmail.com"],
+                    recipient_list=[metric.user.email],
                 )
 
 

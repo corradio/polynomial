@@ -144,7 +144,6 @@ class GoogleAnalytics(OAuth2Integration):
         self, date_start: date, date_end: date
     ) -> Iterable[MeasurementTuple]:
 
-        print(f"{date_start} -> {date_end}")
         if (date_end - date_start).days > MAX_DAYS:
             return batch_range_by_max_batch(
                 date_start=date_start,
