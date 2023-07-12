@@ -89,7 +89,9 @@ class Grafana(Integration):
             if e.response.status_code == 400:
                 # Try to explain to the user
                 data = e.response.json()
-                raise requests.HTTPError(data["results"]["A"]["error"]) from e
+                raise requests.HTTPError(
+                    data["results"]["A"]["error"], response=e.response
+                ) from e
             else:
                 raise
         data = response.json()

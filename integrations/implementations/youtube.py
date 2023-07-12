@@ -59,7 +59,9 @@ class Youtube(OAuth2Integration):
             if e.response.status_code in [400, 403]:
                 # Try to explain to the user
                 data = e.response.json()
-                raise requests.HTTPError(data["error"]["message"]) from None
+                raise requests.HTTPError(
+                    data["error"]["message"], response=e.response
+                ) from None
             else:
                 raise
         items = response.json().get("items", [])

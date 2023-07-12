@@ -154,7 +154,7 @@ class LinkedIn(OAuth2Integration):
         except requests.HTTPError as e:
             if e.response.status_code in [400, 403]:
                 raise requests.HTTPError(
-                    str(e) + f'\n{e.response.json()["message"]}'
+                    str(e) + f'\n{e.response.json()["message"]}', response=e.response
                 ) from None
             else:
                 raise
