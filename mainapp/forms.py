@@ -324,7 +324,6 @@ class MetricIntegrationForm(forms.ModelForm):
                 # Update
                 self.instance.integration_credentials = None
                 self.instance.integration_config = None
-                return super().save(*args, **kwargs)
             else:
                 # Creating metric, i.e. use the cache
                 metric_cache = self.request.session[self.state]["metric"]
@@ -332,6 +331,7 @@ class MetricIntegrationForm(forms.ModelForm):
                 metric_cache["integration_config"] = None
                 metric_cache["integration_id"] = self.cleaned_data["integration_id"]
                 self.request.session.modified = True
+        return super().save(*args, **kwargs)
 
     class Meta:
         model = Metric
