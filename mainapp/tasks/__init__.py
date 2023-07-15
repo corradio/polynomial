@@ -1,13 +1,14 @@
 import json
 import socket
 from datetime import date, datetime, timedelta, timezone
+from email.mime.image import MIMEImage
 from pprint import pformat
 from typing import Optional, Union
 
 import requests
 from celery import shared_task
 from celery.signals import task_failure
-from django.core.mail import mail_admins, send_mail
+from django.core.mail import EmailMultiAlternatives, mail_admins, send_mail
 from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.dateparse import parse_date, parse_duration
@@ -18,6 +19,7 @@ from config.settings import CSRF_TRUSTED_ORIGINS
 from integrations.base import UserFixableError
 
 from ..models import Measurement, Metric, Organization
+from ..utils import charts
 from . import metric_analyse
 from .google_spreadsheet_export import spreadsheet_export
 
@@ -133,14 +135,29 @@ def spreadsheet_export_all():
 def check_notify_metric_update_task(metric_id: int):
     metric = Metric.objects.get(pk=metric_id)
     if metric_analyse.detected_spike(metric.pk):
-        send_mail(
-            f"The {metric.name} metric changed 📈",
-            f"Go check it out. Unfortunately can't link here as we're not sure there's a dashboard.",
+        message = EmailMultiAlternatives(
+            subject=f'New changes in metric "{metric.name}" 📈',
+            body=f"Go check it out. Unfortunately can't link here as we're not sure there's a dashboard.",
             # {BASE_URL}{metric.dashboards.first?.get_absolute_url()}
             from_email="Polynomial <olivier@polynomial.so>",
-            # recipient_list=[metric.user.email],
-            recipient_list=["olivier.corradi@gmail.com"],
+            # to=[metric.user.email],
+            to=["olivier.corradi@gmail.com"],
         )
+        message.mixed_subtype = "related"
+        message.attach_alternative(
+            f"""
+<h1>{metric.name}</h1>
+<p>
+    <img src="cid:chart" width="640", height="280" alt="chart">
+</p>
+""",
+            "text/html",
+        )
+        img_data = charts.generate_png(charts.metric_chart_vl_spec(metric_id))
+        image = MIMEImage(img_data)
+        image.add_header("Content-Id", "<chart>")
+        message.attach(image)
+        message.send()
 
 
 @shared_task

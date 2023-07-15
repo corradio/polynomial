@@ -13,6 +13,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from ..forms import DashboardForm, DashboardMetricAddForm
 from ..models import Dashboard, Measurement, Metric, Organization, User
 from ..queries import query_measurements_without_gaps
+from ..utils.charts import get_vl_spec
 
 
 class DashboardCreateView(LoginRequiredMixin, CreateView):
@@ -230,5 +231,6 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         "since_options": since_options,
         "since": since,
         "since_label": [s["label"] for s in since_options if s["value"] == since][0],
+        "vl_spec": get_vl_spec(start_date, end_date),
     }
     return render(request, "mainapp/dashboard.html", context)
