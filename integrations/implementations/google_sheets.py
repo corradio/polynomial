@@ -111,8 +111,8 @@ class GoogleSheets(OAuth2Integration):
 
         def get_cell(row, column_name):
             if not column_name in header:
-                raise ValueError(
-                    f"Unknown column {column_name}. Detected columns: {header}"
+                raise UserFixableError(
+                    f"Column '{column_name}' wasn't found in the header (should be one of {header})."
                 )
             try:
                 return row[header.index(column_name)]
