@@ -251,12 +251,9 @@ To fix this error, you might have to reconfigure your metric by following the li
         except json.decoder.JSONDecodeError:
             pass
 
-    subject = "[{queue_name}@{host}] Error: {exception}:".format(
-        queue_name="celery",  # `sender.queue` doesn't exist in 4.1?
-        host=socket.gethostname(),
-        **kwargs,
-    )
-
+    queue_name = "celery"  # `sender.queue` doesn't exist in 4.1?
+    host = socket.gethostname()
+    subject = f"[{queue_name}@{host}] Unhandled {type(exception).__name__}"
     message = """{exception!r}
 
 {einfo}
