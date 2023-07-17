@@ -9,7 +9,7 @@ from ..queries import query_measurements_without_gaps
 
 LOOKBACK_DAYS = 30
 MIN_POINTS_PERCENTAGE = 0.5
-STD_MULTIPLIER = 3  # Noise level tolerance
+STD_MULTIPLIER = 5  # Noise level tolerance
 
 
 def extract_spikes(metric_series: dict) -> List[date]:
