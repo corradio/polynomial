@@ -148,7 +148,7 @@ def spreadsheet_export(organization_id):
     }
 
     fields_to_fetch = ["metric__name", "date", "updated_at", "value"]
-    measurements = iter(
+    measurements = (
         Measurement.objects.filter(metric__organizations=organization)
         .select_related("metric")
         .only(*fields_to_fetch)
@@ -156,10 +156,9 @@ def spreadsheet_export(organization_id):
     )
 
     update_values_body = {"values": [["updated_at", "datetime", "key", "value"]]}
-    while batch := islice(
-        measurements,
-        BATCH_SIZE,
-    ):
+    i = 0
+    while batch := list(measurements[i : i + BATCH_SIZE]):
+        i += BATCH_SIZE
         # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values#ValueRange
         update_values_body["values"] += [
             [
