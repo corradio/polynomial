@@ -1,10 +1,11 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from decimal import Decimal
 from typing import List, final
 
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, RealDictRow
 
-from ..base import Integration, MeasurementTuple
+from ..base import Integration, MeasurementTuple, UserFixableError
 
 
 @final
@@ -41,9 +42,14 @@ class Postgresql(Integration):
         assert (
             self.config is not None
         ), "Configuration is required in order to run this integration"
-        self.conn = psycopg2.connect(
-            **self.config["database_connection"], connect_timeout=15
-        )
+        try:
+            self.conn = psycopg2.connect(
+                **self.config["database_connection"], connect_timeout=15
+            )
+        except psycopg2.OperationalError as e:
+            raise UserFixableError(
+                f"Database connection failed\nFull error: {str(e).rstrip()}"
+            )
         self.conn.set_session(readonly=True)
         self.cur = self.conn.cursor(cursor_factory=RealDictCursor)
         return self
@@ -70,7 +76,7 @@ class Postgresql(Integration):
         else:
             self.cur.execute(sql_query_template)
             return [
-                MeasurementTuple(date=row["date"].date(), value=row["value"])
+                MeasurementTuple(date=_date_getter(row), value=_value_getter(row))
                 for row in self.cur
             ][0]
 
@@ -86,6 +92,41 @@ class Postgresql(Integration):
             sql_query_template, vars={"date_start": date_start, "date_end": date_end}
         )
         return [
-            MeasurementTuple(date=row["date"].date(), value=row["value"])
+            MeasurementTuple(date=_date_getter(row), value=_value_getter(row))
             for row in self.cur
         ]
+
+
+def _date_getter(row: RealDictRow) -> date:
+    try:
+        dt = row["date"]
+    except KeyError as e:
+        raise UserFixableError(
+            f"Date column {e} is missing from results. Did you rename it correctly using SELECT <yourfield> AS date?"
+        )
+    if not isinstance(dt, datetime):
+        raise UserFixableError(
+            f"Expected data from column 'date' to be a date. Received {type(dt).__name__} instead."
+        )
+    return dt.date()
+
+
+def _value_getter(row: RealDictRow) -> float:
+    try:
+        value = row["value"]
+        # Attempt conversions
+        if (
+            isinstance(value, int)
+            or isinstance(value, Decimal)
+            or (isinstance(value, str) and value.isnumeric())
+        ):
+            value = float(value)
+    except KeyError as e:
+        raise UserFixableError(
+            f"Value column {e} is missing from results. Did you rename it correctly using SELECT <yourfield> AS value?"
+        )
+    if not isinstance(value, float):
+        raise UserFixableError(
+            f"Expected data from column 'value' to be a number. Received {type(value).__name__} instead."
+        )
+    return value
