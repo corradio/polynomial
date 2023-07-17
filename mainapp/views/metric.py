@@ -67,11 +67,11 @@ def deserialize_list(arg: Optional[str]):
 
 
 def format_exception(e: Exception) -> str:
-    if True:
+    if DEBUG:
         exc_info = sys.exc_info()
         error_str = "\n".join(traceback.format_exception(*exc_info))
     else:
-        error_str = f"{type(e).__name__}: {str(e)}"
+        error_str = f"{str(e)}"
 
     if isinstance(e, requests.HTTPError):
         try:
