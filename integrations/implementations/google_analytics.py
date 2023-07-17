@@ -10,8 +10,8 @@ from ..utils import batch_range_by_max_batch, get_secret
 
 MAX_DAYS = 300  # Maximum number of days per paginated query
 ROW_LIMIT = 10000  # Number of rows to fetch at a time
-# See https://developers.google.com/analytics/devguides/reporting/core/dimsmets
-METRICS = sorted(["ga:users", "ga:sessions"])
+# See https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema
+METRICS = sorted(["totalUsers", "sessions"])
 DIMENSIONS = sorted(["ga:countryIsoCode"])
 
 
@@ -28,9 +28,9 @@ class GoogleAnalytics(OAuth2Integration):
     def callable_config_schema(self):
         if not self.is_authorized:
             return self.config_schema
-        # Get all valid view ids
+        # Get all valid GA ids
         response = self.session.get(
-            "https://www.googleapis.com/analytics/v3/management/accountSummaries"
+            "https://analyticsadmin.googleapis.com/v1alpha/accountSummaries"
         )
         try:
             response.raise_for_status()
@@ -43,16 +43,15 @@ class GoogleAnalytics(OAuth2Integration):
                 ) from None
             else:
                 raise
-        items = response.json()["items"]
-        view_id_choices = sorted(
+        items = response.json()["accountSummaries"]
+        property_id_choices = sorted(
             [
                 {
-                    "title": f"{prop['name']} - {profile['name']} ({profile['id']})",
-                    "value": profile["id"],
+                    "title": f"{property['displayName']} ({property['property'].split('/')[-1]})",
+                    "value": property["property"].split("/")[-1],
                 }
                 for item in items
-                for prop in item["webProperties"]
-                for profile in prop["profiles"]
+                for property in item["propertySummaries"]
             ],
             key=lambda d: d["title"],
         )
@@ -60,10 +59,10 @@ class GoogleAnalytics(OAuth2Integration):
         return {
             "type": "dict",
             "keys": {
-                "view_id": {
+                "property_id": {
                     "type": "string",
                     "required": True,
-                    "choices": view_id_choices,
+                    "choices": property_id_choices,
                 },
                 "metric": {
                     "type": "string",
@@ -111,16 +110,12 @@ class GoogleAnalytics(OAuth2Integration):
         date_start: date,
         date_end: date,
         request_data: Dict,
-        nextPageToken=None,
+        offset=0,
     ):
-        if nextPageToken:
+        if offset:
             request_data = {
-                "reportRequests": [
-                    {
-                        **request_data["reportRequests"][0],
-                        "pageToken": nextPageToken,
-                    }
-                ]
+                **request_data,
+                "offset": offset,
             }
         response = self.session.post(url, json=request_data)
         try:
@@ -133,13 +128,13 @@ class GoogleAnalytics(OAuth2Integration):
             else:
                 raise
         data = response.json()
-        nextPageToken = data["reports"][0].get("nextPageToken")
-        rows = data["reports"][0]["data"].get("rows", [])
-        if not nextPageToken:
+        rows = data.get("rows", [])
+        if len(rows) < request_data["limit"]:
             return rows
         else:
+            offset += data["rowCount"]
             return rows + self._paginated_query(
-                url, date_start, date_end, request_data, nextPageToken=nextPageToken
+                url, date_start, date_end, request_data, offset=offset
             )
 
     def collect_past_range(
@@ -155,49 +150,52 @@ class GoogleAnalytics(OAuth2Integration):
             )
 
         # Parameters
-        view_id = self.config["view_id"]
+        property_id = self.config["property_id"]
         metric = self.config["metric"]
 
         # Documentation:
-        # https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#ReportRequest
+        # https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/properties/runReport
 
         request_data = {
-            "reportRequests": [
+            "dateRanges": [
                 {
-                    "viewId": view_id,
-                    "dateRanges": [
-                        {
-                            "startDate": date_start.strftime("%Y-%m-%d"),
-                            "endDate": date_end.strftime("%Y-%m-%d"),
-                        },
-                    ],
-                    "dimensions": [{"name": "ga:date"}],
-                    "samplingLevel": "LARGE",
-                    "dimensionFilterClauses": [
-                        {
-                            "operator": "and",
-                            "filters": [
-                                {
-                                    "dimensionName": filter["dimensionName"],
-                                    "operator": filter["operator"],
-                                    "expressions": [filter["expression"]],
-                                }
-                                for filter in self.config["filters"]
-                            ],
-                        }
-                    ],
-                    "metrics": [{"expression": metric}],
-                    "pageSize": ROW_LIMIT,
+                    "startDate": date_start.strftime("%Y-%m-%d"),
+                    "endDate": date_end.strftime("%Y-%m-%d"),
                 },
             ],
+            "dimensions": [{"name": "date"}],
+            "dimensionFilter": {
+                "andGroup": {
+                    "expressions": [
+                        {
+                            "filter": {
+                                "fieldName": filter["dimensionName"],
+                                "stringFilter": {
+                                    "matchType": filter["operator"],
+                                    "value": filter["expression"],
+                                },
+                            }
+                        }
+                        for filter in self.config["filters"]
+                    ],
+                }
+            },
+            "metrics": [{"name": metric}],
+            "limit": ROW_LIMIT,
         }
 
-        request_url = f"https://analyticsreporting.googleapis.com/v4/reports:batchGet"
+        # GA doesn't support empty filter groups
+        if not self.config["filters"]:
+            del request_data["dimensionFilter"]
+
+        request_url = f"https://analyticsdata.googleapis.com/v1beta/properties/{property_id}:runReport"
         rows = self._paginated_query(request_url, date_start, date_end, request_data)
         return [
             MeasurementTuple(
-                date=datetime.strptime(row["dimensions"][0], "%Y%m%d").date(),
-                value=float(row["metrics"][0]["values"][0]),
+                date=datetime.strptime(
+                    row["dimensionValues"][0]["value"], "%Y%m%d"
+                ).date(),
+                value=float(row["metricValues"][0]["value"]),
             )
             for row in rows
         ]
