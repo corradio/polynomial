@@ -12,7 +12,7 @@ MAX_DAYS = 300  # Maximum number of days per paginated query
 ROW_LIMIT = 10000  # Number of rows to fetch at a time
 # See https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema
 METRICS = sorted(["totalUsers", "sessions"])
-DIMENSIONS = sorted(["ga:countryIsoCode"])
+DIMENSIONS = sorted(["countryId"])
 
 
 @final
