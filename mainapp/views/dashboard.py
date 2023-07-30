@@ -1,6 +1,7 @@
 import math
 from datetime import date, datetime, timedelta, timezone
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
@@ -14,6 +15,21 @@ from ..forms import DashboardForm, DashboardMetricAddForm
 from ..models import Dashboard, Measurement, Metric, Organization, User
 from ..queries import query_measurements_without_gaps
 from ..utils.charts import get_vl_spec
+
+
+@login_required
+def index(request):
+    user = request.user
+    organizations = Organization.objects.filter(users=user)
+    dashboard = (
+        Dashboard.objects.all()
+        .filter(Q(user=user) | Q(organization__in=organizations))
+        .order_by("name")
+    ).first()
+    if dashboard:
+        return redirect(dashboard.get_absolute_url())
+
+    return render(request, "mainapp/dashboards.html", {})
 
 
 class DashboardCreateView(LoginRequiredMixin, CreateView):

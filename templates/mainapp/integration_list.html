@@ -3,7 +3,7 @@
 
 {% block content %}
     <h2>Select integration</h2>
-    <div class="grid grid-cols-3 md:grid-cols-4 gap-4">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {% for integration_id in object_list %}
             <!-- <li>
               <a href="{% url 'metric_new' %}?integration_id={{ integration_id }}&{{ request.META.QUERY_STRING }}">

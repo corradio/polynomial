@@ -1,11 +1,23 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block head_title %}Lightweight metrics engine for your most vital KPIs{% endblock %}
-
 {% block content %}
-  <h1>Welcome to Polynomial 👋</h1>
-  <p>
-    You have no dashboard yet. Let's <a href="{% url 'dashboard_new' %}">create one now</a>!
-  </p>
+  <div class="px-4 mx-auto mt-10 max-w-screen-xl sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 xl:mt-28">
+    <div class="text-center">
+      <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
+        Lightweight metrics engine for
+        <br />
+        <span class="text-blue-600">your most vital KPIs</span>
+      </h1>
+      <p class="max-w-md mx-auto mt-3 text-gray-500 font-light sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+          eiusmod tempor incididunt ut.
+      </p>
+      <p class="max-w-md mx-auto mt-5 sm:flex sm:justify-center md:mt-8 gap-2">
+        <a class="btn bg-blue-600 text-white md:text-lg md:py-4 md:px-10" href="{% url 'account_signup' %}">Get started</a>
+        <a class="btn md:text-lg md:py-4 md:px-10 text-gray-500" href="{% url 'integrations' %}">Browse integrations</a>
+      </p>
+    </div>
+  </div>
+
 {% endblock %}

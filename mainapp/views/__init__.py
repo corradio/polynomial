@@ -58,18 +58,9 @@ from . import dashboard, metric, organization
 from .utils import add_next
 
 
-@login_required
 def index(request):
-    user = request.user
-    organizations = Organization.objects.filter(users=user)
-    dashboard = (
-        Dashboard.objects.all()
-        .filter(Q(user=user) | Q(organization__in=organizations))
-        .order_by("name")
-    ).first()
-    if dashboard:
-        return redirect(dashboard.get_absolute_url())
-
+    if request.user.is_authenticated:
+        return redirect(reverse("dashboards"))
     return render(request, "mainapp/index.html", {})
 
 

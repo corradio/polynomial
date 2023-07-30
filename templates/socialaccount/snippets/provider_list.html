@@ -6,8 +6,8 @@
 {% if provider.id == "openid" %}
 {% for brand in provider.get_brands %}
 <li>
-  <a title="{{brand.name}}" 
-     class="socialaccount_provider {{provider.id}} {{brand.id}}" 
+  <a title="{{brand.name}}"
+     class="socialaccount_provider {{provider.id}} {{brand.id}}"
      href="{% provider_login_url provider.id openid=brand.openid_url process=process %}"
      >{{brand.name}}</a>
 </li>
@@ -26,7 +26,7 @@
       {% endif %}
 
       {% if process == 'login' %}
-      Log in with {{provider.name}}
+      Login with {{provider.name}}
       {% else %}
       {{ process }} with {{provider.name}}
       {% endif %}

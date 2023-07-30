@@ -172,6 +172,11 @@ urlpatterns = [
         include(
             [
                 path(
+                    "",
+                    view=views.dashboard.index,
+                    name="dashboards",
+                ),
+                path(
                     "new",
                     view=views.dashboard.DashboardCreateView.as_view(),
                     name="dashboard_new",
