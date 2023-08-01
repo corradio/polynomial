@@ -35,6 +35,9 @@ format:
 typecheck:
 	poetry run mypy .
 
+test:
+	$(MANAGE) test
+
 deploy:
 	poetry run fly deploy
 
