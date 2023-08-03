@@ -2211,6 +2211,34 @@ files = [
 ]
 
 [[package]]
+name = "newrelic"
+version = "8.9.0"
+description = "New Relic Python Agent"
+category = "main"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*"
+files = [
+    {file = "newrelic-8.9.0-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:23450caafa8da15a8a6632642b64a6b1921335a4edd58caeb9f244d740e190b9"},
+    {file = "newrelic-8.9.0-cp27-cp27m-manylinux2010_x86_64.whl", hash = "sha256:13662a5eec5b64a5ec5e220fa1a7ac99c5e7ff6eb868bb303273689e7c90d762"},
+    {file = "newrelic-8.9.0-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:d9b1ad14417e424b8db24c2da9f4f095b4ea3fac27cf6d5efdeebd140ad07086"},
+    {file = "newrelic-8.9.0-cp27-cp27mu-manylinux2010_x86_64.whl", hash = "sha256:755d210314f208735a4e53a8ba124ada00fda1fd3ccbdc6d8f01a0d521711c1f"},
+    {file = "newrelic-8.9.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:54c607fb502582484f3bb0e134b19a3634d9b07e79474082d1cde9ff31616844"},
+    {file = "newrelic-8.9.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4f86037cd179a21efaef52784567c3fc951b400f72fe08567b19d47ab31a6a9d"},
+    {file = "newrelic-8.9.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:260d9536d4a2c910387aa13c91621e88f96567bb4acf7278608cd1905c25808b"},
+    {file = "newrelic-8.9.0-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7eb535500073363d25e14ff4a30379957972339530c600673a7bccb26f009aef"},
+    {file = "newrelic-8.9.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ec36f973d6835eb6a0f27871c0dc8127e8bbc4118c3456dbf3f8ef4aae7d707a"},
+    {file = "newrelic-8.9.0-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:57159c99ee6a37f1e487ac5ab68fd67afd1407da1689705b3560f7a903867453"},
+    {file = "newrelic-8.9.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fa53d9610ba18a577a3bb62e3fc9e22c13e8b99a88ef8f8f6ebc5538f0390ff0"},
+    {file = "newrelic-8.9.0-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:732dd981bcda6030c9c377eb8765c60ba5f510ba2052b689cb92a964b16290c0"},
+    {file = "newrelic-8.9.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f249f06dbc8b1a160532ece3d6b1989be1ed63c2fe3f569a8913d7c2f0ee9a7e"},
+    {file = "newrelic-8.9.0-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f2200b2d4e70b0544a5b99b5103c96eecdf204cc2bbbf499106ad93ebd8f6469"},
+    {file = "newrelic-8.9.0.tar.gz", hash = "sha256:a8e8cdfd5ac5f8e58aa11909921e65b4da8afb721de996cd4ecd5c372e339c3c"},
+]
+
+[package.extras]
+infinite-tracing = ["grpcio", "protobuf"]
+
+[[package]]
 name = "notebook"
 version = "6.5.4"
 description = "A web-based notebook environment for interactive computing"
@@ -3781,4 +3809,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.12"
-content-hash = "74829cced273a4017b5b8144ec41e74fef1c0665c4e693d3f7d0adfc22adc382"
+content-hash = "bbb287316819109f8830629ad288d2736dfb7df64931267aa8f865e78940888e"
