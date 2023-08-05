@@ -1,7 +1,7 @@
 version: "3.2"
 services:
   pgdb:
-    image: postgres:11
+    image: postgres:14
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mypassword
