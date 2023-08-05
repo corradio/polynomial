@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 
 {% load dashboard_tags %}
+{% load static %}
 
 {% block head_title %}{{ dashboard }}{% endblock %}
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-lite@5.6.0"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
+<script src="{% static 'node_modules/vega/build/vega.min.js' %}"></script>
+<script src="{% static 'node_modules/vega-lite/build/vega-lite.min.js' %}"></script>
+<script src="{% static 'node_modules/vega-embed/build/vega-embed.min.js' %}"></script>
 {% endblock %}
 
 {% block before_content %}
