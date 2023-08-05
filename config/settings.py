@@ -108,7 +108,6 @@ TEMPLATES = [
 STATICFILES_DIRS = [
     BASE_DIR / "static",
     ("integrations/icons", BASE_DIR / "integrations/icons"),
-    ("node_modules", BASE_DIR / "node_modules"),
 ]
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",

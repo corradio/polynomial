@@ -8,6 +8,6 @@ __pycache__
 celerybeat-schedule
 .DS_Store
 static/dist
-static_root/CACHE
+static_root
 node_modules
 .ipynb_checkpoints
