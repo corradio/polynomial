@@ -4,7 +4,7 @@
     "flowbite": "^1.6.3",
     "tailwind-scrollbar-hide": "^1.1.7",
     "tailwindcss": "^3.2.7",
-    "vega": "5.22.1",
+    "vega": "^5.22.1",
     "vega-embed": "6.21.0",
     "vega-lite": "5.6.0"
   },
