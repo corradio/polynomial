@@ -76,9 +76,8 @@ class Github(OAuth2Integration):
     def collect_past_range(self, date_start, date_end) -> List[MeasurementTuple]:
         metric_key = self.config["metric"]
         metric_config = self._get_metric_config_for_key(metric_key)
-        assert (
-            int(metric_config.get("backfill_days", 0)) > 0
-        ), f"Metric {metric_key} can't backfill"
+        backfill_days = int(metric_config.get("backfill_days", 0))
+        assert backfill_days > 0, f"Metric {metric_key} can't backfill"
 
         r = self.session.get(
             f"https://api.github.com/repos/{self.config['repo_full_name']}{metric_config['path']}"
@@ -87,23 +86,25 @@ class Github(OAuth2Integration):
         data = r.json()
 
         items = data[metric_config["path"].split("/")[-1]]
-        # Filter to find associated timestamp (note: they are given in UTC)
-        items = [
-            # Parse dates
-            {
-                **item,
-                "date": date.fromisoformat(item["timestamp"].replace("T00:00:00Z", "")),
-            }
-            for item in items
+
+        # The github API only returns data for the days that have data
+        # in the last `backfill_days`. By default we set the rest to 0
+        measurements = [
+            MeasurementTuple(date=date_start + timedelta(days=i), value=0)
+            for i in range((date_end - date_start).days + 1)
         ]
-        return [
-            MeasurementTuple(
-                date=item["date"],
-                value=item[metric_config["response_prop"]],
-            )
-            for item in items
-            if item["date"] >= date_start and item["date"] <= date_end
-        ]
+        assert date_start == measurements[0].date
+        assert date_end == measurements[-1].date
+        for item in items:
+            value = item[metric_config["response_prop"]]
+            dt = date.fromisoformat(item["timestamp"].replace("T00:00:00Z", ""))
+            if dt > date_end or dt < date_start:
+                continue
+            i = (dt - date_start).days
+            assert measurements[i].date == dt
+            measurements[i] = measurements[i]._replace(date=dt)
+
+        return measurements
 
     def collect_latest(self) -> MeasurementTuple:
         if self.can_backfill():
