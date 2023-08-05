@@ -214,6 +214,7 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             "metric_name": metric.name,
             "integration_id": metric.integration_id,
             "can_edit": metric.can_edit(request.user),
+            "can_be_backfilled_by_user": metric.can_be_backfilled_by(request.user),
             "measurements": [
                 {
                     "value": value,
