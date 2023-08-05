@@ -5,11 +5,11 @@
   <div class="card">
     <div>
       <!-- dropdown menu -->
-      <a
+      <button
         data-dropdown-toggle="menu-{{ metric.metric_id }}"
         data-dropdown-offset-distance="5"
         data-dropdown-placement="right-start"
-        class="focus:outline-none cursor-pointer focus:z-10 focus:ring-4 focus:ring-gray-200 text-black"
+        class="focus:outline-none cursor-pointer text-black"
       >
         <span class="chevron-after">
           {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
@@ -20,7 +20,7 @@
       </a>
       <div
         id="menu-{{ metric.metric_id }}"
-        class="z-10 hidden bg-white divide-y divide-gray-100 rounded-b-lg overflow-hidden shadow dark:bg-gray-700 text-xs"
+        class="z-10 hidden bg-white divide-y divide-gray-100 rounded-b-lg overflow-hidden shadow dark:bg-gray-700 text-xs text-left"
       >
         <ul class="text-gray-700 dark:text-gray-200">
         {% if metric.can_edit %}

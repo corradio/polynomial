@@ -45,15 +45,15 @@
   </div>
 
   <div class="container mx-auto px-4 text-xs py-1">
-    <a href="#" id="sinceDropdownButton" data-dropdown-toggle="since-dropdown" class="font-medium text-gray-500 bg-white focus:outline-none focus:z-10 focus:ring-4 focus:ring-gray-200">
+    <button id="sinceDropdownButton" data-dropdown-toggle="since-dropdown" class="font-medium text-gray-500 bg-white">
       <span class="chevron-after">{{ since_label }}&nbsp;</span>
     </a>
-    <div id="since-dropdown" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-b-lg overflow-hidden shadow dark:bg-gray-700">
+    <div id="since-dropdown" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-b-lg overflow-hidden shadow dark:bg-gray-700 text-left">
         <ul class="text-gray-700 dark:text-gray-200" aria-labelledby="sinceDropdownButton">
           {% for s in since_options %}
           <li>
               <a
-                class="block px-2 py-2 hover:bg-gray-100 {% if s.value == since %}text-white bg-blue-600 hover:bg-blue-900 active {% else %} hover:text-gray-900 hover:bg-gray-100 {% endif %}"
+                class="block px-2 py-2 {% if s.value == since %}text-white bg-blue-600 hover:bg-blue-900 active {% else %} hover:text-gray-900 hover:bg-gray-100 {% endif %}"
                 href="?since={{ s.value | urlencode }}"
               >
                 {{ s.label }}
