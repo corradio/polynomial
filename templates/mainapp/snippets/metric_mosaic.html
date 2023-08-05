@@ -6,11 +6,10 @@
     <div>
       <!-- dropdown menu -->
       <a
-        href="#"
         data-dropdown-toggle="menu-{{ metric.metric_id }}"
         data-dropdown-offset-distance="5"
         data-dropdown-placement="right-start"
-        class="focus:outline-none focus:z-10 focus:ring-4 focus:ring-gray-200 text-black"
+        class="focus:outline-none cursor-pointer focus:z-10 focus:ring-4 focus:ring-gray-200 text-black"
       >
         <span class="chevron-after">
           {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
