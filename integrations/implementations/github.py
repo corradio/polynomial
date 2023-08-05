@@ -102,7 +102,7 @@ class Github(OAuth2Integration):
                 continue
             i = (dt - date_start).days
             assert measurements[i].date == dt
-            measurements[i] = measurements[i]._replace(date=dt)
+            measurements[i] = measurements[i]._replace(value=value)
 
         return measurements
 

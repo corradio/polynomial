@@ -197,11 +197,11 @@ class GoogleAnalytics(OAuth2Integration):
         df = pd.DataFrame(index=pd.date_range(start=date_start, end=date_end, freq="D"))
         df["value"] = 0
         for row in rows:
-            dt = datetime.strptime(row["dimensionValues"][0]["value"], "%Y%m%d").date()
+            dt = datetime.strptime(row["dimensionValues"][0]["value"], "%Y%m%d")
             df.loc[dt] = float(row["metricValues"][0]["value"])  # type: ignore[call-overload]
         return [
             MeasurementTuple(
-                date=cast(date, dt),
+                date=cast(datetime, dt).date(),
                 value=value,
             )
             for dt, value in df["value"].items()
