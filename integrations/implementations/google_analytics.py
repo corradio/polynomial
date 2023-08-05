@@ -1,8 +1,9 @@
 import os
 import urllib.parse
 from datetime import date, datetime, timedelta
-from typing import Dict, Iterable, List, final
+from typing import Dict, Iterable, List, cast, final
 
+import pandas as pd
 import requests
 
 from ..base import MeasurementTuple, OAuth2Integration
@@ -190,12 +191,18 @@ class GoogleAnalytics(OAuth2Integration):
 
         request_url = f"https://analyticsdata.googleapis.com/v1beta/properties/{property_id}:runReport"
         rows = self._paginated_query(request_url, date_start, date_end, request_data)
+        if not rows:
+            return []
+        # GA doesn't return data for rows that are 0
+        df = pd.DataFrame(index=pd.date_range(start=date_start, end=date_end, freq="D"))
+        df["value"] = 0
+        for row in rows:
+            dt = datetime.strptime(row["dimensionValues"][0]["value"], "%Y%m%d").date()
+            df.loc[dt] = float(row["metricValues"][0]["value"])  # type: ignore[call-overload]
         return [
             MeasurementTuple(
-                date=datetime.strptime(
-                    row["dimensionValues"][0]["value"], "%Y%m%d"
-                ).date(),
-                value=float(row["metricValues"][0]["value"]),
+                date=cast(date, dt),
+                value=value,
             )
-            for row in rows
+            for dt, value in df["value"].items()
         ]
