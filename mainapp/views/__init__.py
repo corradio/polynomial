@@ -16,10 +16,20 @@ from . import dashboard, metric, organization, organization_invitation  # noqa
 from .utils import add_next
 
 
+def get_integration_ids():
+    return [
+        k
+        for k in INTEGRATION_IDS
+        if DEBUG or not INTEGRATION_CLASSES[k]._exclude_in_prod
+    ]
+
+
 def index(request):
     if request.user.is_authenticated:
         return redirect("dashboards")
-    return render(request, "mainapp/index.html", {})
+    return render(
+        request, "mainapp/index.html", {"integration_ids": get_integration_ids()}
+    )
 
 
 class IntegrationListView(ListView):
@@ -27,11 +37,7 @@ class IntegrationListView(ListView):
     template_name = "mainapp/integration_list.html"
 
     def get_queryset(self):
-        return [
-            i
-            for i in INTEGRATION_IDS
-            if DEBUG or not INTEGRATION_CLASSES[i]._exclude_in_prod
-        ]
+        return get_integration_ids()
 
 
 class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
