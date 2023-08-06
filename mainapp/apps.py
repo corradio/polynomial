@@ -6,4 +6,4 @@ class MainappConfig(AppConfig):
     name = "mainapp"
 
     def ready(self):
-        pass
+        import mainapp.signals  # no qa
