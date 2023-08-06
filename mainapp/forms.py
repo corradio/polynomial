@@ -189,7 +189,12 @@ class OrganizationUserCreateForm(forms.ModelForm):
             except OrganizationUser.DoesNotExist:
                 pass
         except User.DoesNotExist:
-            pass
+            # We disable invitations for new users for now,
+            # unless you're a Polynomial admin
+            if not self.request.user.is_staff:
+                forms.ValidationError("User is not already a Polynomial user.")
+            else:
+                pass
 
         # Check if user has already been invited
         try:
