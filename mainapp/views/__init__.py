@@ -60,7 +60,7 @@ from .utils import add_next
 
 def index(request):
     if request.user.is_authenticated:
-        return redirect(reverse("dashboards"))
+        return redirect("dashboards")
     return render(request, "mainapp/index.html", {})
 
 
@@ -182,13 +182,17 @@ class InvitationAcceptView(SingleObjectMixin, View):
             except User.DoesNotExist:
                 invited_user = None
             if request.user == invited_user:
+                if invitation.user is not None:
+                    # This invitation has already been accepted
+                    assert invitation.user == invited_user
+                    return redirect("index")
                 # Accept invitation
                 invitation.accept(request.user)
                 # Send notification to invitee
                 ctx = {"invitation": invitation}
                 email_template = "mainapp/email/organizationinvitation_accepted"
                 get_adapter().send_mail(email_template, invitation.inviter.email, ctx)
-                return redirect("organization_list")
+                return redirect("index")
             else:
                 raise PermissionDenied(
                     "This invitation is not valid for emails associated with this account."

@@ -395,6 +395,6 @@ class OrganizationInvitation(OrganizationUser):
         proxy = True
 
     def accept(self, user):
-        # Update the associate org user
+        # Update the associated org user
         self.user = user
         return self.save()
