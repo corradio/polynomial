@@ -2,7 +2,6 @@ import gzip
 import json
 import secrets
 from datetime import date, datetime
-from itertools import islice
 from typing import Tuple, Union
 
 import requests
@@ -13,7 +12,7 @@ from requests_oauthlib import OAuth2Session
 
 from integrations.utils import get_secret
 
-from ..models import Measurement, Metric, Organization
+from ..models import Measurement, Organization
 
 client_id = get_secret("GOOGLE_CLIENT_ID")
 client_secret = get_secret("GOOGLE_CLIENT_SECRET")

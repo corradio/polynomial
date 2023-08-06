@@ -1,10 +1,8 @@
 import concurrent.futures
 import csv
-import os
-import urllib.parse
-from datetime import date, datetime, timedelta
+from datetime import datetime
 from io import StringIO
-from typing import Dict, List, final
+from typing import final
 
 import requests
 

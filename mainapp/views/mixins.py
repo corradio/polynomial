@@ -5,14 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
-from ..models import (
-    Dashboard,
-    Measurement,
-    Metric,
-    Organization,
-    OrganizationUser,
-    User,
-)
+from ..models import Organization, OrganizationUser
 
 # This enables type-checking to know we're going to mix into a View
 if TYPE_CHECKING:

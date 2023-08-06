@@ -1,5 +1,3 @@
-from allauth import app_settings
-from allauth.account.utils import perform_login
 from allauth.socialaccount.models import SocialLogin
 from allauth.socialaccount.signals import pre_social_login
 from django.dispatch import receiver

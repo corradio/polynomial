@@ -3,7 +3,7 @@ import socket
 from datetime import date, datetime, timedelta, timezone
 from email.mime.image import MIMEImage
 from pprint import pformat
-from typing import Optional, Union
+from typing import Optional
 
 import requests
 from celery import shared_task

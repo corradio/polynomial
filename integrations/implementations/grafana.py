@@ -1,11 +1,10 @@
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from typing import Iterable, final
-from zoneinfo import ZoneInfo
 
 import requests
 
 from ..base import Integration, MeasurementTuple
-from ..utils import batch_range_by_max_batch, get_secret
+from ..utils import batch_range_by_max_batch
 
 MAX_DAYS = 500
 

@@ -1,57 +1,13 @@
-import json
-import secrets
-import sys
-import traceback
-from datetime import date, datetime, timedelta
-from types import MethodType
-from typing import Any, Dict, List, Optional, Union
-
-from allauth.account.adapter import get_adapter
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
-from django.db.models import Q
-from django.forms.models import model_to_dict
-from django.http import (
-    HttpRequest,
-    HttpResponse,
-    HttpResponseBadRequest,
-    HttpResponseNotAllowed,
-    HttpResponseNotFound,
-    HttpResponseRedirect,
-    HttpResponseServerError,
-    JsonResponse,
-)
-from django.shortcuts import get_object_or_404, redirect, render
-from django.template import Context, Template
+from django.http import HttpRequest, HttpResponseNotFound, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
-from django.utils.dateparse import parse_date, parse_duration
-from django.utils.http import urlencode
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    ListView,
-    TemplateView,
-    UpdateView,
-    View,
-)
-from django.views.generic.detail import SingleObjectMixin
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from config.settings import DEBUG
-from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
-from integrations.base import WebAuthIntegration
-
-from ..forms import MetricForm, OrganizationForm, OrganizationUserCreateForm
-from ..models import (
-    Dashboard,
-    Measurement,
-    Metric,
-    Organization,
-    OrganizationInvitation,
-    OrganizationUser,
-    User,
-)
-from ..tasks import backfill_task, google_spreadsheet_export
+from ..forms import OrganizationForm, OrganizationUserCreateForm
+from ..models import Organization, OrganizationUser, User
+from ..tasks import google_spreadsheet_export
 from .mixins import (
     OrganizationAdminRequiredMixin,
     OrganizationMembershipRequiredMixin,

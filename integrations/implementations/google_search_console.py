@@ -1,9 +1,6 @@
-import os
 import urllib.parse
-from datetime import date, timedelta
+from datetime import date
 from typing import Dict, List, final
-
-import requests
 
 from ..base import MeasurementTuple, OAuth2Integration
 from ..utils import get_secret

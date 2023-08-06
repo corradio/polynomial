@@ -158,12 +158,12 @@ urlpatterns = [
     # Invitations
     path(
         "invitations/",
-        view=views.InvitationListView.as_view(),
+        view=views.organization_invitation.InvitationListView.as_view(),
         name="invitation_list",
     ),
     path(
         "invitations/<key>",
-        view=views.InvitationAcceptView.as_view(),
+        view=views.organization_invitation.InvitationAcceptView.as_view(),
         name="invitation_accept",
     ),
     # Dashboards

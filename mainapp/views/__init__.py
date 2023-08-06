@@ -1,60 +1,18 @@
-import json
-import secrets
-import sys
-import traceback
-from datetime import date, datetime, timedelta
-from types import MethodType
-from typing import Any, Dict, List, Optional, Union
-
-from allauth.account.adapter import get_adapter
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
-from django.db.models import Q
-from django.forms.models import model_to_dict
-from django.http import (
-    HttpRequest,
-    HttpResponse,
-    HttpResponseBadRequest,
-    HttpResponseNotAllowed,
-    HttpResponseNotFound,
-    HttpResponseRedirect,
-    HttpResponseServerError,
-    JsonResponse,
-)
+from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template import Context, Template
-from django.urls import reverse, reverse_lazy
-from django.utils.dateparse import parse_date, parse_duration
-from django.utils.http import urlencode
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    ListView,
-    TemplateView,
-    UpdateView,
-    View,
-)
-from django.views.generic.detail import SingleObjectMixin
+from django.urls import reverse
+from django.views.generic import ListView, TemplateView
 
 from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import WebAuthIntegration
 
-from ..forms import MetricForm, OrganizationForm, OrganizationUserCreateForm
-from ..models import (
-    Dashboard,
-    Measurement,
-    Metric,
-    Organization,
-    OrganizationInvitation,
-    OrganizationUser,
-    User,
-)
-from ..tasks import backfill_task, google_spreadsheet_export
+from ..models import Metric
+from ..tasks import google_spreadsheet_export
 
 # Re-export
-from . import dashboard, metric, organization
+from . import dashboard, metric, organization, organization_invitation  # noqa
 from .utils import add_next
 
 
@@ -140,60 +98,4 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
                         reverse("metric-new-with-state", args=[state]),
                         next=cache_obj.get("next"),
                     )
-                )
-
-
-class InvitationListView(LoginRequiredMixin, ListView):
-    model = OrganizationInvitation
-
-    def get_queryset(self):
-        user = self.request.user
-        assert isinstance(user, User)
-        return OrganizationInvitation.objects.filter(
-            invitee_email__in=user.emailaddress_set.values_list("email", flat=True),
-            user=None,
-        )
-
-
-class InvitationAcceptView(SingleObjectMixin, View):
-    model = OrganizationInvitation
-
-    def get_object(self):
-        return get_object_or_404(
-            OrganizationInvitation, invitation_key=self.kwargs["key"]
-        )
-
-    def get(self, request, key):
-        invitation = self.get_object()
-
-        if request.user.is_anonymous:
-            # Mark this email address as verified, and head to sign up
-            get_adapter().stash_verified_email(request, invitation.invitee_email)
-            # Return here once we're signed up
-            return redirect(
-                f"{reverse('account_login')}?{urlencode({'next': request.path})}"
-            )
-        else:
-            # User is authenticated
-            try:
-                invited_user = User.get_by_email(
-                    invitation.invitee_email, only_verified=False
-                )
-            except User.DoesNotExist:
-                invited_user = None
-            if request.user == invited_user:
-                if invitation.user is not None:
-                    # This invitation has already been accepted
-                    assert invitation.user == invited_user
-                    return redirect("index")
-                # Accept invitation
-                invitation.accept(request.user)
-                # Send notification to invitee
-                ctx = {"invitation": invitation}
-                email_template = "mainapp/email/organizationinvitation_accepted"
-                get_adapter().send_mail(email_template, invitation.inviter.email, ctx)
-                return redirect("index")
-            else:
-                raise PermissionDenied(
-                    "This invitation is not valid for emails associated with this account."
                 )

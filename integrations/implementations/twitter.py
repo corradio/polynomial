@@ -1,6 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
-from typing import List, final
-from zoneinfo import ZoneInfo
+from typing import final
 
 import requests
 

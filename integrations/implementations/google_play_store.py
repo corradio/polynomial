@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from ..base import MeasurementTuple, OAuth2Integration, UserFixableError
+from ..base import MeasurementTuple, OAuth2Integration
 from ..utils import batch_range_per_month, get_secret
 
 """

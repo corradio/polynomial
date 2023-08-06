@@ -1,8 +1,6 @@
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Union, final
 
-import requests
-
 from ..base import MeasurementTuple, OAuth2Integration
 from ..utils import fill_mesurement_range, get_secret
 

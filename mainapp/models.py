@@ -1,14 +1,8 @@
-import json
 import logging
-import uuid
-from datetime import date, timedelta
 from typing import TYPE_CHECKING, Optional, Union
 
-from allauth.account.adapter import get_adapter
 from allauth.account.models import EmailAddress
-from allauth.account.utils import setup_user_email
 from django.contrib.auth.models import AbstractUser, AnonymousUser
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse

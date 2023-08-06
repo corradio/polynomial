@@ -7,12 +7,12 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
-from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views.generic import CreateView, DeleteView, UpdateView
 
 from ..forms import DashboardForm, DashboardMetricAddForm
-from ..models import Dashboard, Measurement, Metric, Organization, User
+from ..models import Dashboard, Metric, Organization, User
 from ..queries import query_measurements_without_gaps
 from ..utils.charts import get_vl_spec
 

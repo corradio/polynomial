@@ -1,5 +1,5 @@
-from datetime import date, timedelta
-from typing import Callable, Iterable, List, Protocol, TypeVar, cast
+from datetime import date
+from typing import Iterable, List, Protocol, TypeVar, cast
 
 import pandas as pd
 from environs import Env

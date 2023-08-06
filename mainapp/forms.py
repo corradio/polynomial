@@ -2,7 +2,7 @@ import csv
 import uuid
 from datetime import date, datetime
 from io import TextIOWrapper
-from typing import IO, List
+from typing import List
 
 from allauth.account.adapter import get_adapter
 from django import forms

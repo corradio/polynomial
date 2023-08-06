@@ -1,7 +1,5 @@
-import os
-import urllib.parse
 from datetime import date, datetime, timedelta
-from typing import Dict, List, final
+from typing import List, final
 
 import requests
 

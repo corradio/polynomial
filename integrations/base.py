@@ -5,7 +5,6 @@ import re
 from abc import abstractmethod
 from datetime import date, timedelta
 from typing import (
-    Any,
     Callable,
     ClassVar,
     Dict,
@@ -17,7 +16,6 @@ from typing import (
     Tuple,
 )
 
-import requests
 from requests_oauthlib import OAuth2Session
 
 MeasurementTuple = NamedTuple("MeasurementTuple", [("date", date), ("value", float)])

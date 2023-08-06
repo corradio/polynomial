@@ -31,6 +31,7 @@ rundev:
 format:
 	poetry run black .
 	poetry run isort .
+	poetry run autoflake --recursive --in-place --remove-all-unused-imports .
 
 typecheck:
 	poetry run mypy .

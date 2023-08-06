@@ -1,9 +1,6 @@
-import os
-import urllib.parse
-from datetime import date, datetime, timedelta
-from typing import Dict, Iterable, List, cast, final
+from datetime import date, datetime
+from typing import Dict, Iterable, final
 
-import pandas as pd
 import requests
 
 from ..base import MeasurementTuple, OAuth2Integration
