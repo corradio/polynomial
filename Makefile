@@ -20,7 +20,7 @@ initdb:
 resetdb: cleardb initdb seed
 
 shell:
-	$(MANAGE) shell
+	DEBUG=1 $(MANAGE) shell
 
 runserver:
 	OAUTHLIB_INSECURE_TRANSPORT=1 DEBUG=1 $(MANAGE) runserver
@@ -52,4 +52,4 @@ runtasks:
 	DEBUG=1 poetry run celery -A config call mainapp.tasks.collect_all_latest_task
 
 notebook:
-	$(MANAGE) shell_plus --notebook
+	DEBUG=1 $(MANAGE) shell_plus --notebook
