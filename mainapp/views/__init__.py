@@ -28,7 +28,14 @@ def index(request):
     if request.user.is_authenticated:
         return redirect("dashboards")
     return render(
-        request, "mainapp/index.html", {"integration_ids": get_integration_ids()}
+        request,
+        "mainapp/index.html",
+        {
+            "integrations": [
+                {"id": k, "label": INTEGRATION_CLASSES[k].get_label()}
+                for k in get_integration_ids()
+            ]
+        },
     )
 
 
@@ -37,7 +44,10 @@ class IntegrationListView(ListView):
     template_name = "mainapp/integration_list.html"
 
     def get_queryset(self):
-        return get_integration_ids()
+        return [
+            {"id": k, "label": INTEGRATION_CLASSES[k].get_label()}
+            for k in get_integration_ids()
+        ]
 
 
 class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):

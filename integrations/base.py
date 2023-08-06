@@ -2,6 +2,7 @@ import base64
 import hashlib
 import os
 import re
+import string
 from abc import abstractmethod
 from datetime import date, timedelta
 from typing import (
@@ -53,6 +54,10 @@ class Integration:
     # This will only be used if the method is overridden
     def callable_config_schema(self) -> Dict:
         return self.config_schema
+
+    @classmethod
+    def get_label(cls):
+        return string.capwords(cls.__module__.split(".")[-1].replace("_", " "), sep=" ")
 
     @abstractmethod
     def can_backfill(self) -> bool:

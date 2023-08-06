@@ -3,28 +3,31 @@
 
 {% block content %}
     <h2>Select integration</h2>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {% for integration_id in object_list %}
+    <p class="text-sm text-gray-500">
+      Not on the list? Request a new integration <a href="https://docs.google.com/forms/d/e/1FAIpQLScYQROio_QR2F8FFtalrE-4TXvJ8lsJEIrJ7W8-ZULcUxLVqw/viewform">here</a>, or contribute by <a href="https://github.com/corradio/polynomial/tree/master/integrations">building it</a>.
+    </p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
+        {% for integration in object_list %}
             <!-- <li>
-              <a href="{% url 'metric_new' %}?integration_id={{ integration_id }}&{{ request.META.QUERY_STRING }}">
-                {% with "integrations/icons/"|add:integration_id|add:".png" as icon_url %}
+              <a href="{% url 'metric_new' %}?integration_id={{ integration.id }}&{{ request.META.QUERY_STRING }}">
+                {% with "integrations/icons/"|add:integration.id|add:".png" as icon_url %}
                   <img class="integration-icon" src="{% static icon_url %}" alt="">
                 {% endwith %}
-                {{ integration_id }}
+                {{ integration.label }}
               </a>
             </li> -->
           <div class="p-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800">
               <h5 class="mb-2 font-bold tracking-tight text-gray-900">
-                {% with "integrations/icons/"|add:integration_id|add:".png" as icon_url %}
+                {% with "integrations/icons/"|add:integration.id|add:".png" as icon_url %}
                   <img class="integration-icon" src="{% static icon_url %}" alt="">
                 {% endwith %}
-                {{ integration_id}}
+                {{ integration.label }}
               </h5>
               <!-- <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
                 Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order.
               </p> -->
               <a
-                  href="{% url 'metric_new' %}?integration_id={{ integration_id }}&{{ request.META.QUERY_STRING }}"
+                  href="{% url 'metric_new' %}?integration_id={{ integration.id }}&{{ request.META.QUERY_STRING }}"
                   class="mt-2 btn inline-flex items-center px-3 py-2"
               >
                   Select

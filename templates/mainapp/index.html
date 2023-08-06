@@ -11,23 +11,25 @@
       </h1>
       <p class="max-w-md mx-auto mt-3 text-gray-500 font-light sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
         The fastest way to centralize the performance indicators that matter to you.
-        Simply select an integration, and Polynomial takes care of the rest.
+        Simply connect <a href="{% url 'integrations' %}">integrations</a>, and Polynomial takes care of the rest.
       </p>
       <p class="max-w-md mx-auto my-5 flex justify-center md:my-8 gap-2 md:text-md">
         <a class="btn bg-blue-600 text-white md:py-4 md:px-10" href="https://docs.google.com/forms/d/e/1FAIpQLSerYLHahqXc32Kt5a8tS0sta4uFHEY-CbisvxnyCXKFD2cMOA/viewform">Request invite</a>
         <a class="btn md:py-4 md:px-10 text-gray-500" href="{% url 'integrations' %}">Browse integrations</a>
       </p>
       <p>
-        {% for integration_id in integration_ids %}
-          {% with "integrations/icons/"|add:integration_id|add:".png" as icon_url %}
-            <img class="integration-icon" src="{% static icon_url %}" alt="">
+        {% for integration in integrations %}
+          {% with "integrations/icons/"|add:integration.id|add:".png" as icon_url %}
+            <img class="integration-icon" src="{% static icon_url %}" alt="{{ integration.label }}">
           {% endwith %}
         {% endfor %}
+      </p>
+      <p class="text-xs text-gray-500 font-light">
+         extend or build new integrations <a href="https://github.com/corradio/polynomial/tree/master/integrations">here</a>.
       </p>
     </div>
     <div class="max-w-5xl mx-auto rounded shadow-xl my-14 border border-gray-100">
       <img class="py-2 lg:py-10 lg:px-14" src="{% static 'images/screenshot.png' %}">
     </div>
   </div>
-
 {% endblock %}
