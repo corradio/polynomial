@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 
 from ..base import MeasurementTuple, OAuth2Integration
-from ..utils import batch_range_by_max_batch, get_secret
+from ..utils import batch_range_by_max_batch, fill_mesurement_range, get_secret
 
 MAX_DAYS = 300  # Maximum number of days per paginated query
 ROW_LIMIT = 10000  # Number of rows to fetch at a time
@@ -193,16 +193,14 @@ class GoogleAnalytics(OAuth2Integration):
         rows = self._paginated_query(request_url, date_start, date_end, request_data)
         if not rows:
             return []
-        # GA doesn't return data for rows that are 0
-        df = pd.DataFrame(index=pd.date_range(start=date_start, end=date_end, freq="D"))
-        df["value"] = 0
-        for row in rows:
-            dt = datetime.strptime(row["dimensionValues"][0]["value"], "%Y%m%d")
-            df.loc[dt] = float(row["metricValues"][0]["value"])  # type: ignore[call-overload]
-        return [
+        measurements = [
             MeasurementTuple(
-                date=cast(datetime, dt).date(),
-                value=value,
+                date=datetime.strptime(row["dimensionValues"][0]["value"], "%Y%m%d"),
+                value=float(row["metricValues"][0]["value"]),
             )
-            for dt, value in df["value"].items()
+            for row in rows
         ]
+        # GA doesn't return data for rows that are 0
+        return fill_mesurement_range(
+            measurements, date_start=date_start, date_end=date_end, fill_value=0
+        )

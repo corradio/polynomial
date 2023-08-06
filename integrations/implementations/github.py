@@ -4,7 +4,7 @@ from typing import Dict, List, Union, final
 import requests
 
 from ..base import MeasurementTuple, OAuth2Integration
-from ..utils import get_secret
+from ..utils import fill_mesurement_range, get_secret
 
 REPO_METRICS: List[Dict[str, Union[str, int]]] = [
     {"title": "stars", "path": "", "response_prop": "stargazers_count"},
@@ -87,24 +87,18 @@ class Github(OAuth2Integration):
 
         items = data[metric_config["path"].split("/")[-1]]
 
+        measurements = [
+            MeasurementTuple(
+                date=date.fromisoformat(item["timestamp"].replace("T00:00:00Z", "")),
+                value=item[metric_config["response_prop"]],
+            )
+            for item in items
+        ]
         # The github API only returns data for the days that have data
         # in the last `backfill_days`. By default we set the rest to 0
-        measurements = [
-            MeasurementTuple(date=date_start + timedelta(days=i), value=0)
-            for i in range((date_end - date_start).days + 1)
-        ]
-        assert date_start == measurements[0].date
-        assert date_end == measurements[-1].date
-        for item in items:
-            value = item[metric_config["response_prop"]]
-            dt = date.fromisoformat(item["timestamp"].replace("T00:00:00Z", ""))
-            if dt > date_end or dt < date_start:
-                continue
-            i = (dt - date_start).days
-            assert measurements[i].date == dt
-            measurements[i] = measurements[i]._replace(value=value)
-
-        return measurements
+        return fill_mesurement_range(
+            measurements, date_start=date_start, date_end=date_end, fill_value=0
+        )
 
     def collect_latest(self) -> MeasurementTuple:
         if self.can_backfill():

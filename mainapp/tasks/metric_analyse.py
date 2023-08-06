@@ -20,6 +20,7 @@ def extract_spikes(metric_series: dict) -> List[date]:
         [{"date": dt, "value": value} for dt, value in metric_series]
     ).set_index("date")
     df.index = pd.to_datetime(df.index)
+    assert isinstance(df.index, pd.DatetimeIndex)
     if len(df.dropna()) / len(df) < MIN_POINTS_PERCENTAGE:
         return []
 
@@ -29,8 +30,8 @@ def extract_spikes(metric_series: dict) -> List[date]:
     is_outside_noise_level = (df["trend"] - df["value"]).abs() > std * STD_MULTIPLIER
     is_not_na = ~df["value"].isna()
     df["is_spike"] = is_not_na & is_outside_noise_level
-    spike_datetimes: pd.DatetimeIndex = df.index[df["is_spike"]]
-    return [d.date() for d in spike_datetimes.to_pydatetime()]
+    spike_index: pd.DatetimeIndex = df.index[df["is_spike"]]
+    return list(spike_index.date)
 
 
 def detected_spike(metric_id: int) -> bool:

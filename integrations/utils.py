@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from typing import Callable, Iterable, List, Protocol, TypeVar
+from typing import Callable, Iterable, List, Protocol, TypeVar, cast
 
 import pandas as pd
 from environs import Env
@@ -64,3 +64,27 @@ def batch_range_by_max_batch(
             date_end=days[min(i + max_days - 1, len(days) - 1)],
         )
     )
+
+
+def fill_mesurement_range(
+    measurements: List[MeasurementTuple],
+    date_start: date,
+    date_end: date,
+    fill_value: float = 0,
+):
+    df = pd.DataFrame(measurements)
+    # Convert 'date' object column into DatetimeIndex
+    series: pd.Series[float] = df.set_index(pd.DatetimeIndex(df.date)).value
+    # Reindex to set missing dates
+    range_index = pd.date_range(start=date_start, end=date_end, freq="D")
+    series = series.reindex(range_index, fill_value=fill_value)
+    assert isinstance(series.index, pd.DatetimeIndex)
+    # Exclude points outside the range
+    series = series[(series.index.date >= date_start) & (series.index.date <= date_end)]
+    return [
+        MeasurementTuple(
+            date=cast(pd.Timestamp, dt).date(),
+            value=value,
+        )
+        for dt, value in series.items()
+    ]
