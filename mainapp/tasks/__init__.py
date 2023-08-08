@@ -65,7 +65,7 @@ def collect_latest_task(metric_id: int):
     )
 
     # Check notify
-    check_notify_metric_update_task.delay(metric_id)
+    check_notify_metric_changed_task.delay(metric_id)
 
 
 @shared_task()
@@ -132,7 +132,7 @@ def spreadsheet_export_all():
 
 
 @shared_task
-def check_notify_metric_update_task(metric_id: int):
+def check_notify_metric_changed_task(metric_id: int):
     metric = Metric.objects.get(pk=metric_id)
     if metric_analyse.detected_spike(metric.pk):
         message = EmailMultiAlternatives(

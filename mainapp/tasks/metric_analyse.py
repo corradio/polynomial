@@ -1,3 +1,4 @@
+import logging
 from datetime import date, timedelta
 from typing import List
 
@@ -10,6 +11,8 @@ from ..queries import query_measurements_without_gaps
 LOOKBACK_DAYS = 30
 MIN_POINTS_PERCENTAGE = 0.5
 STD_MULTIPLIER = 5  # Noise level tolerance
+
+logger = logging.getLogger(__name__)
 
 
 def extract_spikes(metric_series: dict) -> List[date]:
@@ -35,6 +38,7 @@ def extract_spikes(metric_series: dict) -> List[date]:
 
 
 def detected_spike(metric_id: int) -> bool:
+    logger.info(f"Starting spike detection for metric_id={metric_id}")
     # Query
     end_date = date.today()
     start_date = end_date - timedelta(days=LOOKBACK_DAYS)
@@ -42,6 +46,7 @@ def detected_spike(metric_id: int) -> bool:
     # Get all outliers
     spike_dates = extract_spikes(metric_series)
     if spike_dates:
+        logger.info(f"Detected spikes at {spike_dates} for metric_id={metric_id}")
         # Verify this is indeed the last point
         last_non_nan_measurement = (
             Measurement.objects.exclude(value=float("nan"))
@@ -54,4 +59,5 @@ def detected_spike(metric_id: int) -> bool:
             and last_non_nan_measurement.date == spike_dates[-1]
         ):
             return True
+    logger.info(f"No spikes detected for metric_id={metric_id}")
     return False

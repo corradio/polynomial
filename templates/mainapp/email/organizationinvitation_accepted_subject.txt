@@ -1,1 +1,1 @@
-{% spaceless %}Your invitation to join {{ invitation.organization|safe }} on Polynomial as been accepted{% endspaceless %}
+{% spaceless %}Your invitation to join {{ invitation.organization|safe }} on Polynomial has been accepted{% endspaceless %}
