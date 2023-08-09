@@ -2,6 +2,7 @@ import logging
 from typing import TYPE_CHECKING, Optional, Union
 
 from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth.models import AbstractUser, AnonymousUser
 from django.db import models
 from django.db.models import Q
@@ -21,6 +22,7 @@ class User(AbstractUser):
         from django.db.models.manager import RelatedManager
 
         emailaddress_set: RelatedManager[EmailAddress]
+        socialaccount_set: RelatedManager[SocialAccount]
 
     last_dashboard_visit = models.DateTimeField(null=True)
 
@@ -46,6 +48,13 @@ class User(AbstractUser):
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
         return self.username
+
+    @property
+    def avatar_url(self) -> Optional[str]:
+        avatar_urls = [acc.get_avatar_url() for acc in self.socialaccount_set.all()]
+        if avatar_urls:
+            return avatar_urls[0]
+        return None
 
 
 class Metric(models.Model):

@@ -42,8 +42,8 @@
           <a href="{% url 'integrations' %}" class="btn cta mr-2">New metric</a>
           <button type="button" class="flex mr-3 text-sm bg-gray-100 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600 overflow-hidden w-8 h-8 inline-flex items-center justify-center" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom">
             <span class="sr-only">Open user menu</span>
-              {% if user.socialaccount_set.all.0.get_avatar_url %}
-              <img class="w-8 h-8 rounded-full" src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="user photo">
+              {% if user.avatar_url %}
+              <img class="w-8 h-8 rounded-full" src="{{ user.avatar_url }}" alt="user photo">
               {% else %}
               <svg class="w-8 h-8 rounded-full text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
