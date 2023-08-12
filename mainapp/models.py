@@ -51,7 +51,11 @@ class User(AbstractUser):
 
     @property
     def avatar_url(self) -> Optional[str]:
-        avatar_urls = [acc.get_avatar_url() for acc in self.socialaccount_set.all()]
+        avatar_urls = [
+            acc.get_avatar_url()
+            for acc in self.socialaccount_set.all()
+            if acc.get_avatar_url()
+        ]
         if avatar_urls:
             return avatar_urls[0]
         return None
