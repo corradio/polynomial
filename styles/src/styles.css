@@ -32,15 +32,8 @@
       bg-blue-600 hover:bg-blue-700;
     @apply px-5 py-2.5;
   }
-  input:disabled {
-    @apply
-      disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none;
-  }
   form > div > label, form > p > label {
     @apply block mb-2 text-sm font-medium text-gray-900;
-  }
-  form input[type='checkbox'] + label {
-    @apply inline;
   }
   form span.helptext {
     @apply mt-2 text-sm text-gray-500;
@@ -119,6 +112,14 @@
   textarea {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
+  }
+
+  input {
+    @apply
+      disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none;
+  }
+  form label:has(input[type='checkbox']:disabled) {
+    @apply text-slate-500;
   }
 }
 
