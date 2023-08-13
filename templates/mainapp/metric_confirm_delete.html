@@ -4,6 +4,14 @@
     <form method="post">{% csrf_token %}
       <p>Are you sure you want to delete "{{ object }}"?</p>
       {{ form }}
+      <p>
+        This will remove it from the following dashboards:
+        <ul class="list-disc list-inside">
+          {% for dashboard in object.dashboards.all %}
+            <li>{{ dashboard }}</li>
+          {% endfor %}
+        </ul>
+      </p>
       <input type="submit" value="Confirm">
   </form>
 {% endblock %}

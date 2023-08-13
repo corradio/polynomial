@@ -32,7 +32,10 @@
           <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-backfill' metric.metric_id %}?next={{ request.get_full_path | urlencode }}">backfill</a></li>
         {% endif %}
         {% if can_edit %}
-          <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'dashboardmetric_remove' dashboard.pk metric.metric_id %}?next={{ request.get_full_path | urlencode }}">remove</a></li>
+          <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'dashboardmetric_remove' dashboard.pk metric.metric_id %}?next={{ request.get_full_path | urlencode }}">hide</a></li>
+        {% endif %}
+        {% if metric.can_edit %}
+          <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric_delete' metric.metric_id %}?next={{ request.get_full_path | urlencode }}">delete</a></li>
         {% endif %}
         </ul>
       </div>

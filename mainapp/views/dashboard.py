@@ -104,6 +104,11 @@ class DashboardMetricRemoveView(LoginRequiredMixin, DeleteView):
     pk_url_kwarg = "metric_pk"
     template_name = "mainapp/dashboardmetric_confirm_remove.html"
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["dashboard"] = self.dashboard
+        return context
+
     def dispatch(self, request, *args, **kwargs):
         self.dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
         if not self.dashboard.can_delete(request.user):
