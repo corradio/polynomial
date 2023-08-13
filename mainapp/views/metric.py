@@ -293,7 +293,9 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
                 "metric": metric,
             }
 
-        kwargs["instance"].save_credentials = MethodType(
+        # Override credential saving procedure to ensure
+        # we write to cache instead of db
+        kwargs["instance"].save_integration_credentials = MethodType(
             credentials_saver, kwargs["instance"]
         )
         return kwargs
