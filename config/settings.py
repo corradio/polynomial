@@ -18,6 +18,8 @@ from typing import List
 from celery.schedules import crontab
 from environs import Env
 
+from integrations.implementations.linkedin import LinkedIn
+
 env = Env()
 env.read_env()  # read .env file, if it exists
 
@@ -201,11 +203,16 @@ SOCIALACCOUNT_PROVIDERS = {
             "email-address",
             "picture-url",
             "public-profile-url",
+            "profilePicture(displayImage~:playableStreams)",
         ],
         "APP": {
             "client_id": env.str("LINKEDIN_CLIENT_ID", default=None),
             "secret": env.str("LINKEDIN_CLIENT_SECRET", default=None),
         },
+        # LinkedIn will remove authorization to scopes not requested,
+        # and thus integration scopes must be given here to avoid the
+        # login process to break already configured integrations.
+        "SCOPE": ["r_basicprofile", "r_emailaddress"] + LinkedIn.scopes,
     },
 }
 SOCIALACCOUNT_QUERY_EMAIL = True
