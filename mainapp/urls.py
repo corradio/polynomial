@@ -1,9 +1,15 @@
 from django.urls import include, path
+from django.views.generic.base import TemplateView
 
 from . import views
 
 urlpatterns = [
     path("", views.index, name="index"),
+    path(
+        "privacy/",
+        TemplateView.as_view(template_name="mainapp/privacy.html"),
+        name="privacy",
+    ),
     path(
         "callbacks/authorize",
         views.AuthorizeCallbackView.as_view(),
