@@ -1,4 +1,5 @@
 import json
+import logging
 import socket
 from datetime import date, datetime, timedelta, timezone
 from email.mime.image import MIMEImage
@@ -25,9 +26,12 @@ from .google_spreadsheet_export import spreadsheet_export
 
 BASE_URL = CSRF_TRUSTED_ORIGINS[0]
 
+logger = logging.getLogger(__name__)
+
 
 @shared_task(max_retries=5, autoretry_for=(RequestException,), retry_backoff=10)
 def collect_latest_task(metric_id: int):
+    logger.info(f"Start collect_latest_task(metric_id={metric_id})")
     metric = Metric.objects.get(pk=metric_id)
     integration_instance = metric.integration_instance
     if integration_instance.can_backfill():
@@ -65,6 +69,7 @@ def collect_latest_task(metric_id: int):
     )
 
     # Check notify
+    logger.info(f"Will start check_notify_metric_changed_task(metric_id={metric_id})")
     check_notify_metric_changed_task.delay(metric_id)
 
 

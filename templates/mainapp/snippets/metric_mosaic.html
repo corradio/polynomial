@@ -27,6 +27,8 @@
           <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-details' metric.metric_id %}?next={{ request.get_full_path | urlencode }}">edit</a></li>
           <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-duplicate' metric.metric_id %}?next={{ request.get_full_path | urlencode }}">duplicate</a></li>
           <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-import' metric.metric_id %}?next={{ request.get_full_path | urlencode }}">import CSV</a></li>
+        {% else %}
+          <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-details' metric.metric_id %}?next={{ request.get_full_path | urlencode }}">details</a></li>
         {% endif %}
         {% if metric.can_be_backfilled_by_user %}
           <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-backfill' metric.metric_id %}?next={{ request.get_full_path | urlencode }}">backfill</a></li>

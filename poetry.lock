@@ -1021,14 +1021,14 @@ Django = ">=3.2"
 
 [[package]]
 name = "django-jsonform"
-version = "2.18.0"
+version = "2.19.0"
 description = "A user-friendly JSON editing form for Django admin."
 category = "main"
 optional = false
 python-versions = ">=3.4"
 files = [
-    {file = "django-jsonform-2.18.0.tar.gz", hash = "sha256:abe4fecda723f70b313ac8c24b60e7d4399866bbae759af5a1cf98029ecc6107"},
-    {file = "django_jsonform-2.18.0-py3-none-any.whl", hash = "sha256:43c2f6d0d1186baf2dd9f2e0d8a1faf2b2d103a5b6cf6d57e7fed7f047f8ab76"},
+    {file = "django-jsonform-2.19.0.tar.gz", hash = "sha256:8f567d2e40d528e49a5bd698f56d8844e98602be7bef95b8db15e23c2d57d5b8"},
+    {file = "django_jsonform-2.19.0-py3-none-any.whl", hash = "sha256:928bc55866462a5fdfafd5df8f491f5d4e226fa2c5e1dab8756b5e51bb784cdf"},
 ]
 
 [package.dependencies]
@@ -3915,4 +3915,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.12"
-content-hash = "dde5d60876f4f10bf0ea3af1a096069773e003e97607921c31877d903dde4a82"
+content-hash = "e41aa77f9c629035ecdc2eee4536a4fd51b504f54970de5612e46c8c09cc47f9"

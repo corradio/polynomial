@@ -1,5 +1,6 @@
 import gzip
 import json
+import logging
 import secrets
 from datetime import date, datetime
 from typing import Tuple, Union
@@ -13,6 +14,8 @@ from requests_oauthlib import OAuth2Session
 from integrations.utils import get_secret
 
 from ..models import Measurement, Organization
+
+logger = logging.getLogger(__name__)
 
 client_id = get_secret("GOOGLE_CLIENT_ID")
 client_secret = get_secret("GOOGLE_CLIENT_SECRET")
@@ -78,6 +81,7 @@ def sheet_value(value: float) -> str:
 
 @shared_task()
 def spreadsheet_export(organization_id):
+    logger.info(f"Start spreadsheet_export(organization_id={organization_id})")
     organization = Organization.objects.get(pk=organization_id)
     spreadsheet_id = organization.google_spreadsheet_export_spreadsheet_id
     credentials = organization.google_spreadsheet_export_credentials
@@ -147,16 +151,19 @@ def spreadsheet_export(organization_id):
     }
 
     fields_to_fetch = ["metric__name", "date", "updated_at", "value"]
+    logger.info("Before measurements")
     measurements = (
         Measurement.objects.filter(metric__organizations=organization)
         .select_related("metric")
         .only(*fields_to_fetch)
         .order_by("-updated_at", "-date", "metric__name")[:ROW_LIMIT]
     )
+    logger.info("After measurements")
 
     update_values_body = {"values": [["updated_at", "datetime", "key", "value"]]}
     i = 0
     while batch := list(measurements[i : i + BATCH_SIZE]):
+        logger.info(f"Start {i}")
         i += BATCH_SIZE
         # https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values#ValueRange
         update_values_body["values"] += [
@@ -170,8 +177,10 @@ def spreadsheet_export(organization_id):
         ]
         if not update_values_body["values"]:
             return
+        logger.info(f"Gzip compress {i} with {len(update_values_body['values'])}")
         data = gzip.compress(json.dumps(update_values_body).encode("utf-8"))
         request_url = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/'{sheet_name}':append"
+        logger.info(f"POST {i}")
         response = session.post(
             request_url,
             params=params,

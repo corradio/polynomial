@@ -11,12 +11,6 @@
 {% endblock %}
 
 {% block before_content %}
-  {% if not user.is_authenticated %}
-    <div class="container mx-auto px-4">
-      <h1>{% firstof dashboard.organization dashboard.user %} public dashboards</h1>
-    </div>
-  {% endif %}
-
   <div class="text-sm font-medium text-center border-b border-gray-200 mb-1">
     <ul class="flex items-stretch overflow-x-auto scrollbar-hide -mb-px container mx-auto px-4">
       {% for d in dashboards %}

@@ -6,6 +6,7 @@ from typing import List
 
 from allauth.account.adapter import get_adapter
 from django import forms
+from django.core.exceptions import PermissionDenied
 from django.core.validators import FileExtensionValidator
 from django.db import transaction
 from django.db.models import Q
@@ -24,29 +25,35 @@ from mainapp.models import (
 
 class MetricForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop("user")
+        self.user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
         # manually set the current instance on the widget
         # see https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         self.fields["integration_config"].widget.instance = self.instance
 
+        if not self.instance.can_edit(self.user):
+            for field in self.fields.values():
+                field.disabled = True
+
         organizations_field = self.fields["organizations"]
         assert isinstance(organizations_field, forms.ModelChoiceField)
-        organizations = Organization.objects.filter(users=user)
-        organizations_field.queryset = Organization.objects.filter(users=user)
+        organizations = Organization.objects.filter(users=self.user)
+        organizations_field.queryset = Organization.objects.filter(users=self.user)
         organizations_field.help_text = "Sharing a metric with an organization will make it usable by all its members"
 
         if "dashboards" in self.fields:
             dashboards_field = self.fields["dashboards"]
             assert isinstance(dashboards_field, forms.ModelChoiceField)
             dashboards_field.queryset = Dashboard.objects.all().filter(
-                Q(user=user) | Q(organization__in=organizations)
+                Q(user=self.user) | Q(organization__in=organizations)
             )
             dashboards_field.help_text = (
                 "Adding a metric to a dashboard will also add it to its organization"
             )
 
     def save(self, *args, **kwargs):
+        if not self.instance.can_edit(self.user):
+            raise PermissionDenied()
         metric = super().save(*args, **kwargs)
         # Also make sure that for each dashboard,
         # the metric is moved to its organization if applicable

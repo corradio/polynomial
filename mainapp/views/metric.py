@@ -374,9 +374,11 @@ class MetricUpdateView(LoginRequiredMixin, UpdateView):
             )
         return next_destination
 
-    def get_queryset(self, *args, **kwargs):
-        # Only show metric if user can access it
-        return super().get_queryset(*args, **kwargs).filter(user=self.request.user)
+    def get_object(self, queryset=None):
+        instance = super().get_object(queryset)
+        if not instance.can_view(self.request.user):
+            raise PermissionDenied()
+        return instance
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
