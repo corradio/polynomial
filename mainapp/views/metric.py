@@ -4,7 +4,7 @@ import sys
 import traceback
 from datetime import datetime
 from types import MethodType
-from typing import Optional
+from typing import List, Optional
 
 import requests
 from django.contrib import messages
@@ -36,10 +36,10 @@ from ..tasks import backfill_task
 from .utils import add_next
 
 
-def deserialize_list(arg: Optional[str]):
+def deserialize_int_list(arg: Optional[str]) -> List[int]:
     if not arg:
         return []
-    return arg.split(",")
+    return [int(s) for s in arg.split(",")]
 
 
 def format_exception(e: Exception) -> str:
@@ -203,8 +203,8 @@ def metric_new(request):
     request.session[state] = {
         "metric": {
             "integration_id": request.GET["integration_id"],
-            "dashboards": deserialize_list(request.GET.get("dashboard_ids")),
-            "organizations": deserialize_list(request.GET.get("organization_ids")),
+            "dashboards": deserialize_int_list(request.GET.get("dashboard_ids")),
+            "organizations": deserialize_int_list(request.GET.get("organization_ids")),
         },
         "user_id": request.user.id,
     }

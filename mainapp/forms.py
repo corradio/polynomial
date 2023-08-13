@@ -63,12 +63,13 @@ class MetricForm(forms.ModelForm):
             "organizations",
             "integration_config",
             "integration_id",
+            # The following are required to be able to save that info when creating
+            "dashboards",
         ]
 
         widgets = {
-            # Make this field available to the form but invisible to user
             "integration_id": forms.HiddenInput(),
-            "dashboards": forms.CheckboxSelectMultiple(),
+            "dashboards": forms.MultipleHiddenInput(),
             "organizations": forms.CheckboxSelectMultiple(),
         }
 
