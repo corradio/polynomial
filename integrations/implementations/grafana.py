@@ -1,10 +1,10 @@
 from datetime import date, datetime, timedelta
-from typing import Iterable, final
+from typing import Iterable, List, Optional, final
 
 import requests
 
 from ..base import Integration, MeasurementTuple
-from ..utils import batch_range_by_max_batch
+from ..utils import batch_range_by_max_batch, replace_null_with_nan
 
 MAX_DAYS = 500
 
@@ -101,6 +101,7 @@ class Grafana(Integration):
         frame = frames[0]
         if not frame["data"]["values"]:
             return []
+        values: List[Optional[float]]
         timestamps, values = frame["data"]["values"]
         measurements = [
             MeasurementTuple(
@@ -108,7 +109,7 @@ class Grafana(Integration):
                 # we use a start-of-day convention
                 date=datetime.utcfromtimestamp(timestamp / 1000).date()
                 - timedelta(days=1),
-                value=values[i],
+                value=replace_null_with_nan(values[i]),
             )
             for i, timestamp in enumerate(timestamps)
         ]

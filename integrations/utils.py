@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Iterable, List, Protocol, TypeVar, cast
+from typing import Iterable, List, Optional, Protocol, TypeVar, cast
 
 import pandas as pd
 from environs import Env
@@ -12,6 +12,12 @@ env.read_env()  # read .env file, if it exists
 
 def get_secret(key):
     return env.str(key, default=None)
+
+
+def replace_null_with_nan(f: Optional[float]) -> float:
+    if f is None:
+        return float("nan")
+    return f
 
 
 # Time
