@@ -31,7 +31,7 @@ class MetricForm(forms.ModelForm):
         # see https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         self.fields["integration_config"].widget.instance = self.instance
 
-        if not self.instance.can_edit(self.user):
+        if self.instance.pk and not self.instance.can_edit(self.user):
             for field in self.fields.values():
                 field.disabled = True
 

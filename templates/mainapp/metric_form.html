@@ -10,7 +10,7 @@
   <form action="" method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    {% if metric|can_edit:user %}
+    {% if not metric or metric|can_edit:user %}
     {% if can_web_auth %}
     <input type="button" id="button-authorize" value="Re-authorize">
     {% endif %}
@@ -110,7 +110,7 @@
     </p>
     {% endif %}
   </form>
-  {% if metric|can_edit:user %}
+  {% if not metric or metric|can_edit:user %}
     {% if metric.id %}
     <a href="{% url 'metric_delete' metric.id %}">Delete metric</a>
     {% endif %}
