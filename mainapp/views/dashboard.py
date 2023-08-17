@@ -235,9 +235,10 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     since_options = [
         {"label": "last 10 years", "value": "3650 days"},
         {"label": "last year", "value": "365 days"},
+        {"label": "last 2 months", "value": "60 days"},
+        {"label": "last 6 months", "value": "180 days"},
         {"label": "last quarter", "value": "last-quarter"},
         {"label": "current quarter", "value": "current-quarter"},
-        {"label": "last 60 days", "value": "60 days"},
     ]
     dashboards_list = list(dashboards)
     context = {
