@@ -55,18 +55,17 @@ def collect_latest_task(metric_id: int):
                             "value": measurement.value,
                         },
                     )
-            return
-
-    # For integration that can't backfill
-    with integration_instance as inst:
-        measurement = inst.collect_latest()
-    Measurement.objects.update_or_create(
-        metric=metric,
-        date=measurement.date,
-        defaults={
-            "value": measurement.value,
-        },
-    )
+    else:
+        # For integration that can't backfill
+        with integration_instance as inst:
+            measurement = inst.collect_latest()
+        Measurement.objects.update_or_create(
+            metric=metric,
+            date=measurement.date,
+            defaults={
+                "value": measurement.value,
+            },
+        )
 
     # Check notify
     logger.info(f"Will start check_notify_metric_changed_task(metric_id={metric_id})")
