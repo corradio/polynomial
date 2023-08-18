@@ -17,8 +17,9 @@ def get_vl_spec(
     measurements=[],
     width="container",
     height="container",
+    include_moving_average=True,
 ):
-    return {
+    obj = {
         "$schema": "https:#vega.github.io/schema/vega-lite/v5.json",
         "width": width,
         "height": height,
@@ -90,14 +91,17 @@ def get_vl_spec(
         "layer": [
             # Line
             {"name": "line", "mark": {"type": "line"}},
-            # Moving average
+        ],
+    }
+    if include_moving_average:
+        obj["layer"].append(
             {
                 "name": "moving_average",
                 "mark": {"type": "line", "color": "red", "opacity": 0.5},
                 "encoding": {"y": {"field": "rolling_mean", "title": "Value"}},
-            },
-        ],
-    }
+            }
+        )
+    return obj
 
 
 def metric_chart_vl_spec(metric_id: int):

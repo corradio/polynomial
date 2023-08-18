@@ -2,7 +2,7 @@ import json
 import secrets
 import sys
 import traceback
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from types import MethodType
 from typing import List, Optional
 
@@ -33,7 +33,8 @@ from .. import forms
 from ..forms import MetricForm
 from ..models import Measurement, Metric, Organization, User
 from ..tasks import backfill_task
-from .utils import add_next
+from ..utils.charts import get_vl_spec
+from .utils import OrjsonResponse, add_next
 
 
 def deserialize_int_list(arg: Optional[str]) -> List[int]:
@@ -55,6 +56,51 @@ def format_exception(e: Exception) -> str:
         except json.decoder.JSONDecodeError:
             pass
     return error_str
+
+
+def process_metric_test(
+    config, integration_credentials, integration_class, credentials_updater
+):
+    try:
+        with integration_class(
+            config,
+            credentials=integration_credentials,
+            credentials_updater=credentials_updater,
+        ) as inst:
+            if inst.can_backfill:
+                date_end = date.today() - timedelta(days=1)
+                date_start = date_end - timedelta(days=10)
+                measurements = inst.collect_past_range(
+                    date_start=date_start, date_end=date_end
+                )
+            else:
+                measurements = [inst.collect_latest()]
+            return OrjsonResponse(
+                {
+                    "measurements": [
+                        {
+                            "value": m.value,
+                            "date": m.date.isoformat(),
+                        }
+                        for m in measurements
+                    ],
+                    "datetime": datetime.now(),
+                    "canBackfill": inst.can_backfill(),
+                    "status": "ok",
+                    "newSchema": inst.callable_config_schema(),
+                    "vlSpec": get_vl_spec(
+                        date_start, date_end, include_moving_average=False
+                    ),
+                }
+            )
+    except Exception as e:
+        return JsonResponse(
+            {
+                "error": format_exception(e),
+                "datetime": datetime.now(),
+                "status": "error",
+            }
+        )
 
 
 @login_required
@@ -117,36 +163,9 @@ def metric_new_test(request, state):
         metric_cache["integration_credentials"] = arg
         request.session.modified = True
 
-    try:
-        with integration_class(
-            config,
-            credentials=integration_credentials,
-            credentials_updater=credentials_updater,
-        ) as inst:
-            measurement = inst.collect_latest()
-            return JsonResponse(
-                {
-                    # Circumvent NaNs
-                    "measurement": [
-                        measurement.date,
-                        str(measurement.value)
-                        if measurement.value != measurement.value
-                        else measurement.value,
-                    ],
-                    "datetime": datetime.now(),
-                    "canBackfill": inst.can_backfill(),
-                    "status": "ok",
-                    "newSchema": inst.callable_config_schema(),
-                }
-            )
-    except Exception as e:
-        return JsonResponse(
-            {
-                "error": format_exception(e),
-                "datetime": datetime.now(),
-                "status": "error",
-            }
-        )
+    return process_metric_test(
+        config, integration_credentials, integration_class, credentials_updater
+    )
 
 
 class MetricListView(LoginRequiredMixin, ListView):
@@ -434,36 +453,9 @@ def metric_test(request, pk):
         metric.integration_credentials = arg
         metric.save()
 
-    try:
-        with integration_class(
-            config,
-            credentials=integration_credentials,
-            credentials_updater=credentials_updater,
-        ) as inst:
-            measurement = inst.collect_latest()
-            return JsonResponse(
-                {
-                    # Circumvent NaNs
-                    "measurement": [
-                        measurement.date,
-                        str(measurement.value)
-                        if measurement.value != measurement.value
-                        else measurement.value,
-                    ],
-                    "datetime": datetime.now(),
-                    "canBackfill": inst.can_backfill(),
-                    "status": "ok",
-                    "newSchema": inst.callable_config_schema(),
-                }
-            )
-    except Exception as e:
-        return JsonResponse(
-            {
-                "error": format_exception(e),
-                "datetime": datetime.now(),
-                "status": "error",
-            }
-        )
+    return process_metric_test(
+        config, integration_credentials, integration_class, credentials_updater
+    )
 
 
 class MetricImportView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):

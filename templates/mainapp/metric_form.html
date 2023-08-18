@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 
+{% load static %}
 {% load metric_tags %}
 
 {% block extra_head %}
 {{ form.media }}
+<script src="{% static 'vega.min.js' %}"></script>
+<script src="{% static 'vega-lite.min.js' %}"></script>
+<script src="{% static 'vega-embed.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -14,7 +18,7 @@
     {% if can_web_auth %}
     <input type="button" id="button-authorize" value="Re-authorize">
     {% endif %}
-    <input type="button" id="button-test" value="Test">
+    <input type="button" id="button-test" value="Preview">
     <input type="submit" id="button-submit" value="Save">
     <script>
       var testButton = document.getElementById("button-test");
@@ -47,6 +51,7 @@
         document.querySelector('#integration-test-container').style.color = 'gray';
         var testLabel = document.querySelector('#integration-test-container span.label');
         testLabel.innerText = '[' + new Date() + '] Testing..';
+        document.getElementById('chart').style.display = 'none';
 
         var csrftoken = document.querySelector('input[name=csrfmiddlewaretoken]').value;
         var data = JSON.stringify({
@@ -82,6 +87,7 @@
           testLabel.innerText = '[' + (data.datetime || new Date()) + ']';
           if (isError) {
              testLabel.innerText += ' Integration failed:';
+             document.querySelector('#integration-test-container pre').innerText = data.error;
           } else {
             testLabel.innerText += ' Integration successfully ran:';
             // Update schema if any
@@ -93,10 +99,23 @@
               };
               formInstance.update(newConfig);
             }
+            if (data.measurements.length <= 1) {
+              document.querySelector('#integration-test-container pre').innerText = JSON.stringify(data.measurement);
+            } else {
+              document.querySelector('#integration-test-container pre').innerText = '';
+              document.getElementById('chart').style.display = null;
+              // Show the graph
+              values = data.measurements
+                // due to the way javascript parses dates, we must take some care here
+                // see https://stackoverflow.com/questions/64319836/date-parsing-and-when-to-use-utc-timeunits-in-vega-lite
+                .map(d => ({ ...d, date: d.date + 'T00:00:00' }));
+              vegaEmbed(
+                '#chart',
+                {...data.vlSpec, data: { values } },
+                {"actions": false}
+              );
+            }
           }
-          document.querySelector('#integration-test-container pre').innerText = isError
-            ? data.error
-            : JSON.stringify(data.measurement);
         });
       };
     </script>
@@ -106,6 +125,7 @@
           <p>
             <pre></pre>
           </p>
+          <div id="chart" style="width: 100%; height: 250px; display: none"></div>
         </div>
     </p>
     {% endif %}
