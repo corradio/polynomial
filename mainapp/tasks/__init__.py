@@ -1,5 +1,4 @@
 import json
-import logging
 import socket
 from datetime import date, datetime, timedelta, timezone
 from email.mime.image import MIMEImage
@@ -9,6 +8,7 @@ from typing import Optional
 import requests
 from celery import shared_task
 from celery.signals import task_failure
+from celery.utils.log import get_task_logger
 from django.core.mail import EmailMultiAlternatives, mail_admins, send_mail
 from django.forms.models import model_to_dict
 from django.urls import reverse
@@ -26,7 +26,7 @@ from .google_spreadsheet_export import spreadsheet_export
 
 BASE_URL = CSRF_TRUSTED_ORIGINS[0]
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 @shared_task(max_retries=5, autoretry_for=(RequestException,), retry_backoff=10)
@@ -130,6 +130,7 @@ def spreadsheet_export_all():
     for organization in Organization.objects.filter(
         **{f"{f}__isnull": False for f in required_fields}
     ):
+        logger.info(f"Scheduling organization_id={organization.pk}")
         spreadsheet_export.delay(
             organization_id=organization.pk,
         )
