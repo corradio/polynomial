@@ -18,6 +18,8 @@ def get_vl_spec(
     width="container",
     height="container",
 ):
+    if not measurements:
+        return {}
     start_date = measurements[0].date
     end_date = measurements[-1].date
     vl_spec = {

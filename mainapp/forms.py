@@ -23,7 +23,13 @@ from mainapp.models import (
 )
 
 
-class MetricForm(forms.ModelForm):
+class BaseModelForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("label_suffix", "")  # Removes ":" as label suffix
+        super().__init__(*args, **kwargs)
+
+
+class MetricForm(BaseModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
@@ -63,6 +69,12 @@ class MetricForm(forms.ModelForm):
                 metric.organizations.add(dashboard.organization)
         return metric
 
+    @property
+    def media(self):
+        # Hack to make sure the CSS styles do not propagate
+        media = super().media
+        return forms.Media(js=media._js)
+
     class Meta:
         model = Metric
         fields = [
@@ -81,7 +93,7 @@ class MetricForm(forms.ModelForm):
         }
 
 
-class MetricImportForm(forms.ModelForm):
+class MetricImportForm(BaseModelForm):
     file = forms.FileField(validators=[FileExtensionValidator(["csv"])])
     date_field = forms.CharField(required=True, initial="datetime")
     value_field = forms.CharField(required=True, initial="value")
@@ -136,7 +148,7 @@ class MetricImportForm(forms.ModelForm):
         fields: List[str] = []
 
 
-class OrganizationForm(forms.ModelForm):
+class OrganizationForm(BaseModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance.google_spreadsheet_export_credentials:
@@ -177,7 +189,7 @@ class OrganizationForm(forms.ModelForm):
         }
 
 
-class OrganizationUserCreateForm(forms.ModelForm):
+class OrganizationUserCreateForm(BaseModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request")
         self.organization_pk = kwargs.pop("organization_pk")
@@ -256,7 +268,7 @@ class OrganizationUserCreateForm(forms.ModelForm):
         labels = {"invitee_email": "Email"}
 
 
-class DashboardForm(forms.ModelForm):
+class DashboardForm(BaseModelForm):
     def __init__(self, *args, **kwargs):
         request = kwargs.pop("request")
         super().__init__(*args, **kwargs)
@@ -289,7 +301,7 @@ class DashboardForm(forms.ModelForm):
         }
 
 
-class DashboardMetricAddForm(forms.ModelForm):
+class DashboardMetricAddForm(BaseModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
@@ -322,7 +334,7 @@ class DashboardMetricAddForm(forms.ModelForm):
         }
 
 
-class MetricIntegrationForm(forms.ModelForm):
+class MetricIntegrationForm(BaseModelForm):
     def __init__(self, *args, **kwargs):
         if "request" in kwargs:
             self.request = kwargs.pop("request")
@@ -351,7 +363,7 @@ class MetricIntegrationForm(forms.ModelForm):
         fields = ["integration_id"]
 
 
-class MetricDashboardAddForm(forms.ModelForm):
+class MetricDashboardAddForm(BaseModelForm):
     dashboard_new = forms.CharField(required=False, label="Or create a new dashboard")
 
     def __init__(self, *args, **kwargs):

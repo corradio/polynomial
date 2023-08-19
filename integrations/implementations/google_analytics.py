@@ -75,6 +75,7 @@ class GoogleAnalytics(OAuth2Integration):
                             "dimensionName": {
                                 "type": "string",
                                 "choices": DIMENSIONS,
+                                "required": True,
                             },
                             "operator": {
                                 "type": "string",
@@ -91,8 +92,9 @@ class GoogleAnalytics(OAuth2Integration):
                                         "IN_LIST",  # Not supported as it would require multiple expressions
                                     ]
                                 ),
+                                "required": True,
                             },
-                            "expression": {"type": "string"},
+                            "expression": {"type": "string", "required": True},
                         },
                     },
                 },

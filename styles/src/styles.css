@@ -16,7 +16,12 @@
     @apply text-blue-600 no-underline hover:underline;
   }
   /* forms */
-  input[type='submit'], button[type='submit'], input[type='button'], button.primaryAction, .btn {
+  input[type='submit'],
+  button[type='submit'],
+  input[type='button'],
+  button.primaryAction,
+  .btn,
+  .rjf-add-button {
     /* note button.primaryAction is used in django-allauth */
     @apply no-underline hover:no-underline
       text-black font-medium text-sm px-4 py-2
@@ -32,18 +37,18 @@
       bg-blue-600 hover:bg-blue-700;
     @apply px-5 py-2.5;
   }
-  form > div > label, form > p > label {
+  form > div label, form > p label, .rjf-form-group-title {
     @apply block mb-2 text-sm font-medium text-gray-900;
   }
-  form span.helptext {
-    @apply mt-2 text-sm text-gray-500;
+  form span.helptext, .rjf-help-text {
+    @apply mt-2 text-sm text-gray-500 font-light;
   }
   form ul.errorlist {
     @apply text-red-700 text-sm;
   }
-  form > p:not(:last-child), form > div {
-    /* Use django form.as_p or form.as_div when rendering */
-    @apply mb-6;
+  form > p:not(:first-child) {
+    /* Use django form.as_p when rendering */
+    @apply mt-6;
   }
   input[type='text'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
@@ -114,7 +119,7 @@
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
   }
 
-  input {
+  input, textarea {
     @apply
       disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none;
   }
@@ -163,4 +168,34 @@ table.table tbody th {
 }
 table.table tbody td {
   @apply px-6;
+}
+
+/* react-jsonform style */
+.rjf-form-row:not(:last-child),
+.rjf-form-group:not(:last-child),
+.rjf-form-group-wrapper:not(:last-child) {
+  @apply mb-6;
+}
+.rjf-form-wrapper, .rjf-form-group-wrapper {
+  @apply border border-dashed rounded-lg border-gray-300 px-4 py-4;
+}
+.rjf-form-group-wrapper {
+  position: relative; /* Enables form control to be put top-right */
+}
+.rjf-form-row-controls {
+  position: absolute;
+  right: 9px;
+  top: 5px;
+  z-index: 2;
+}
+.rjf-form-row-controls button {
+  position: relative;
+  margin-left: 10px;
+  cursor: pointer;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 40px;
+}
+.rjf-remove-button {
+  @apply text-red-500;
 }

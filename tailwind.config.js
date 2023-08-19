@@ -4,6 +4,7 @@ module.exports = {
     './templates/**/*.html',
     './.venv/lib/**/templates/**/*.html',
     './node_modules/flowbite/**/*.js',
+    './.venv/lib/**/django_jsonform/react-json-form.js',
   ],
   theme: {
     extend: {},

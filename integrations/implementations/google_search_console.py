@@ -52,6 +52,7 @@ class GoogleSearchConsole(OAuth2Integration):
                                     "query",
                                     "searchAppearance",
                                 ],
+                                "required": True,
                             },
                             "operator": {
                                 "type": "string",
@@ -63,8 +64,13 @@ class GoogleSearchConsole(OAuth2Integration):
                                     "includingRegex",
                                     "excludingRegex",
                                 ],
+                                "required": True,
                             },
-                            "expression": {"type": "string"},
+                            "expression": {
+                                "type": "string",
+                                "widget": "textarea",
+                                "required": True,
+                            },
                         },
                     },
                 },

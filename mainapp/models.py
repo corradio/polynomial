@@ -108,7 +108,12 @@ class Metric(models.Model):
         # No model instance, return empty schema
         return EMPTY_CONFIG_SCHEMA
 
-    integration_config = JSONField(blank=True, null=True, schema=callable_config_schema)
+    integration_config = JSONField(
+        blank=True,
+        null=True,
+        schema=callable_config_schema,
+        verbose_name="Integration configuration",
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def get_absolute_url(self):

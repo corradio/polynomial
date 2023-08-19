@@ -9,14 +9,13 @@
         data-dropdown-toggle="menu-{{ metric.metric_id }}"
         data-dropdown-offset-distance="5"
         data-dropdown-placement="right-start"
-        class="focus:outline-none cursor-pointer text-black"
+        class="focus:outline-none cursor-pointer text-black inline-grid"
       >
-        <span class="chevron-after">
+        <span class="chevron-after truncate">
           {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
             <img class="integration-icon" src="{% static icon_url %}" alt="">
           {% endwith %}
           {{ metric.metric_name }}
-        </span>
       </a>
       <div
         id="menu-{{ metric.metric_id }}"
