@@ -79,7 +79,10 @@ def process_metric_test(
             # turn into "null" JSON
             return OrjsonResponse(
                 {
-                    "measurements": measurements,
+                    "measurements": [
+                        {"date": date.isoformat(), "value": value}
+                        for date, value in measurements
+                    ],
                     "datetime": datetime.now(),
                     "canBackfill": inst.can_backfill(),
                     "status": "ok",
