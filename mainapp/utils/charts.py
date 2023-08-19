@@ -1,9 +1,11 @@
 import base64
 import json
 from datetime import date, datetime, timedelta
+from typing import List
 
 import vl_convert as vlc
 
+from ..models import Measurement
 from ..queries import query_measurements_without_gaps
 
 
@@ -12,14 +14,13 @@ def date_to_js_timestamp(d: date):
 
 
 def get_vl_spec(
-    start_date: date,
-    end_date: date,
-    measurements=[],
+    measurements: List[Measurement],
     width="container",
     height="container",
-    include_moving_average=True,
 ):
-    obj = {
+    start_date = measurements[0].date
+    end_date = measurements[-1].date
+    vl_spec = {
         "$schema": "https:#vega.github.io/schema/vega-lite/v5.json",
         "width": width,
         "height": height,
@@ -29,8 +30,14 @@ def get_vl_spec(
         "padding": {"right": 30, "left": 30, "top": 5, "bottom": 30},
         "data": {
             "values": [
-                {"value": value, "date": date.isoformat()}
-                for date, value in measurements
+                {
+                    # NaN should be returned None in order to be JSON compliant
+                    "value": None if m.value != m.value else m.value,
+                    # due to the way javascript parses dates, we must take some care here
+                    # see https://stackoverflow.com/questions/64319836/date-parsing-and-when-to-use-utc-timeunits-in-vega-lite
+                    "date": f"{m.date.isoformat()}T00:00:00",
+                }
+                for m in measurements
             ]
         },
         "params": [
@@ -45,12 +52,7 @@ def get_vl_spec(
                 "views": ["points"],
             }
         ],
-        "transform": [
-            {
-                "window": [{"field": "value", "op": "mean", "as": "rolling_mean"}],
-                "frame": [-15, 15],
-            }
-        ],
+        "transform": [],
         "encoding": {
             "x": {
                 "field": "date",
@@ -93,15 +95,54 @@ def get_vl_spec(
             {"name": "line", "mark": {"type": "line"}},
         ],
     }
-    if include_moving_average:
-        obj["layer"].append(
+    # Only add moving average if there's more than X days of data being non NaN
+    if len([m for m in measurements if m.value == m.value]) > 30:
+        vl_spec["transform"].append(
+            {
+                "window": [{"field": "value", "op": "mean", "as": "rolling_mean"}],
+                "frame": [-15, 15],
+            }
+        )
+        vl_spec["layer"].append(
             {
                 "name": "moving_average",
                 "mark": {"type": "line", "color": "red", "opacity": 0.5},
                 "encoding": {"y": {"field": "rolling_mean", "title": "Value"}},
             }
         )
-    return obj
+    day_span = (end_date - start_date).days
+    if day_span > 365:
+        # Multi-year graph
+
+        # Ticks per year
+        vl_spec["encoding"]["x"]["axis"]["tickCount"] = "year"
+        vl_spec["encoding"]["x"]["axis"]["labelExpr"] = "timeFormat(datum.value, '%Y')"
+        # Style
+        vl_spec["layer"][0]["mark"]["opacity"] = 0.5
+        vl_spec["layer"][0]["mark"]["strokeWidth"] = 1.5
+    elif day_span > 150:
+        # Year graph
+        pass
+    else:
+        # Quarter/month graph
+        vl_spec["layer"].append(
+            {
+                "name": "points",
+                "mark": {"type": "circle", "tooltip": True},
+                "encoding": {
+                    "size": {
+                        "condition": {
+                            "param": "highlight",
+                            "empty": False,
+                            "value": 200,
+                        },
+                        "value": 20,  # default value
+                    }
+                },
+            }
+        )
+    # Only add points if we're dealing with less than X points
+    return vl_spec
 
 
 def metric_chart_vl_spec(metric_id: int):
@@ -110,9 +151,7 @@ def metric_chart_vl_spec(metric_id: int):
     measurements = query_measurements_without_gaps(
         start_date=start_date, end_date=end_date, metric_id=metric_id
     )
-    return json.dumps(
-        get_vl_spec(start_date, end_date, measurements, width=640, height=280)
-    )
+    return json.dumps(get_vl_spec(measurements, width=640, height=280))
 
 
 def generate_png(vl_spec: str) -> bytes:

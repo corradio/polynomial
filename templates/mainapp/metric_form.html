@@ -105,13 +105,9 @@
               document.querySelector('#integration-test-container pre').innerText = '';
               document.getElementById('chart').style.display = null;
               // Show the graph
-              values = data.measurements
-                // due to the way javascript parses dates, we must take some care here
-                // see https://stackoverflow.com/questions/64319836/date-parsing-and-when-to-use-utc-timeunits-in-vega-lite
-                .map(d => ({ ...d, date: d.date + 'T00:00:00' }));
               vegaEmbed(
                 '#chart',
-                {...data.vlSpec, data: { values } },
+                data.vlSpec,
                 {"actions": false}
               );
             }

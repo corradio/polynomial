@@ -220,15 +220,9 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             "integration_id": metric.integration_id,
             "can_edit": metric.can_edit(request.user),
             "can_be_backfilled_by_user": metric.can_be_backfilled_by(request.user),
-            "measurements": [
-                {
-                    "value": value,
-                    "date": date.isoformat(),
-                }
-                for date, value in query_measurements_without_gaps(
-                    start_date, end_date, metric.pk
-                )
-            ],
+            "vl_spec": get_vl_spec(
+                query_measurements_without_gaps(start_date, end_date, metric.pk)
+            ),
         }
         for metric in Metric.objects.filter(dashboard=dashboard).order_by("name")
     ]
@@ -243,8 +237,6 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     dashboards_list = list(dashboards)
     context = {
         "measurements_by_metric": measurements_by_metric,
-        "start_date": start_date,
-        "end_date": end_date,
         "dashboard": dashboard,
         "dashboards": dashboards_list,
         "dashboard_index": -1
@@ -254,6 +246,5 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         "since_options": since_options,
         "since": since,
         "since_label": [s["label"] for s in since_options if s["value"] == since][0],
-        "vl_spec": get_vl_spec(start_date, end_date),
     }
     return render(request, "mainapp/dashboard.html", context)

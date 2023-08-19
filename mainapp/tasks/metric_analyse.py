@@ -15,12 +15,12 @@ STD_MULTIPLIER = 5  # Noise level tolerance
 logger = logging.getLogger(__name__)
 
 
-def extract_spikes(metric_series: dict) -> List[date]:
+def extract_spikes(measurements: List[Measurement]) -> List[date]:
     """
     Returns dates of spikes
     """
     df = pd.DataFrame(
-        [{"date": dt, "value": value} for dt, value in metric_series]
+        [{"date": m.date, "value": m.value} for m in measurements]
     ).set_index("date")
     df.index = pd.to_datetime(df.index)
     assert isinstance(df.index, pd.DatetimeIndex)
@@ -42,9 +42,9 @@ def detected_spike(metric_id: int) -> bool:
     # Query
     end_date = date.today()
     start_date = end_date - timedelta(days=LOOKBACK_DAYS)
-    metric_series = query_measurements_without_gaps(start_date, end_date, metric_id)
+    measurements = query_measurements_without_gaps(start_date, end_date, metric_id)
     # Get all outliers
-    spike_dates = extract_spikes(metric_series)
+    spike_dates = extract_spikes(measurements)
     if spike_dates:
         logger.info(f"Detected spikes at {spike_dates} for metric_id={metric_id}")
         # Verify this is indeed the last point

@@ -75,22 +75,16 @@ def process_metric_test(
                 )
             else:
                 measurements = [inst.collect_latest()]
+            # Use OrjsonResponse to make sure measurement NaNs
+            # turn into "null" JSON
             return OrjsonResponse(
                 {
-                    "measurements": [
-                        {
-                            "value": m.value,
-                            "date": m.date.isoformat(),
-                        }
-                        for m in measurements
-                    ],
+                    "measurements": measurements,
                     "datetime": datetime.now(),
                     "canBackfill": inst.can_backfill(),
                     "status": "ok",
                     "newSchema": inst.callable_config_schema(),
-                    "vlSpec": get_vl_spec(
-                        date_start, date_end, include_moving_average=False
-                    ),
+                    "vlSpec": get_vl_spec(measurements),
                 }
             )
     except Exception as e:

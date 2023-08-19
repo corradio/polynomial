@@ -1,9 +1,14 @@
 from datetime import date
+from typing import List, Optional, Tuple
 
 from django.db import connection
 
+from .models import Measurement
 
-def query_measurements_without_gaps(start_date: date, end_date: date, metric_id: int):
+
+def query_measurements_without_gaps(
+    start_date: date, end_date: date, metric_id: int
+) -> List[Measurement]:
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -22,4 +27,8 @@ def query_measurements_without_gaps(start_date: date, end_date: date, metric_id:
         """,
             [start_date, end_date, metric_id],
         )
-        return cursor.fetchall()
+        results: List[Tuple[date, Optional[float]]] = cursor.fetchall()
+        return [
+            Measurement(date=date, value=value if value is not None else float("nan"))
+            for date, value in results
+        ]
