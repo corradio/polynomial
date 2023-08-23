@@ -184,7 +184,7 @@ def verify_inactive_task(metric_id: int):
                 # On the nth day, send out a reminder
                 message = f"""Hello {metric.user.first_name} 👋
 
-It seems like your metric "{metric.name}" hasn't collected any new data in the last {reminder_days}.
+It seems like your metric "{metric.name}" hasn't collected any new data in the last {reminder_days} days.
 
 To fix this error, you might have to reconfigure your metric by following the link below:
 {BASE_URL}{reverse('metric-details', args=[metric_id])}
