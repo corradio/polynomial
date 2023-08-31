@@ -243,13 +243,23 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute=0, hour=4),
     },
 }
+CELERY_TASK_TIME_LIMIT = 11 * 60  # seconds
+CELERY_TASK_SOFT_TIME_LIMIT = 10 * 60  # seconds
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "socket_timeout": 30,
+    "retry_on_timeout": True,
+    "health_check_interval": 30,
+    "socket_keepalive": True,
+}
+CELERY_RESULT_BACKEND_ALWAYS_RETRY = True
+CELERY_RESULT_BACKEND_MAX_RETRIES = 3
+CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = CELERY_BROKER_TRANSPORT_OPTIONS
 CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 10 * 60  # seconds
+CELERY_WORKER_SEND_TASK_EVENTS = True
+CELERY_REDIS_SOCKET_TIMEOUT = 30
 CELERY_REDIS_RETRY_ON_TIMEOUT = True
-CELERY_BROKER_TRANSPORT_OPTIONS = {"retry_policy": {"timeout": 5.0}}
-CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {"retry_policy": {"timeout": 5.0}}
-# CONSIDER https://docs.celeryq.dev/en/stable/userguide/configuration.html#result-backend-always-retry
-# but beware of max retries and timeouts
+CELERY_REDIS_BACKEND_HEALTH_CHECK_INTERVAL = 30
+CELERY_REDIS_SOCKET_KEEPALIVE = True
 
 # Static deployment
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
