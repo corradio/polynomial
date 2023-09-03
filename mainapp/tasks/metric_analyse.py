@@ -62,4 +62,4 @@ def detected_spike(metric_id: int) -> Optional[date]:
         ):
             return spike_dates[-1]
     logger.info(f"No spikes detected for metric_id={metric_id}")
-    return
+    return None
