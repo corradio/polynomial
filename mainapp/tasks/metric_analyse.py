@@ -8,9 +8,10 @@ from mainapp.models import Measurement
 
 from ..queries import query_measurements_without_gaps
 
-LOOKBACK_DAYS = 30
+LOOKBACK_DAYS = 40
 MIN_POINTS_PERCENTAGE = 0.5
-STD_MULTIPLIER = 5  # Noise level tolerance
+STD_MULTIPLIER = 7  # Noise level tolerance
+TREND_ROLLING_DAYS = 5
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +25,11 @@ def extract_spikes(measurements: List[Measurement]) -> List[date]:
     ).set_index("date")
     df.index = pd.to_datetime(df.index)
     assert isinstance(df.index, pd.DatetimeIndex)
+    logger.debug(f"Using n={len(df)} points")
     if len(df.dropna()) / len(df) < MIN_POINTS_PERCENTAGE:
         return []
 
-    df["trend"] = df["value"].rolling(5).mean()
+    df["trend"] = df["value"].rolling(7).mean()
     std = df["trend"].std()
     # detect points
     is_outside_noise_level = (df["trend"] - df["value"]).abs() > std * STD_MULTIPLIER
