@@ -1,6 +1,6 @@
 import logging
 from datetime import date, timedelta
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 
@@ -39,7 +39,7 @@ def extract_spikes(measurements: List[Measurement]) -> List[date]:
     return list(spike_index.date)
 
 
-def detected_spike(metric_id: int) -> bool:
+def detected_spike(metric_id: int) -> Optional[date]:
     logger.info(f"Starting spike detection for metric_id={metric_id}")
     # Query
     end_date = date.today()
@@ -60,6 +60,6 @@ def detected_spike(metric_id: int) -> bool:
             last_non_nan_measurement
             and last_non_nan_measurement.date == spike_dates[-1]
         ):
-            return True
+            return spike_dates[-1]
     logger.info(f"No spikes detected for metric_id={metric_id}")
-    return False
+    return

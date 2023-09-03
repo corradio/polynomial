@@ -139,7 +139,8 @@ def spreadsheet_export_all():
 @shared_task
 def check_notify_metric_changed_task(metric_id: int):
     metric = Metric.objects.get(pk=metric_id)
-    if metric_analyse.detected_spike(metric.pk):
+    spike_date = metric_analyse.detected_spike(metric.pk)
+    if spike_date:
         message = EmailMultiAlternatives(
             subject=f'New changes in metric "{metric.name}" 📈',
             body=f"Go check it out. Unfortunately can't link here as we're not sure there's a dashboard.",
@@ -158,7 +159,9 @@ def check_notify_metric_changed_task(metric_id: int):
 """,
             "text/html",
         )
-        img_data = charts.generate_png(charts.metric_chart_vl_spec(metric_id))
+        img_data = charts.generate_png(
+            charts.metric_chart_vl_spec(metric_id, highlight_date=spike_date)
+        )
         image = MIMEImage(img_data)
         image.add_header("Content-Id", "<chart>")
         message.attach(image)

@@ -1,7 +1,7 @@
 import base64
 import json
 from datetime import date, datetime, timedelta
-from typing import List
+from typing import List, Optional
 
 import vl_convert as vlc
 
@@ -15,6 +15,7 @@ def date_to_js_timestamp(d: date):
 
 def get_vl_spec(
     measurements: List[Measurement],
+    highlight_date: Optional[date] = None,
     width="container",
     height="container",
 ):
@@ -29,7 +30,7 @@ def get_vl_spec(
         "view": {"stroke": "transparent"},  # Remove background rectangle
         # This ensures the padding is not added on top of axis padding
         "autosize": {"type": "none"},
-        "padding": {"right": 30, "left": 30, "top": 5, "bottom": 30},
+        "padding": {"right": 30, "left": 30, "top": 10, "bottom": 30},
         "data": {
             "values": [
                 {
@@ -126,34 +127,57 @@ def get_vl_spec(
         # Year graph
         pass
     else:
-        # Quarter/month graph
-        vl_spec["layer"].append(
-            {
-                "name": "points",
-                "mark": {"type": "circle", "tooltip": True},
-                "encoding": {
-                    "size": {
-                        "condition": {
-                            "param": "highlight",
-                            "empty": False,
-                            "value": 200,
-                        },
-                        "value": 20,  # default value
-                    }
-                },
-            }
-        )
+        # < Quarter/month graph
+        if highlight_date:
+            vl_spec["layer"].append(
+                {
+                    "name": "points",
+                    "mark": {"type": "circle", "tooltip": True},
+                    "encoding": {
+                        "size": {
+                            "condition": {
+                                "test": {
+                                    "field": "date",
+                                    "oneOf": [date_to_js_timestamp(highlight_date)],
+                                },
+                                "value": 200,
+                            },
+                            "value": 20,  # default value
+                        }
+                    },
+                }
+            )
+        else:
+            # Highlight points based on mouseover
+            vl_spec["layer"].append(
+                {
+                    "name": "points",
+                    "mark": {"type": "circle", "tooltip": True},
+                    "encoding": {
+                        "size": {
+                            "condition": {
+                                "param": "highlight",
+                                "empty": False,
+                                "value": 200,
+                            },
+                            "value": 20,  # default value
+                        }
+                    },
+                }
+            )
     # Only add points if we're dealing with less than X points
     return vl_spec
 
 
-def metric_chart_vl_spec(metric_id: int):
+def metric_chart_vl_spec(metric_id: int, highlight_date: Optional[date] = None):
     end_date = date.today()
     start_date = end_date - timedelta(days=30)
     measurements = query_measurements_without_gaps(
         start_date=start_date, end_date=end_date, metric_id=metric_id
     )
-    return json.dumps(get_vl_spec(measurements, width=640, height=280))
+    return json.dumps(
+        get_vl_spec(measurements, highlight_date=highlight_date, width=640, height=280)
+    )
 
 
 def generate_png(vl_spec: str) -> bytes:
