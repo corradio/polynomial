@@ -29,7 +29,7 @@ def extract_spikes(measurements: List[Measurement]) -> List[date]:
     if len(df.dropna()) / len(df) < MIN_POINTS_PERCENTAGE:
         return []
 
-    df["trend"] = df["value"].rolling(7).mean()
+    df["trend"] = df["value"].rolling(TREND_ROLLING_DAYS).mean()
     std = df["trend"].std()
     # detect points
     is_outside_noise_level = (df["trend"] - df["value"]).abs() > std * STD_MULTIPLIER
