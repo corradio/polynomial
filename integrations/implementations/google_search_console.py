@@ -23,7 +23,7 @@ class GoogleSearchConsole(OAuth2Integration):
             return self.config_schema
         response = self.session.get("https://www.googleapis.com/webmasters/v3/sites")
         response.raise_for_status()
-        site_urls = [entry["siteUrl"] for entry in response.json()["siteEntry"]]
+        site_urls = [entry["siteUrl"] for entry in response.json().get("siteEntry", [])]
         # Use https://bhch.github.io/react-json-form/playground
         return {
             "type": "dict",
