@@ -155,6 +155,11 @@ urlpatterns = [
                                 views.organization.authorize_google_spreadsheet_export,
                                 name="organization_authorize_google_spreadsheet_export",
                             ),
+                            path(
+                                "authorize_slack_notifications",
+                                views.organization.authorize_slack_notifications,
+                                name="organization_authorize_slack_notifications",
+                            ),
                         ]
                     ),
                 ),

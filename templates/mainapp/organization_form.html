@@ -28,6 +28,20 @@
         </a>
       {% endif %}
     </p>
+
+    <p>
+      {% if not object.slack_notifications_credentials %}
+        {% if object.pk %}
+          <a href={% url 'organization_authorize_slack_notifications' object.pk %}>
+            Activate Slack notifications
+          </a>
+        {% endif %}
+      {% else %}
+        <a href={% url 'organization_authorize_slack_notifications' object.pk %}>
+          Re-authorize Slack notifications
+        </a>
+      {% endif %}
+    </p>
     <p>
       <input type="submit" value="submit">
     </p>

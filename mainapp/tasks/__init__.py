@@ -21,7 +21,7 @@ from integrations.base import UserFixableError
 
 from ..models import Measurement, Metric, Organization
 from ..utils import charts
-from . import metric_analyse
+from . import metric_analyse, slack_notifications
 from .google_spreadsheet_export import spreadsheet_export
 
 BASE_URL = CSRF_TRUSTED_ORIGINS[0]
@@ -141,6 +141,7 @@ def check_notify_metric_changed_task(metric_id: int):
     metric = Metric.objects.get(pk=metric_id)
     spike_date = metric_analyse.detected_spike(metric.pk)
     if spike_date:
+        # Send email
         message = EmailMultiAlternatives(
             subject=f'New changes in metric "{metric.name}" 📈',
             body=f"Go check it out. Unfortunately can't link here as we're not sure there's a dashboard.",
@@ -166,6 +167,19 @@ def check_notify_metric_changed_task(metric_id: int):
         image.add_header("Content-Id", "<chart>")
         message.attach(image)
         message.send()
+        # Check for slack messages
+        for organization in metric.organizations.all():
+            if (
+                organization
+                and organization.slack_notifications_credentials
+                and organization.slack_notifications_channel
+            ):
+                # Send slack message
+                slack_notifications.notify_channel(
+                    organization.slack_notifications_credentials,
+                    organization.slack_notifications_channel,
+                    img_data,
+                )
 
 
 @shared_task

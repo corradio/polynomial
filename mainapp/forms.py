@@ -21,6 +21,7 @@ from mainapp.models import (
     OrganizationUser,
     User,
 )
+from mainapp.tasks import slack_notifications
 
 
 class BaseModelForm(forms.ModelForm):
@@ -158,6 +159,17 @@ class OrganizationForm(BaseModelForm):
             self.fields[
                 "google_spreadsheet_export_sheet_name"
             ].widget = forms.HiddenInput()
+        if self.instance.slack_notifications_credentials:
+            self.fields["slack_notifications_channel"].widget = forms.Select(
+                choices=(
+                    (k, k)
+                    for k in slack_notifications.list_public_channels(
+                        self.instance.slack_notifications_credentials
+                    )
+                )
+            )
+        else:
+            self.fields["slack_notifications_channel"].widget = forms.HiddenInput()
 
     def save(self, commit=True):
         if not self.instance.pk:
@@ -181,6 +193,7 @@ class OrganizationForm(BaseModelForm):
             "slug",
             "google_spreadsheet_export_spreadsheet_id",
             "google_spreadsheet_export_sheet_name",
+            "slack_notifications_channel",
         ]
 
         widgets = {

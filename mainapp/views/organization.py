@@ -7,7 +7,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from ..forms import OrganizationForm, OrganizationUserCreateForm
 from ..models import Organization, OrganizationUser, User
-from ..tasks import google_spreadsheet_export
+from ..tasks import google_spreadsheet_export, slack_notifications
 from .mixins import (
     OrganizationAdminRequiredMixin,
     OrganizationMembershipRequiredMixin,
@@ -127,5 +127,21 @@ def authorize_google_spreadsheet_export(request: HttpRequest, organization_pk: i
     # Save parameters in session
     request.session[state] = {
         "organization_id": organization.id,
+        "service": "google",
+    }
+    return HttpResponseRedirect(uri)
+
+
+@login_required
+def authorize_slack_notifications(request: HttpRequest, organization_pk: int):
+    organization = get_object_or_404(Organization, pk=organization_pk)
+    if not organization.is_admin(request.user):
+        return HttpResponseNotFound()
+    uri, state = slack_notifications.authorize(request)
+    assert uri is not None
+    # Save parameters in session
+    request.session[state] = {
+        "organization_id": organization.id,
+        "service": "slack",
     }
     return HttpResponseRedirect(uri)

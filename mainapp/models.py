@@ -361,6 +361,11 @@ class Organization(models.Model):
     google_spreadsheet_export_sheet_name = models.CharField(
         max_length=128, blank=True, null=True
     )
+    # Used for slack notifications
+    slack_notifications_credentials = models.JSONField(blank=True, null=True)
+    slack_notifications_channel = models.CharField(
+        max_length=128, blank=True, null=True
+    )
 
     def __str__(self):
         return self.name

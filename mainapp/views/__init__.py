@@ -9,7 +9,7 @@ from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import WebAuthIntegration
 
 from ..models import Metric
-from ..tasks import google_spreadsheet_export
+from ..tasks import google_spreadsheet_export, slack_notifications
 
 # Re-export
 from . import dashboard, metric, organization, organization_invitation  # noqa
@@ -62,19 +62,37 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
             # - an organization id (if it was called from /organizations/<pk>/edit)
             # - Nothing (if it was called from /metrics/new/<state>/authorize)
             if "organization_id" in cache_obj:
-                return redirect(
-                    add_next(
-                        google_spreadsheet_export.process_authorize_callback(
-                            organization_id=cache_obj["organization_id"],
-                            uri=request.build_absolute_uri(request.get_full_path()),
-                            authorize_callback_uri=request.build_absolute_uri(
-                                reverse("authorize-callback")
+                service = cache_obj.get("service")
+                if service == "google":
+                    return redirect(
+                        add_next(
+                            google_spreadsheet_export.process_authorize_callback(
+                                organization_id=cache_obj["organization_id"],
+                                uri=request.build_absolute_uri(request.get_full_path()),
+                                authorize_callback_uri=request.build_absolute_uri(
+                                    reverse("authorize-callback")
+                                ),
+                                state=state,
                             ),
-                            state=state,
-                        ),
-                        next=cache_obj.get("next"),
+                            next=cache_obj.get("next"),
+                        )
                     )
-                )
+                elif service == "slack":
+                    return redirect(
+                        add_next(
+                            slack_notifications.process_authorize_callback(
+                                organization_id=cache_obj["organization_id"],
+                                uri=request.build_absolute_uri(request.get_full_path()),
+                                authorize_callback_uri=request.build_absolute_uri(
+                                    reverse("authorize-callback")
+                                ),
+                                state=state,
+                            ),
+                            next=cache_obj.get("next"),
+                        )
+                    )
+                else:
+                    raise NotImplementedError(f"Unknown service '{service}'")
 
             metric = None
             if "metric_id" in cache_obj:

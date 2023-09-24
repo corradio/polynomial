@@ -15,7 +15,7 @@ pre-commit install
 docker-compose up pgdb
 ```
 
-## Initiate db with migrations
+### Initiate db with migrations
 ```sh
 make initdb
 ```
