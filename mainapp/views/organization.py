@@ -39,6 +39,7 @@ class OrganizationUpdateView(
     model = Organization
     pk_url_kwarg = "organization_pk"
     form_class = OrganizationForm
+    success_url = reverse_lazy("organization_list")
 
 
 class OrganizationDeleteView(
