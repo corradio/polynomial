@@ -179,6 +179,7 @@ def check_notify_metric_changed_task(metric_id: int):
                     organization.slack_notifications_credentials,
                     organization.slack_notifications_channel,
                     img_data,
+                    f"New changes in metric *{metric.name}*",
                 )
 
 

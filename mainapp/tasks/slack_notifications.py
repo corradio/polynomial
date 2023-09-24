@@ -73,7 +73,7 @@ def list_public_channels(credentials: dict):
     return (f"#{obj['name']}" for obj in response.json()["channels"])
 
 
-def notify_channel(credentials: dict, channel_name: str, img_data: bytes):
+def notify_channel(credentials: dict, channel_name: str, img_data: bytes, message: str):
     """
     Sharing to private channels won't be possible here.
     It turns out that a bot token can't upload a file somewhere, and then make it public so it can be
@@ -100,7 +100,7 @@ def notify_channel(credentials: dict, channel_name: str, img_data: bytes):
             "filetype": "png",
             "filename": "image.png",
             "channels": channel_name,
-            "initial_comment": "New changes in metric *carbon_intensity*",
+            "initial_comment": message,
         },
         files={"file": img_data},
     )
