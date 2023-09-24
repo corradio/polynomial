@@ -11,9 +11,5 @@
   "scripts": {
     "build": "tailwindcss -i ./styles/src/styles.css -o ./static/dist/styles.css --minify",
     "watch": "tailwindcss -i ./styles/src/styles.css -o ./static/dist/styles.css --watch"
-  },
-  "volta": {
-    "node": "14.21.1",
-    "yarn": "1.21.1"
   }
 }
