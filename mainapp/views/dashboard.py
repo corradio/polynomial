@@ -165,7 +165,7 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             others_query = Q(user=user, organization=None)
         dashboards = dashboards.filter(others_query)
 
-    since = request.GET.get("since", "60 days")
+    since = request.GET.get("since", "180 days")
 
     start_date = None
 
@@ -228,11 +228,12 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     ]
     since_options = [
         {"label": "last 10 years", "value": "3650 days"},
+        {"label": "last 5 years", "value": "1825 days"},
         {"label": "last year", "value": "365 days"},
-        {"label": "last 2 months", "value": "60 days"},
         {"label": "last 6 months", "value": "180 days"},
-        {"label": "last quarter", "value": "last-quarter"},
-        {"label": "current quarter", "value": "current-quarter"},
+        {"label": "last 2 months", "value": "60 days"},
+        # {"label": "last quarter", "value": "last-quarter"},
+        # {"label": "current quarter", "value": "current-quarter"},
     ]
     dashboards_list = list(dashboards)
     context = {

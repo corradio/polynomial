@@ -123,7 +123,7 @@ def get_vl_spec(
         # Style
         vl_spec["layer"][0]["mark"]["opacity"] = 0.5
         vl_spec["layer"][0]["mark"]["strokeWidth"] = 1.5
-    elif day_span > 150:
+    elif day_span > 200:
         # Year graph
         pass
     else:
