@@ -47,9 +47,24 @@ METRICS: List[Dict[str, Any]] = [
         "value": "commentCount",
         "endpoint": "organizationalEntityShareStatistics",
     },
-    # These are only lifetime statistics
-    # "shareMentionsCount", # This one can't be backfilled
-    # "commentMentionsCount", # This one can't be backfilled
+    {
+        "title": "Mentions (in shares)",
+        "endpoint": "organizationalEntityShareStatistics",
+        "value": "shareMentionsCount",
+        "can_backfill": False,
+        "value_getter": lambda element: element["totalShareStatistics"][
+            "shareMentionsCount"
+        ],
+    },
+    {
+        "title": "Mentions (in comments)",
+        "endpoint": "organizationalEntityShareStatistics",
+        "value": "commentMentionsCount",
+        "can_backfill": False,
+        "value_getter": lambda element: element["totalShareStatistics"][
+            "commentMentionsCount"
+        ],
+    },
     # Follower statistics
     # See https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/organizations/follower-statistics?view=li-lms-2022-12&tabs=http
     {
@@ -238,7 +253,6 @@ class LinkedIn(OAuth2Integration):
             return MeasurementTuple(date=date.today(), value=data["firstDegreeSize"])
 
         # Other cases
-        value_getter = metric_config["value_getter"]
         url = f"https://api.linkedin.com/rest/{metric_config['endpoint']}"
 
         request_params = {
@@ -248,6 +262,7 @@ class LinkedIn(OAuth2Integration):
         }
 
         elements = self._paginated_query(url, request_params)
-        value = float(value_getter(elements))
+        value_getter = metric_config["value_getter"]
+        value = float(value_getter(elements[0]))
 
         return MeasurementTuple(date=date.today(), value=value)

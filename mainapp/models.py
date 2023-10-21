@@ -156,7 +156,9 @@ class Metric(models.Model):
         # metric belong to
         return any(o.is_member(user) for o in self.organizations.all())
 
-    def can_be_backfilled_by(self, user: Union[User, AnonymousUser]):
+    def can_be_backfilled_by(self, user: Union[User, AnonymousUser]) -> bool:
+        if not self.can_backfill:
+            return False
         if self.can_edit(user):
             return True
         # Check if user is admin of any of the orgs that this

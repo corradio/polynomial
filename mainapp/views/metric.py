@@ -67,7 +67,7 @@ def process_metric_test(
             credentials=integration_credentials,
             credentials_updater=credentials_updater,
         ) as inst:
-            if inst.can_backfill:
+            if inst.can_backfill():
                 date_end = date.today() - timedelta(days=1)
                 date_start = date_end - timedelta(days=10)
                 measurements = inst.collect_past_range(

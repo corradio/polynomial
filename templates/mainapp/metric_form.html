@@ -103,7 +103,7 @@
               document.querySelector('#integration-test-container pre').innerText = 'No results returned';
             }
             else if (data.measurements.length <= 1) {
-              document.querySelector('#integration-test-container pre').innerText = JSON.stringify(data.measurement);
+              document.querySelector('#integration-test-container pre').innerText = JSON.stringify(data.measurements[0]);
             } else {
               document.querySelector('#integration-test-container pre').innerText = '';
               document.getElementById('chart').style.display = null;
