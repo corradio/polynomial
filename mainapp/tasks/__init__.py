@@ -170,11 +170,11 @@ def check_notify_metric_changed_task(metric_id: int):
         # Check for slack messages
         for organization in metric.organizations.all():
             if (
-                organization
-                and organization.slack_notifications_credentials
+                organization.slack_notifications_credentials
                 and organization.slack_notifications_channel
             ):
                 # Send slack message
+                logger.info(f"Sending slack notification for metric_id={metric_id}")
                 slack_notifications.notify_channel(
                     organization.slack_notifications_credentials,
                     organization.slack_notifications_channel,

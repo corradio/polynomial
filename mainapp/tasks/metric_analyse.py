@@ -59,6 +59,7 @@ def detected_spike(metric_id: int) -> Optional[date]:
         if (
             last_non_nan_measurement
             and last_non_nan_measurement.date == spike_dates[-1]
+            and spike_dates[-1] == date.today() - timedelta(days=1)
         ):
             return spike_dates[-1]
     logger.info(f"No spikes detected for metric_id={metric_id}")

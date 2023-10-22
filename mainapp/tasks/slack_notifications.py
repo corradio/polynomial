@@ -17,7 +17,7 @@ client_id = get_secret("SLACK_CLIENT_ID")
 client_secret = get_secret("SLACK_CLIENT_SECRET")
 authorization_url = "https://slack.com/oauth/v2/authorize"
 token_url = "https://slack.com/api/oauth.v2.access"
-scopes = ["files:write,chat:write,chat:write.public,channels:read"]
+scopes = ["files:write,chat:write,channels:read,channels:join"]
 
 
 def authorize(request: HttpRequest) -> Tuple[str, str]:
@@ -61,7 +61,7 @@ def process_authorize_callback(
     return reverse("organization_edit", args=[organization_id])
 
 
-def list_public_channels(credentials: dict):
+def query_public_channels(credentials: dict):
     # `token_type` is set to `bot` and this doesn't fare well with oauthlib
     credentials = {**credentials, "token_type": "bearer"}
     session = OAuth2Session(
@@ -70,7 +70,13 @@ def list_public_channels(credentials: dict):
     )
     response = session.get("https://slack.com/api/conversations.list")
     response.raise_for_status()
-    return (f"#{obj['name']}" for obj in response.json()["channels"])
+    obj = response.json()
+    assert obj["ok"] == True, str(obj)
+    return obj["channels"]
+
+
+def list_public_channels(credentials: dict):
+    return sorted(f"#{obj['name']}" for obj in query_public_channels(credentials))
 
 
 def notify_channel(credentials: dict, channel_name: str, img_data: bytes, message: str):
@@ -80,9 +86,16 @@ def notify_channel(credentials: dict, channel_name: str, img_data: bytes, messag
     shared in any channel. This requires a user token, only possible in the paid plan.
     This is because uploading a file using `files.upload` outside of a channel makes it private,
     and making it public using `files.sharedPublicURL` requires a paid account and a user token.
-    The solution is therefore to give the bot the ability to upload to any public channel using
-    the `chat:write.public` scope.
+    The solution could therefore be to give the bot the ability to upload to any public channel using
+    the `chat:write.public` scope. However, turns out that bots can't upload to channels they are not
+    part of. We therefore need to join the channel first.
     """
+
+    channel_id = next(
+        obj["id"]
+        for obj in query_public_channels(credentials)
+        if obj["name"] == channel_name.replace("#", "")
+    )
 
     # `token_type` is set to `bot` and this doesn't fare well with oauthlib
     credentials = {**credentials, "token_type": "bearer"}
@@ -92,8 +105,19 @@ def notify_channel(credentials: dict, channel_name: str, img_data: bytes, messag
         token=credentials,
     )
 
+    # Check if there's a need to join the public channel
+    # (slack bots can't upload files to channel they don't belong to)
+    response = session.post(
+        "https://slack.com/api/conversations.join",
+        data={
+            "channel": channel_id,
+        },
+    )
+    response.raise_for_status()
+    obj = response.json()
+    assert obj["ok"] == True, str(obj)
+
     # Upload image
-    # Note here the usage of requests instead of session in order to use user token
     response = session.post(
         "https://slack.com/api/files.upload",
         data={
@@ -105,3 +129,5 @@ def notify_channel(credentials: dict, channel_name: str, img_data: bytes, messag
         files={"file": img_data},
     )
     response.raise_for_status()
+    obj = response.json()
+    assert obj["ok"] == True, str(obj)
