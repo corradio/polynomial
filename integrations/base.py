@@ -185,7 +185,7 @@ class OAuth2Integration(WebAuthIntegration):
             },
         )
 
-    def __enter__(self):
+    def __enter__(self) -> "OAuth2Integration":
         assert self.session.authorized
         return self
 
