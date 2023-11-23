@@ -19,10 +19,12 @@ class Grafana(Integration):
                 "type": "string",
                 "format": "password",
                 "required": True,
+                "help_text": "In Grafana, go to Administration > Users and access > Service accounts. Then create new service account with 'viewer' role, and 'Add service account token'"
             },
             "datasource_uid": {
                 "type": "string",
                 "required": True,
+                "help_text": "Find the UID of your datasource by going to the datasource settings in Grafana and looking at the URL. It should look like `https://YOUR_COMPANY.grafana.net/datasources/edit/<UID>`."
             },
             "expression": {
                 "type": "string",
