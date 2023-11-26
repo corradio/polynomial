@@ -1,7 +1,7 @@
 import base64
 import json
 from datetime import date, datetime, timedelta
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import vl_convert as vlc
 
@@ -18,6 +18,7 @@ def get_vl_spec(
     highlight_date: Optional[date] = None,
     width="container",
     height="container",
+    labels: Optional[Dict[date, str]] = None,
 ):
     if not measurements:
         return {}
@@ -30,7 +31,7 @@ def get_vl_spec(
         "view": {"stroke": "transparent"},  # Remove background rectangle
         # This ensures the padding is not added on top of axis padding
         "autosize": {"type": "none"},
-        "padding": {"right": 30, "left": 30, "top": 10, "bottom": 30},
+        "padding": {"right": 30, "left": 30, "top": 15, "bottom": 30},
         "data": {
             "values": [
                 {
@@ -39,6 +40,7 @@ def get_vl_spec(
                     # due to the way javascript parses dates, we must take some care here
                     # see https://stackoverflow.com/questions/64319836/date-parsing-and-when-to-use-utc-timeunits-in-vega-lite
                     "date": f"{m.date.isoformat()}T00:00:00",
+                    "label": labels.get(m.date, "") if labels else "",
                 }
                 for m in measurements
             ]
@@ -96,8 +98,29 @@ def get_vl_spec(
         "layer": [
             # Line
             {"name": "line", "mark": {"type": "line"}},
+            # Labels
+            {
+                "name": "labels",
+                "mark": {
+                    "type": "text",
+                    "align": "center",
+                    "baseline": "bottom",
+                    "dy": -5,
+                    "fontSize": 15,
+                },
+                "encoding": {"text": {"field": "label"}},
+            },
         ],
     }
+    # The x-ticks above are made for months. Move to days if the span is days
+    if len(measurements) < 60:
+        x_axis = vl_spec["encoding"]["x"]["axis"]
+        x_axis["tickCount"] = {"interval": "day", "step": 1}
+        # https://d3js.org/d3-time-format#locale_format
+        x_axis[
+            "labelExpr"
+        ] = '[timeFormat(datum.value, "%e"), timeFormat(datum.value, "%d") == "01" ? timeFormat(datum.value, "%b") : ""]'
+
     # Only add moving average if there's more than X days of data being non NaN
     if len([m for m in measurements if m.value == m.value]) > 30:
         vl_spec["transform"].append(
