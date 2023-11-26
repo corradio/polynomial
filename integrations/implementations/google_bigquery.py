@@ -67,7 +67,7 @@ class GoogleBigQuery(OAuth2Integration):
                     "type": "string",
                     "widget": "textarea",
                     "required": True,
-                    "helpText": "Use @date_start and @date_end to insert requested start and end dates in SQL Query",
+                    "helpText": "Use @date_start and @date_end to insert requested start and end dates in SQL Query. Note the dates are inclusive.",
                     "default": "SELECT CURRENT_DATE() as date, 1 as value",
                 },
             },
@@ -113,7 +113,7 @@ class GoogleBigQuery(OAuth2Integration):
         fields = data["schema"]["fields"]
         rows = (
             {fields[i]["name"]: f["v"] for i, f in enumerate(row["f"])}
-            for row in data["rows"]
+            for row in data.get("rows", [])
         )
         return [
             MeasurementTuple(date=_date_getter(row), value=_value_getter(row))

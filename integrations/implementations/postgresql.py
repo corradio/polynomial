@@ -32,7 +32,7 @@ class Postgresql(Integration):
                 "type": "string",
                 "widget": "textarea",
                 "required": True,
-                "helpText": "Use %(date_start)s and %(date_end)s to insert requested start and end dates in SQL Query",
+                "helpText": "Use %(date_start)s and %(date_end)s to insert requested start and end dates in SQL Query. Note the dates are inclusive.",
                 "default": "SELECT NOW() as date, 1 as value",
             },
         },
