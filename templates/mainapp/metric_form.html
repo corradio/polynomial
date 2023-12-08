@@ -20,7 +20,7 @@
     {% if can_web_auth %}
     <input type="button" id="button-authorize" value="Re-authorize">
     {% endif %}
-    {% if not metric or metric|can_edit:user}
+    {% if not metric or metric|can_edit:user %}
     <input type="button" id="button-test" value="Preview">
     <input type="submit" id="button-submit" value="Save">
     {% endif %}
