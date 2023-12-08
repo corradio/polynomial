@@ -160,8 +160,12 @@ def check_notify_metric_changed_task(metric_id: int):
 """,
             "text/html",
         )
+        # TODO: the following will query last measurements, which is also done
+        # when calling `metric_analyse.detected_spike`
         img_data = charts.generate_png(
-            charts.metric_chart_vl_spec(metric_id, highlight_date=spike_date)
+            charts.metric_chart_vl_spec(
+                metric_id, highlight_date=spike_date, lookback_days=30
+            )
         )
         image = MIMEImage(img_data)
         image.add_header("Content-Id", "<chart>")

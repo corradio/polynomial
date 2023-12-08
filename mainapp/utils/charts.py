@@ -4,9 +4,18 @@ from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional
 
 import vl_convert as vlc
+from django.templatetags.static import static
+
+from config.settings import DEBUG
 
 from ..models import Measurement
-from ..queries import query_measurements_without_gaps
+from ..queries import query_measurements_without_gaps, query_topk_dates
+
+TOP3_MEDAL_IMAGE_PATH = [
+    static("images/medal_1st.png"),  # 🥇
+    static("images/medal_2nd.png"),  # 🥈
+    static("images/medal_3rd.png"),  # 🥉
+]
 
 
 def date_to_js_timestamp(d: date):
@@ -19,6 +28,7 @@ def get_vl_spec(
     width="container",
     height="container",
     labels: Optional[Dict[date, str]] = None,
+    imageLabelUrls: Optional[Dict[date, str]] = None,
 ):
     if not measurements:
         return {}
@@ -41,6 +51,9 @@ def get_vl_spec(
                     # see https://stackoverflow.com/questions/64319836/date-parsing-and-when-to-use-utc-timeunits-in-vega-lite
                     "date": f"{m.date.isoformat()}T00:00:00",
                     "label": labels.get(m.date, "") if labels else "",
+                    "imageLabelUrl": imageLabelUrls.get(m.date, "")
+                    if imageLabelUrls
+                    else "",
                 }
                 for m in measurements
             ]
@@ -57,7 +70,9 @@ def get_vl_spec(
                 "views": ["points"],
             }
         ],
-        "transform": [],
+        "transform": [
+            {"calculate": "datum.value * 1.1", "as": "valueWithOffset"},
+        ],
         "encoding": {
             "x": {
                 "field": "date",
@@ -109,6 +124,20 @@ def get_vl_spec(
                     "fontSize": 15,
                 },
                 "encoding": {"text": {"field": "label"}},
+            },
+            # Image labels
+            {
+                "name": "imageLabels",
+                "mark": {
+                    "type": "image",
+                    "width": 24,
+                    "height": 24,
+                },
+                "encoding": {
+                    "x": {"field": "date", "type": "temporal"},
+                    "y": {"field": "valueWithOffset", "type": "quantitative"},
+                    "url": {"field": "imageLabelUrl", "type": "nominal"},
+                },
             },
         ],
     }
@@ -192,14 +221,31 @@ def get_vl_spec(
     return vl_spec
 
 
-def metric_chart_vl_spec(metric_id: int, highlight_date: Optional[date] = None):
+def metric_chart_vl_spec(
+    metric_id: int, highlight_date: Optional[date] = None, lookback_days: int = 30
+):
     end_date = date.today()
-    start_date = end_date - timedelta(days=30)
+    start_date = end_date - timedelta(days=lookback_days)
     measurements = query_measurements_without_gaps(
         start_date=start_date, end_date=end_date, metric_id=metric_id
     )
+    topk_dates = query_topk_dates(metric_id)
+    root_path = "http://127.0.0.1:8000" if DEBUG else "https://polynomial.so"
+    imageLabelUrls = dict(
+        zip(
+            topk_dates,
+            [f"{root_path}{path}" for path in TOP3_MEDAL_IMAGE_PATH],
+        )
+    )
+
     return json.dumps(
-        get_vl_spec(measurements, highlight_date=highlight_date, width=640, height=280)
+        get_vl_spec(
+            measurements,
+            highlight_date=highlight_date,
+            width=640,
+            height=280,
+            imageLabelUrls=imageLabelUrls,
+        )
     )
 
 

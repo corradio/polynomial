@@ -3654,17 +3654,17 @@ files = [
 
 [[package]]
 name = "vl-convert-python"
-version = "0.11.2"
+version = "1.1.0"
 description = "Convert Vega-Lite chart specifications to SVG, PNG, or Vega"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "vl_convert_python-0.11.2-cp37-abi3-macosx_10_7_x86_64.whl", hash = "sha256:5d9648c1963ae805373f013ff13edb20caa6bb7f61cbc26409ba48cd9645a3e4"},
-    {file = "vl_convert_python-0.11.2-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:9136510d3ffe9d8f330bec186aeb55f80a14a9fb11b44b435a56cd5f73f829d4"},
-    {file = "vl_convert_python-0.11.2-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4e90d289a11c9f6e8ce4de43c616db39970b7a5b92e8dcdec27aeee600d87bc2"},
-    {file = "vl_convert_python-0.11.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1056c57a91aad00661d0394f46ff24b945e5496524e84a587739b7c7025076ce"},
-    {file = "vl_convert_python-0.11.2-cp37-abi3-win_amd64.whl", hash = "sha256:97740df713fb44a561c78ffb1bc3865f9a276d751866dddad1893d22587d6713"},
-    {file = "vl_convert_python-0.11.2.tar.gz", hash = "sha256:3e2db75b9236f1f828e38011ae05c7ad6c25fddc42eec70e5bc1cd2e7b7f6bdc"},
+    {file = "vl_convert_python-1.1.0-cp37-abi3-macosx_10_7_x86_64.whl", hash = "sha256:3e4fee1b0dd19a56935724d77bb471e7fd05eed99330848c1b2547c859532fdd"},
+    {file = "vl_convert_python-1.1.0-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:f1b61dd9d6ad171f9b09545a3af77083eebfc91075f3913e92ddf667efe97099"},
+    {file = "vl_convert_python-1.1.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4f12983c2d379cdc3f273063befc7cef620a1304991c6c89d08e7b5591b4023a"},
+    {file = "vl_convert_python-1.1.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:83b013c44e8e022ce1984d26cd38703544bf595065dca39009e8653e0c4cc377"},
+    {file = "vl_convert_python-1.1.0-cp37-abi3-win_amd64.whl", hash = "sha256:df907f8ae6d799f8e26ba40c93f1bf98e5b6dcb31797e3a6acecbcd851251cdd"},
+    {file = "vl_convert_python-1.1.0.tar.gz", hash = "sha256:cc2bf58e019a5b4796b2903af8eb952555a7701603e0752e9f9fe66627af5c2e"},
 ]
 
 [[package]]
@@ -3755,4 +3755,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.12"
-content-hash = "7420a9cdc58491ace8e76ddf9d99be144684224a14e135d5ebf435707978d3dc"
+content-hash = "2ddf2ef00109ce2d195c1cb02d487d4902938230c4193723788eb23a5c509281"

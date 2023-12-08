@@ -13,8 +13,8 @@ from django.views.generic import CreateView, DeleteView, UpdateView
 
 from ..forms import DashboardForm, DashboardMetricAddForm
 from ..models import Dashboard, Metric, Organization, User
-from ..queries import query_measurements_without_gaps
-from ..utils.charts import get_vl_spec
+from ..queries import query_measurements_without_gaps, query_topk_dates
+from ..utils.charts import TOP3_MEDAL_IMAGE_PATH, get_vl_spec
 
 
 @login_required
@@ -221,7 +221,10 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             "can_edit": metric.can_edit(request.user),
             "can_be_backfilled_by_user": metric.can_be_backfilled_by(request.user),
             "vl_spec": get_vl_spec(
-                query_measurements_without_gaps(start_date, end_date, metric.pk)
+                query_measurements_without_gaps(start_date, end_date, metric.pk),
+                imageLabelUrls=dict(
+                    zip(query_topk_dates(metric.pk), TOP3_MEDAL_IMAGE_PATH)
+                ),
             ),
         }
         for metric in Metric.objects.filter(dashboard=dashboard).order_by("name")

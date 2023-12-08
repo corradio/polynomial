@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 from django.db import connection
 
@@ -32,3 +32,10 @@ def query_measurements_without_gaps(
             Measurement(date=date, value=value if value is not None else float("nan"))
             for date, value in results
         ]
+
+
+def query_topk_dates(metric_id: int, topk=3) -> Iterable[date]:
+    return (
+        m.date
+        for m in Measurement.objects.filter(metric_id=metric_id).order_by("-value")[:3]
+    )
