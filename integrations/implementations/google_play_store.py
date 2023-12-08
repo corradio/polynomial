@@ -91,7 +91,7 @@ class GooglePlayStore(OAuth2Integration):
         try:
             response.raise_for_status()
         except requests.HTTPError as e:
-            if e.response.status_code in [400, 403]:
+            if e.response and e.response.status_code in [400, 403]:
                 # Try to explain to the user
                 try:
                     data = e.response.json()
@@ -100,7 +100,7 @@ class GooglePlayStore(OAuth2Integration):
                     ) from None
                 except requests.exceptions.InvalidJSONError:
                     raise e from None
-            if e.response.status_code == 404:
+            if e.response and e.response.status_code == 404:
                 # No data, simply return empty list
                 return []
             else:

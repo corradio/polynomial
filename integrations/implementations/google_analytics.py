@@ -121,7 +121,7 @@ class GoogleAnalytics(OAuth2Integration):
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 400:
+            if e.response and e.response.status_code == 400:
                 # Try to explain to the user
                 data = e.response.json()
                 raise Exception(data["error"]["message"])

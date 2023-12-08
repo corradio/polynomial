@@ -110,7 +110,7 @@ class GoogleSheets(OAuth2Integration):
         try:
             response.raise_for_status()
         except requests.HTTPError as e:
-            if e.response.status_code in [400, 403]:
+            if e.response and e.response.status_code in [400, 403]:
                 # Try to explain to the user
                 data = e.response.json()
                 raise requests.HTTPError(

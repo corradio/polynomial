@@ -12,7 +12,8 @@ def validate_http_response(response: requests.models.Response):
         response.raise_for_status()
     except requests.HTTPError as e:
         if (
-            e.response.status_code == 403
+            e.response
+            and e.response.status_code == 403
             and e.response.json()["reason"] == "client-not-enrolled"
         ):
             # This is a backend error due to insufficient privileges of the API token
