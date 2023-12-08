@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.10.13-slim-buster
+ARG PYTHON_VERSION=3.10.13-slim-bookworm
 
 FROM python:${PYTHON_VERSION}
 
