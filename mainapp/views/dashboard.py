@@ -223,7 +223,10 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             "vl_spec": get_vl_spec(
                 query_measurements_without_gaps(start_date, end_date, metric.pk),
                 imageLabelUrls=dict(
-                    zip(query_topk_dates(metric.pk), TOP3_MEDAL_IMAGE_PATH)
+                    zip(
+                        query_topk_dates(metric.pk) if metric.enable_medals else [],
+                        TOP3_MEDAL_IMAGE_PATH,
+                    )
                 ),
             ),
         }

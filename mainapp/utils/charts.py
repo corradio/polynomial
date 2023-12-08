@@ -8,7 +8,7 @@ from django.templatetags.static import static
 
 from config.settings import DEBUG
 
-from ..models import Measurement
+from ..models import Measurement, Metric
 from ..queries import query_measurements_without_gaps, query_topk_dates
 
 TOP3_MEDAL_IMAGE_PATH = [
@@ -240,14 +240,17 @@ def metric_chart_vl_spec(
     measurements = query_measurements_without_gaps(
         start_date=start_date, end_date=end_date, metric_id=metric_id
     )
-    topk_dates = query_topk_dates(metric_id)
-    root_path = "http://127.0.0.1:8000" if DEBUG else "https://polynomial.so"
-    imageLabelUrls = dict(
-        zip(
-            topk_dates,
-            [f"{root_path}{path}" for path in TOP3_MEDAL_IMAGE_PATH],
+    metric = Metric.objects.get(metric_id)
+    imageLabelUrls = None
+    if metric.enable_medals:
+        topk_dates = query_topk_dates(metric_id)
+        root_path = "http://127.0.0.1:8000" if DEBUG else "https://polynomial.so"
+        imageLabelUrls = dict(
+            zip(
+                topk_dates,
+                [f"{root_path}{path}" for path in TOP3_MEDAL_IMAGE_PATH],
+            )
         )
-    )
 
     return json.dumps(
         get_vl_spec(

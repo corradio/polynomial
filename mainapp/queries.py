@@ -3,7 +3,7 @@ from typing import Iterable, List, Optional, Tuple
 
 from django.db import connection
 
-from .models import Measurement
+from .models import Measurement, Metric
 
 
 def query_measurements_without_gaps(
@@ -35,7 +35,13 @@ def query_measurements_without_gaps(
 
 
 def query_topk_dates(metric_id: int, topk=3) -> Iterable[date]:
+    sort_field_arg = "value"
+    metric = Metric.objects.get(pk=metric_id)
+    if metric.higher_is_better:
+        sort_field_arg = f"-{sort_field_arg}"  # Reverse sort order
     return (
         m.date
-        for m in Measurement.objects.filter(metric_id=metric_id).order_by("-value")[:3]
+        for m in Measurement.objects.filter(metric_id=metric_id).order_by(
+            sort_field_arg
+        )[:3]
     )

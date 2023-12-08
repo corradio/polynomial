@@ -81,6 +81,8 @@ class MetricForm(BaseModelForm):
         fields = [
             "name",
             "organizations",
+            "enable_medals",
+            "higher_is_better",
             "integration_config",
             "integration_id",
             # The following are required to be able to save that info when creating
@@ -91,6 +93,12 @@ class MetricForm(BaseModelForm):
             "integration_id": forms.HiddenInput(),
             "dashboards": forms.MultipleHiddenInput(),
             "organizations": forms.CheckboxSelectMultiple(),
+            "higher_is_better": forms.Select(
+                choices=(
+                    (True, "Higher values are better"),
+                    (False, "Lower values are better"),
+                )
+            ),
         }
 
 

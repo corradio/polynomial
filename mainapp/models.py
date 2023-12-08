@@ -72,6 +72,13 @@ class Metric(models.Model):
     dashboards = models.ManyToManyField(
         "Dashboard", through="dashboard_metrics", blank=True
     )
+    higher_is_better = models.BooleanField(
+        default=True,
+        help_text="Whether or not high values are considered a good outcome",
+    )
+    enable_medals = models.BooleanField(
+        default=True, help_text="Highlight the top 3 values"
+    )
 
     # The credentials can be saved either in db, or in cache, while the object
     # is temporarily being built. We therefore allow this to be changed later.
