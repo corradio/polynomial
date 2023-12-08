@@ -20,5 +20,7 @@ jobs:
         run: poetry install
       - name: Typecheck
         run: make typecheck
+      - name: Collect static
+        run: poetry run python manage.py collectstatic
       - name: Test
         run: make test
