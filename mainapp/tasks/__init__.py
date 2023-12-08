@@ -191,12 +191,7 @@ def check_notify_metric_changed_task(metric_id: int):
 def verify_inactive_task(metric_id: int):
     metric = Metric.objects.get(pk=metric_id)
     # How long since last successful collect?
-    last_non_nan_measurement = (
-        Measurement.objects.exclude(value=float("nan"))
-        .filter(metric=metric_id)
-        .order_by("updated_at")
-        .last()
-    )
+    last_non_nan_measurement = metric.last_non_nan_measurement
     if last_non_nan_measurement:
         # Reminder after a week
         for reminder_days in [15, 30, 90]:

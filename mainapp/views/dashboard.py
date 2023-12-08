@@ -213,13 +213,23 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             interval = timedelta(days=60)
         start_date = end_date - interval
 
+    def has_outdated_measurements(metric) -> bool:
+        last_non_nan_measurement = metric.last_non_nan_measurement
+        if last_non_nan_measurement is None:
+            return False
+        days = (datetime.now(timezone.utc) - last_non_nan_measurement.updated_at).days
+        return days > 14
+
     measurements_by_metric = [
         {
             "metric_id": metric.id,
             "metric_name": metric.name,
             "integration_id": metric.integration_id,
             "can_edit": metric.can_edit(request.user),
+            "can_web_auth": metric.can_web_auth,
+            "can_alter_credentials": metric.can_alter_credentials_by(request.user),
             "can_be_backfilled_by_user": metric.can_be_backfilled_by(request.user),
+            "has_outdated_measurements": has_outdated_measurements(metric),
             "vl_spec": get_vl_spec(
                 query_measurements_without_gaps(start_date, end_date, metric.pk),
                 imageLabelUrls=dict(

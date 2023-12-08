@@ -97,9 +97,9 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
             metric = None
             if "metric_id" in cache_obj:
                 # Get integration instance
-                metric = get_object_or_404(
-                    Metric, pk=cache_obj["metric_id"], user=request.user
-                )
+                metric = get_object_or_404(Metric, pk=cache_obj["metric_id"])
+                if not metric.can_alter_credentials_by(request.user):
+                    raise PermissionDenied()
             integration_id = (
                 metric.integration_id
                 if metric
@@ -118,6 +118,9 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
             # Save credentials
             if metric:
                 metric.integration_credentials = integration_credentials
+                # Also change ownership in case someone authorized another user's
+                # integration (from the same org)
+                metric.user = self.request.user
                 metric.save()
                 # Clean up session as it won't be used anymore
                 del self.request.session[state]

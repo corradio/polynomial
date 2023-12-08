@@ -410,7 +410,9 @@ class MetricUpdateView(LoginRequiredMixin, UpdateView):
 
 @login_required
 def metric_authorize(request, pk):
-    metric = get_object_or_404(Metric, pk=pk, user=request.user)
+    metric = get_object_or_404(Metric, pk=pk)
+    if not metric.can_alter_credentials_by(request.user):
+        raise PermissionDenied()
     integration_id = metric.integration_id
     # Get integration class and get the uri
     integration_class = INTEGRATION_CLASSES[integration_id]

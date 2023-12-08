@@ -127,6 +127,15 @@ class Metric(models.Model):
         return reverse("metric-details", args=[self.pk])
 
     @property
+    def last_non_nan_measurement(self) -> Optional["Measurement"]:
+        return (
+            Measurement.objects.exclude(value=float("nan"))
+            .filter(metric=self.pk)
+            .order_by("updated_at")
+            .last()
+        )
+
+    @property
     def can_web_auth(self):
         return issubclass(INTEGRATION_CLASSES[self.integration_id], WebAuthIntegration)
 
@@ -159,7 +168,7 @@ class Metric(models.Model):
     def can_view(self, user: Union[User, AnonymousUser]):
         if self.can_edit(user):
             return True
-        # Check if user is member of any of the orgs that this
+        # Check if user is *member* of any of the orgs that this
         # metric belong to
         return any(o.is_member(user) for o in self.organizations.all())
 
@@ -168,9 +177,16 @@ class Metric(models.Model):
             return False
         if self.can_edit(user):
             return True
-        # Check if user is admin of any of the orgs that this
+        # Check if user is *member* of any of the orgs that this
         # metric belong to
-        return any(o.is_admin(user) for o in self.organizations.all())
+        return any(o.is_member(user) for o in self.organizations.all())
+
+    def can_alter_credentials_by(self, user: Union[User, AnonymousUser]) -> bool:
+        if self.can_edit(user):
+            return True
+        # Check if user is *member* of any of the orgs that this
+        # metric belong to
+        return any(o.is_member(user) for o in self.organizations.all())
 
     def __str__(self):
         return f"{self.name}"

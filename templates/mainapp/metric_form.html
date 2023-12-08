@@ -14,12 +14,17 @@
   <form action="" method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    {% if not metric or metric|can_edit:user %}
+
+    {% if not metric or metric|can_edit:user or metric|can_alter_credentials_by:user %}
+    
     {% if can_web_auth %}
     <input type="button" id="button-authorize" value="Re-authorize">
     {% endif %}
+    {% if not metric or metric|can_edit:user}
     <input type="button" id="button-test" value="Preview">
     <input type="submit" id="button-submit" value="Save">
+    {% endif %}
+
     <script>
       var testButton = document.getElementById("button-test");
       var authorizeButton = document.getElementById("button-authorize");
