@@ -22,6 +22,11 @@ def date_to_js_timestamp(d: date):
     return int(datetime.fromisoformat(d.isoformat()).timestamp() * 1000)
 
 
+def filter_nan(value: float) -> Optional[float]:
+    # Remove NaN
+    return None if value != value else value
+
+
 def get_vl_spec(
     measurements: List[Measurement],
     highlight_date: Optional[date] = None,
@@ -34,6 +39,9 @@ def get_vl_spec(
         return {}
     start_date = measurements[0].date
     end_date = measurements[-1].date
+    value_extent = max((filter_nan(m.value) or 0 for m in measurements)) - min(
+        (filter_nan(m.value) or 0 for m in measurements)
+    )
     vl_spec = {
         "$schema": "https:#vega.github.io/schema/vega-lite/v5.json",
         "width": width,
@@ -46,7 +54,7 @@ def get_vl_spec(
             "values": [
                 {
                     # NaN should be returned None in order to be JSON compliant
-                    "value": None if m.value != m.value else m.value,
+                    "value": filter_nan(m.value),
                     # due to the way javascript parses dates, we must take some care here
                     # see https://stackoverflow.com/questions/64319836/date-parsing-and-when-to-use-utc-timeunits-in-vega-lite
                     "date": f"{m.date.isoformat()}T00:00:00",
@@ -71,7 +79,10 @@ def get_vl_spec(
             }
         ],
         "transform": [
-            {"calculate": "datum.value * 1.1", "as": "valueWithOffset"},
+            {
+                "calculate": f"datum.value + {0.1 * value_extent}",
+                "as": "valueWithOffset",
+            },
         ],
         "encoding": {
             "x": {
