@@ -240,7 +240,7 @@ def metric_chart_vl_spec(
     measurements = query_measurements_without_gaps(
         start_date=start_date, end_date=end_date, metric_id=metric_id
     )
-    metric = Metric.objects.get(metric_id)
+    metric = Metric.objects.get(pk=metric_id)
     imageLabelUrls = None
     if metric.enable_medals:
         topk_dates = query_topk_dates(metric_id)
