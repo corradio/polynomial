@@ -50,7 +50,7 @@ def format_exception(e: Exception) -> str:
     else:
         error_str = f"{str(e)}"
 
-    if isinstance(e, requests.HTTPError) and e.response:
+    if isinstance(e, requests.HTTPError) and e.response is not None:
         try:
             error_str += f"\nAdditional JSON response:\n{e.response.json()}"
         except json.decoder.JSONDecodeError:
