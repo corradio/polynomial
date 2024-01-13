@@ -4,7 +4,7 @@ import sys
 import traceback
 from datetime import date, datetime, timedelta
 from types import MethodType
-from typing import List, Optional
+from typing import List, Optional, Type
 
 import requests
 from django.contrib import messages
@@ -27,7 +27,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
-from integrations.base import WebAuthIntegration
+from integrations.base import Integration, WebAuthIntegration
 
 from .. import forms
 from ..forms import MetricForm
@@ -59,8 +59,11 @@ def format_exception(e: Exception) -> str:
 
 
 def process_metric_test(
-    config, integration_credentials, integration_class, credentials_updater
-):
+    config,
+    integration_credentials,
+    integration_class: Type[Integration],
+    credentials_updater,
+) -> HttpResponse:
     try:
         with integration_class(
             config,
@@ -70,11 +73,13 @@ def process_metric_test(
             if inst.can_backfill():
                 date_end = date.today() - timedelta(days=1)
                 date_start = date_end - timedelta(days=10)
-                measurements = inst.collect_past_range(
-                    date_start=date_start, date_end=date_end
+                # Convert to list as generator will be iterated twice
+                measurements = list(
+                    inst.collect_past_range(date_start=date_start, date_end=date_end)
                 )
             else:
                 measurements = [inst.collect_latest()]
+
             # Use OrjsonResponse to make sure measurement NaNs
             # turn into "null" JSON
             return OrjsonResponse(
@@ -87,7 +92,9 @@ def process_metric_test(
                     "canBackfill": inst.can_backfill(),
                     "status": "ok",
                     "newSchema": inst.callable_config_schema(),
-                    "vlSpec": get_vl_spec(measurements),
+                    "vlSpec": get_vl_spec(
+                        [Measurement(**m._asdict()) for m in measurements]
+                    ),
                 }
             )
     except Exception as e:

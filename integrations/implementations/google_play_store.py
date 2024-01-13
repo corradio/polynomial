@@ -14,10 +14,10 @@ https://support.google.com/googleplay/android-developer/answer/139628?hl=en-GB&c
 
 """
 METRICS = [
-    {"title": "Daily Average Rating"},
-    {"title": "Total Average Rating"},
+    "Daily Average Rating",
+    "Total Average Rating",
     # An active device is one that has been turned on at least once in the past 30 days.
-    {"title": "Active Device Installs"},
+    "Active Device Installs",
 ]
 
 
