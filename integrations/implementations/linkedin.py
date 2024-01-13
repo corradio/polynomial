@@ -96,7 +96,7 @@ class LinkedIn(OAuth2Integration):
             "state": "APPROVED",
         }
         response = self.session.get(
-            "https://api.linkedin.com/rest/organizationAcls", params=request_params
+            "https://api.linkedin.com/v2/organizationAcls", params=request_params
         )
         if response.status_code == 401:
             # Could e.g. be
@@ -151,7 +151,7 @@ class LinkedIn(OAuth2Integration):
     def __enter__(self):
         super().__enter__()
         self.session.headers = {
-            "LinkedIn-Version": "202212",
+            "LinkedIn-Version": "202312",
         }
         return self
 
