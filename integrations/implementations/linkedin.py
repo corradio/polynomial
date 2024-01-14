@@ -196,7 +196,7 @@ class LinkedIn(OAuth2Integration):
         org_id = self.config["org_id"]
         metric = self.config["metric"]
         metric_config = self._get_metric_config_for_key(metric)
-        url = f"https://api.linkedin.com/rest/{metric_config['endpoint']}"
+        url = f"https://api.linkedin.com/v2/{metric_config['endpoint']}"
 
         time_start = int(time.mktime(date_start.timetuple()) * 1000)
         time_end = int(time.mktime((date_end + timedelta(days=1)).timetuple()) * 1000)
@@ -246,14 +246,14 @@ class LinkedIn(OAuth2Integration):
             # This metric requires a particular endpoint.
             # We hardcode it here.
             response = self.session.get(
-                f"https://api.linkedin.com/rest/networkSizes/urn:li:organization:{org_id}?edgeType=CompanyFollowedByMember"
+                f"https://api.linkedin.com/v2/networkSizes/urn:li:organization:{org_id}?edgeType=CompanyFollowedByMember"
             )
             response.raise_for_status()
             data = response.json()
             return MeasurementTuple(date=date.today(), value=data["firstDegreeSize"])
 
         # Other cases
-        url = f"https://api.linkedin.com/rest/{metric_config['endpoint']}"
+        url = f"https://api.linkedin.com/v2/{metric_config['endpoint']}"
 
         request_params = {
             "q": "organizationalEntity",
