@@ -15,8 +15,36 @@
     {% csrf_token %}
     {{ form.as_p }}
 
+    {% if metric %}
+    <div>
+      <p class="text-sm font-medium leading-6 text-gray-900">Metadata</p>
+      <div class="border border-dashed rounded-lg border-gray-300 px-4 py-2">
+        <dl class="divide-y divide-gray-100">
+          <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+            <dt class="text-sm font-medium leading-6 text-gray-900">Owner</dt>
+            <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ metric.user.name }} ({{ metric.user.email }})</dd>
+          </div>
+          <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+            <dt class="text-sm font-medium leading-6 text-gray-900">Created</dt>
+            <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ metric.created_at|timesince }} ago</dd>
+          </div>
+          <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+            <dt class="text-sm font-medium leading-6 text-gray-900">Last successful collection</dt>
+            <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+              {% if not metric.last_non_nan_measurement %}
+              Never
+              {% else %}
+              {{ metric.last_non_nan_measurement.updated_at|timesince }} ago
+              {% endif %}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+    {% endif %}
+
     {% if not metric or metric|can_edit:user or metric|can_alter_credentials_by:user %}
-    
+
     {% if can_web_auth %}
     <input type="button" id="button-authorize" value="Re-authorize">
     {% endif %}
@@ -140,4 +168,5 @@
     {% endif %}
     <a href="select-integration">Change integration</a>
   {% endif %}
+
 {% endblock %}
