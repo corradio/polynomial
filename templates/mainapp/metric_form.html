@@ -44,7 +44,7 @@
     {% endif %}
 
     {% if not metric or metric|can_edit:user or metric|can_alter_credentials_by:user %}
-
+    
     {% if can_web_auth %}
     <input type="button" id="button-authorize" value="Re-authorize">
     {% endif %}
@@ -168,5 +168,4 @@
     {% endif %}
     <a href="select-integration">Change integration</a>
   {% endif %}
-
 {% endblock %}
