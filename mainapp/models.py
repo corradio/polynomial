@@ -163,7 +163,10 @@ class Metric(models.Model):
             return False
 
     def can_edit(self, user: Union[User, AnonymousUser]):
-        return self.user == user
+        # Owner or org admin
+        if self.user == user:
+            return True
+        return any(o.is_admin(user) for o in self.organizations.all())
 
     def can_view(self, user: Union[User, AnonymousUser]):
         if self.can_edit(user):
