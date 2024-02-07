@@ -30,7 +30,7 @@ logger = get_task_logger(__name__)
 
 
 @shared_task(max_retries=5, autoretry_for=(RequestException,), retry_backoff=10)
-def collect_latest_task(metric_id: int):
+def collect_latest_task(metric_id: int) -> None:
     logger.info(f"Start collect_latest_task(metric_id={metric_id})")
     metric = Metric.objects.get(pk=metric_id)
     integration_instance = metric.integration_instance
@@ -73,7 +73,7 @@ def collect_latest_task(metric_id: int):
 
 
 @shared_task()
-def collect_all_latest_task():
+def collect_all_latest_task() -> None:
     for metric in Metric.objects.all():
         collect_latest_task.delay(metric.id)
         verify_inactive_task.delay(metric.id)
@@ -121,7 +121,7 @@ def backfill_task(metric_id: int, since: Optional[str] = None):
 
 
 @shared_task
-def spreadsheet_export_all():
+def spreadsheet_export_all() -> None:
     required_fields = [
         "google_spreadsheet_export_spreadsheet_id",
         "google_spreadsheet_export_credentials",
@@ -137,7 +137,7 @@ def spreadsheet_export_all():
 
 
 @shared_task
-def check_notify_metric_changed_task(metric_id: int):
+def check_notify_metric_changed_task(metric_id: int) -> None:
     metric = Metric.objects.get(pk=metric_id)
     spike_date = metric_analyse.detected_spike(metric.pk)
     if spike_date:
@@ -188,7 +188,7 @@ def check_notify_metric_changed_task(metric_id: int):
 
 
 @shared_task
-def verify_inactive_task(metric_id: int):
+def verify_inactive_task(metric_id: int) -> None:
     metric = Metric.objects.get(pk=metric_id)
     # How long since last successful collect?
     last_non_nan_measurement = metric.last_non_nan_measurement
@@ -215,7 +215,7 @@ To fix this error, you might have to reconfigure your metric by following the li
 
 
 @task_failure.connect()
-def celery_task_failure_email(sender, *args, **kwargs):
+def celery_task_failure_email(sender, *args, **kwargs) -> None:
     exception = kwargs["exception"]
     subject = None
     message = ""
@@ -240,34 +240,49 @@ To fix the error, you will have to re-authorize by following the link below:
             # If it's an HTTPError, only handle certain error codes
             # - 401 Unauthorized: client provides no credentials or invalid credentials
             # - 403 Forbidden: has valid credentials but not enough privileges
-            if not isinstance(
-                exception, requests.HTTPError
-            ) or exception.response.status_code in [400, 401, 403]:
+            if not isinstance(exception, requests.HTTPError) or (
+                exception.response is not None
+                and exception.response.status_code in [400, 401, 402, 403]
+            ):
                 # Handler for exceptions that can be fixed by the user
                 subject = (
                     f"Aw snap, collecting data for the {metric.name} metric failed 😟"
                 )
+                more_detail = None
+                if (
+                    isinstance(exception, requests.HTTPError)
+                    and exception.response is not None
+                ):
+                    try:
+                        more_detail = exception.response.json()
+                    except json.decoder.JSONDecodeError:
+                        pass
                 message = f"""Hello {metric.user.first_name} 👋
 
 Unfortunately, something went wrong last night when attempting to collect the latest data for the {metric.name} metric.
-The error was: {exception}
+The error was: {exception}"""
+                if more_detail:
+                    message += f"\n\nAdditional information: {more_detail}"
+
+                message += f"""
 
 To fix this error, you might have to reconfigure your metric by following the link below:
 {BASE_URL}{reverse('metric-details', args=[metric_pk])}
 """
         if subject and message:
-            return send_mail(
+            send_mail(
                 subject,
                 message,
                 from_email="Polynomial <olivier@polynomial.so>",
                 recipient_list=[metric.user.email],
             )
+            return
 
     # Generic handler
     extras = {}
 
     # Add some details if this is a HTTPError
-    if isinstance(exception, requests.HTTPError):
+    if isinstance(exception, requests.HTTPError) and exception.response is not None:
         try:
             extras["response_json"] = exception.response.json()
         except json.decoder.JSONDecodeError:
