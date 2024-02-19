@@ -9,6 +9,7 @@ from .models import Measurement, Metric
 def query_measurements_without_gaps(
     start_date: date, end_date: date, metric_id: int
 ) -> List[Measurement]:
+    assert start_date <= end_date, "start_date should be before end_date"
     with connection.cursor() as cursor:
         cursor.execute(
             """

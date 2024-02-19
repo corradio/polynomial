@@ -130,7 +130,7 @@ class GoogleSheets(OAuth2Integration):
         # Parse data
         measurements = [
             MeasurementTuple(
-                date=self._serial_date_to_date(get_cell(row, date_column)),
+                date=self._serial_date_to_date(float(get_cell(row, date_column))),
                 value=try_convert_cell_to_float(get_cell(row, value_column), row_index),
             )
             for row_index, row in enumerate(data)

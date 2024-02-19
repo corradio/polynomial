@@ -6,6 +6,7 @@ from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth.models import AbstractUser, AnonymousUser
 from django.db import models
 from django.db.models import Q
+from django.db.models.manager import Manager
 from django.urls import reverse
 from django.utils.text import slugify
 from django_jsonform.models.fields import JSONField
@@ -19,10 +20,8 @@ logger = logging.getLogger(__name__)
 class User(AbstractUser):
     # tz, see https://docs.djangoproject.com/en/4.1/topics/i18n/timezones/
     if TYPE_CHECKING:
-        from django.db.models.manager import RelatedManager
-
-        emailaddress_set: RelatedManager[EmailAddress]
-        socialaccount_set: RelatedManager[SocialAccount]
+        emailaddress_set: Manager[EmailAddress]
+        socialaccount_set: Manager[SocialAccount]
 
     last_dashboard_visit = models.DateTimeField(null=True)
 
@@ -68,8 +67,10 @@ class Metric(models.Model):
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )
     integration_credentials = models.JSONField(blank=True, null=True)
-    organizations = models.ManyToManyField("Organization", blank=True)
-    dashboards = models.ManyToManyField(
+    organizations: models.ManyToManyField = models.ManyToManyField(
+        "Organization", blank=True
+    )
+    dashboards: models.ManyToManyField = models.ManyToManyField(
         "Dashboard", through="dashboard_metrics", blank=True
     )
     higher_is_better = models.BooleanField(
@@ -373,6 +374,7 @@ class OrganizationUser(models.Model):
 class Organization(models.Model):
     name = models.CharField(max_length=128)
     slug = models.SlugField(unique=True)
+    organizationuser_set: Manager[OrganizationUser]
     users = models.ManyToManyField(
         User,
         through=OrganizationUser,

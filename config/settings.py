@@ -243,11 +243,11 @@ CELERY_RESULT_BACKEND = env.str("REDIS_URL", default="redis://127.0.0.1:6379")
 CELERY_BEAT_SCHEDULE = {
     "collect_all_latest": {
         "task": "mainapp.tasks.collect_all_latest_task",
-        "schedule": crontab(minute=0, hour=2),
+        "schedule": crontab(minute="0", hour="2"),
     },
     "export": {
         "task": "mainapp.tasks.spreadsheet_export_all",
-        "schedule": crontab(minute=0, hour=4),
+        "schedule": crontab(minute="0", hour="4"),
     },
 }
 CELERY_TASK_TIME_LIMIT = 11 * 60  # seconds
