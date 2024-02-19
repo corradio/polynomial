@@ -44,7 +44,7 @@ deploy:
 
 # Celery
 runworker:
-	DEBUG=1 poetry run celery -A config worker -l DEBUG
+	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES DEBUG=1 poetry run celery -A config worker -l DEBUG
 
 runbeat:
 	DEBUG=1 poetry run celery -A config beat -l INFO
