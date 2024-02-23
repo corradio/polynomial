@@ -56,7 +56,7 @@ class Plausible(Integration):
 
         url = f"https://plausible.io/api/v1/stats/aggregate"
         url += f"?site_id={site_id}"
-        url += "&period=day"
+        url += "&period=day&with_imported=true"
         # Plausible uses timezones defined in the plausible site config
         url += f"&date={date.strftime('%Y-%m-%d')}"
         url += f"&metrics={metric}"
