@@ -80,7 +80,10 @@ def collect_all_latest_task() -> None:
 
 
 @shared_task(max_retries=10, autoretry_for=(RequestException,), retry_backoff=30)
-def backfill_task(metric_id: int, since: Optional[str] = None):
+def backfill_task(metric_id: int, since: Optional[str] = None) -> None:
+    if backfill_task.request.retries:
+        logger.info(f"Retrying backfill_task since {since}")
+
     metric = Metric.objects.get(pk=metric_id)
     if not since:
         start_date: Optional[date] = date.min
@@ -109,15 +112,22 @@ def backfill_task(metric_id: int, since: Optional[str] = None):
             date_end=date.today() - timedelta(days=1),
         )
         # Save
+        retry_since = since
         for measurement in measurements_iterator:
-            Measurement.objects.update_or_create(
-                metric=metric,
-                date=measurement.date,
-                defaults={
-                    "value": measurement.value,
-                    "metric": metric,
-                },
-            )
+            try:
+                Measurement.objects.update_or_create(
+                    metric=metric,
+                    date=measurement.date,
+                    defaults={
+                        "value": measurement.value,
+                        "metric": metric,
+                    },
+                )
+                retry_since = (measurement.date + timedelta(days=1)).isoformat()
+            except Exception as e:
+                raise backfill_task.retry(
+                    exc=e, kwargs={"metric_id": metric_id, "since": retry_since}
+                )
 
 
 @shared_task
