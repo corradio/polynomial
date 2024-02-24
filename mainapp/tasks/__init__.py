@@ -113,8 +113,8 @@ def backfill_task(metric_id: int, since: Optional[str] = None) -> None:
         )
         # Save
         retry_since = since
-        for measurement in measurements_iterator:
-            try:
+        try:
+            for measurement in measurements_iterator:
                 Measurement.objects.update_or_create(
                     metric=metric,
                     date=measurement.date,
@@ -124,10 +124,10 @@ def backfill_task(metric_id: int, since: Optional[str] = None) -> None:
                     },
                 )
                 retry_since = (measurement.date + timedelta(days=1)).isoformat()
-            except Exception as e:
-                raise backfill_task.retry(
-                    exc=e, kwargs={"metric_id": metric_id, "since": retry_since}
-                )
+        except Exception as e:
+            raise backfill_task.retry(
+                exc=e, kwargs={"metric_id": metric_id, "since": retry_since}
+            )
 
 
 @shared_task
