@@ -85,6 +85,7 @@
       vlSpec,
       {"actions": false}
     ).then(result => {
+      {% if metric.can_edit %}
       result.view.addEventListener('click', function(event, item) {
         // Prompt
         var newMarker = prompt("What marker would you like to set?", item.datum.datum.marker);
@@ -136,6 +137,7 @@
           });
         }
       });
+      {% endif %}
     }).catch(console.warn);;
   {% endfor %}
 </script>

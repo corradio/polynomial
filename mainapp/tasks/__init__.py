@@ -79,10 +79,12 @@ def collect_all_latest_task() -> None:
         verify_inactive_task.delay(metric.id)
 
 
-@shared_task(max_retries=10, autoretry_for=(RequestException,), retry_backoff=30)
+@shared_task(max_retries=10)
 def backfill_task(metric_id: int, since: Optional[str] = None) -> None:
     if backfill_task.request.retries:
-        logger.info(f"Retrying backfill_task since {since}")
+        logger.info(
+            f"Retrying backfill_task {backfill_task.request.retries}/{backfill_task.max_retries} resuming at {since}"
+        )
 
     metric = Metric.objects.get(pk=metric_id)
     if not since:
@@ -124,9 +126,14 @@ def backfill_task(metric_id: int, since: Optional[str] = None) -> None:
                     },
                 )
                 retry_since = (measurement.date + timedelta(days=1)).isoformat()
-        except Exception as e:
+        except RequestException as e:
+            # This will retry the task. Countdown needs to be manually set, but
+            # max_retries will follow task configuration
+            countdown = 10 * (2 ** (backfill_task.request.retries + 1))
             raise backfill_task.retry(
-                exc=e, kwargs={"metric_id": metric_id, "since": retry_since}
+                exc=e,
+                countdown=countdown,
+                kwargs={"metric_id": metric_id, "since": retry_since},
             )
 
 
