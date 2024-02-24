@@ -44,6 +44,10 @@ celery-types = "^0.22.0"
 [tool.isort]
 profile = "black"
 
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
