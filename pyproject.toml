@@ -39,6 +39,7 @@ autoflake = "^2.2.0"
 notebook = "<7.0.0" # TODO: Remove once https://github.com/django-extensions/django-extensions/issues/1830 is fixed
 django-stubs = "^4.2.7"
 mypy = "^1.8.0"
+celery-types = "^0.22.0"
 
 [tool.isort]
 profile = "black"
