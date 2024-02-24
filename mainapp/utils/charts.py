@@ -173,7 +173,6 @@ def get_vl_spec(
                     "dx": 0,
                     "dy": 2,
                     "fontSize": 11,
-                    # "fontWeight": 300,
                     "angle": -90,
                     "color": "gray",
                 },
@@ -181,14 +180,6 @@ def get_vl_spec(
                     "x": {"field": "markerDate"},
                     "y": {"value": 0},
                     "text": {"field": "marker"},
-                    "color": {
-                        "condition": {
-                            "param": "highlight",
-                            "empty": False,
-                            "value": "black",
-                        },
-                        "value": "gray",  # default value,
-                    },
                 },
             },
         ],
@@ -269,6 +260,18 @@ def get_vl_spec(
                     },
                 }
             )
+            # Highlight markers based on mouseover
+            for layer in vl_spec["layer"]:
+                if layer["name"] == "commentLabels":
+                    layer["encoding"]["color"] = {
+                        "condition": {
+                            "param": "highlight",
+                            "empty": False,
+                            "value": "black",
+                        },
+                        "value": "gray",  # default value,
+                    }
+                    break
     # Only add points if we're dealing with less than X points
     return vl_spec
 
