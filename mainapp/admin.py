@@ -10,14 +10,14 @@ class MetricAdminForm(forms.ModelForm):
         # If the follow line is enabled, and if the `widget.config`
         # setting is removed from Meta, then the custom schema will be used,
         # see https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
-        # self.fields["integration_config"].widget.instance = self.instance
+        self.fields["integration_config"].widget.instance = self.instance
 
     class Meta:
         model = models.Metric
         fields = "__all__"
         # The following can be enabled in order to make the field editable as
         # normal JSON
-        widgets = {"integration_config": forms.Textarea()}
+        # widgets = {"integration_config": forms.Textarea()}
 
 
 class MetricAdmin(admin.ModelAdmin):
