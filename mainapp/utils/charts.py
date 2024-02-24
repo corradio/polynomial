@@ -34,14 +34,14 @@ def get_vl_spec(
     height="container",
     labels: Optional[Dict[date, str]] = None,
     imageLabelUrls: Optional[Dict[date, str]] = None,
+    markers: Optional[Dict[date, str]] = None,
 ):
     if not measurements:
         return {}
     start_date = measurements[0].date
     end_date = measurements[-1].date
-    value_extent = max((filter_nan(m.value) or 0 for m in measurements)) - min(
-        (filter_nan(m.value) or 0 for m in measurements)
-    )
+    max_value = max((filter_nan(m.value) or 0 for m in measurements))
+    value_extent = max_value - min((filter_nan(m.value) or 0 for m in measurements))
     vl_spec = {
         "$schema": "https:#vega.github.io/schema/vega-lite/v5.json",
         "width": width,
@@ -51,20 +51,20 @@ def get_vl_spec(
         "autosize": {"type": "none"},
         "padding": {"right": 30, "left": 30, "top": 15, "bottom": 30},
         "data": {
+            "name": "data",
             "values": [
                 {
                     # NaN should be returned None in order to be JSON compliant
                     "value": filter_nan(m.value),
-                    # due to the way javascript parses dates, we must take some care here
-                    # see https://stackoverflow.com/questions/64319836/date-parsing-and-when-to-use-utc-timeunits-in-vega-lite
-                    "date": f"{m.date.isoformat()}T00:00:00",
+                    "date": date_to_js_timestamp(m.date),
                     "label": labels.get(m.date, "") if labels else "",
                     "imageLabelUrl": imageLabelUrls.get(m.date, "")
                     if imageLabelUrls
                     else "",
+                    "marker": markers.get(m.date, "") if markers else "",
                 }
                 for m in measurements
-            ]
+            ],
         },
         "params": [
             {
@@ -82,6 +82,10 @@ def get_vl_spec(
             {
                 "calculate": f"datum.value + {0.1 * value_extent}",
                 "as": "valueWithOffset",
+            },
+            {
+                "calculate": "datum.marker ? datum.date : null",
+                "as": "markerDate",
             },
         ],
         "encoding": {
@@ -148,6 +152,43 @@ def get_vl_spec(
                     "x": {"field": "date", "type": "temporal"},
                     "y": {"field": "valueWithOffset", "type": "quantitative"},
                     "url": {"field": "imageLabelUrl", "type": "nominal"},
+                },
+            },
+            # Rules
+            {
+                "name": "markers",
+                "mark": "rule",
+                "encoding": {
+                    "x": {"field": "markerDate", "type": "temporal"},
+                    "y": None,
+                    "color": {"value": "gray"},
+                },
+            },
+            {
+                "name": "commentLabels",
+                "mark": {
+                    "type": "text",
+                    "align": "right",
+                    "baseline": "top",
+                    "dx": 0,
+                    "dy": 2,
+                    "fontSize": 11,
+                    # "fontWeight": 300,
+                    "angle": -90,
+                    "color": "gray",
+                },
+                "encoding": {
+                    "x": {"field": "markerDate"},
+                    "y": {"value": 0},
+                    "text": {"field": "marker"},
+                    "color": {
+                        "condition": {
+                            "param": "highlight",
+                            "empty": False,
+                            "value": "black",
+                        },
+                        "value": "gray",  # default value,
+                    },
                 },
             },
         ],
@@ -241,6 +282,7 @@ def metric_chart_vl_spec(
         start_date=start_date, end_date=end_date, metric_id=metric_id
     )
     metric = Metric.objects.get(pk=metric_id)
+    markers = {marker.date: marker.text for marker in metric.marker_set.all()}
     imageLabelUrls = None
     if metric.enable_medals:
         topk_dates = query_topk_dates(metric_id)
@@ -259,6 +301,7 @@ def metric_chart_vl_spec(
             width=640,
             height=280,
             imageLabelUrls=imageLabelUrls,
+            markers=markers,
         )
     )
 

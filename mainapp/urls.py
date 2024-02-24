@@ -23,8 +23,29 @@ urlpatterns = [
                 path("", views.metric.MetricListView.as_view(), name="metrics"),
                 path(
                     "<int:pk>/",
-                    views.metric.MetricUpdateView.as_view(),
-                    name="metric-details",
+                    include(
+                        [
+                            path(
+                                "",
+                                views.metric.MetricUpdateView.as_view(),
+                                name="metric-details",
+                            ),
+                            # Markers
+                            path(
+                                "markers/",
+                                include(
+                                    [
+                                        path("", views.marker.marker, name="marker"),
+                                        path(
+                                            "<str:marker_date_str>",
+                                            views.marker.marker_with_date,
+                                            name="marker",
+                                        ),
+                                    ]
+                                ),
+                            ),
+                        ]
+                    ),
                 ),
                 path(
                     "<int:pk>/backfill",

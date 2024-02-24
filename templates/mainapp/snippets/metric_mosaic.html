@@ -75,17 +75,68 @@
 
 {{ vl_spec | json_script:"vl_spec" }}
 
-<script type="text/javascript">
-  var vlSpec = JSON.parse(document.getElementById('vl_spec').textContent);
+{% csrf_token %}
 
-  var vlSpec;
+<script type="text/javascript">
   {% for metric in measurements_by_metric %}
-    vlSpec = JSON.parse(document.getElementById('metric-spec-{{ metric.metric_id }}').textContent);
+    var vlSpec = JSON.parse(document.getElementById('metric-spec-{{ metric.metric_id }}').textContent);
     vegaEmbed(
       '#chart-{{ metric.metric_id }}',
       vlSpec,
       {"actions": false}
-    );
+    ).then(result => {
+      result.view.addEventListener('click', function(event, item) {
+        // Prompt
+        var newMarker = prompt("What marker would you like to set?", item.datum.datum.marker);
+        if (newMarker == null) {
+            return; // Cancel
+        }
+        var url;
+        var method;
+        var requestBody;
+        var dateStr = new Date(item.datum.datum.date).toISOString().replace('T00:00:00.000Z', '');
+        if (newMarker == '' && item.datum.datum.marker != '') {
+          url = '/metrics/{{ metric.metric_id }}/markers/' + dateStr;
+          method = 'DELETE';
+        } else if (newMarker != '') {
+          // Upsert
+          url = '/metrics/{{ metric.metric_id }}/markers/';
+          method = 'POST';
+          requestBody = {
+            'text': newMarker,
+            'date': dateStr,
+          }
+        }
+        if (url && method) {
+          var csrftoken = document.querySelector('input[name=csrfmiddlewaretoken]').value;
+          fetch(url, {
+            method: method,
+            headers: {
+              'X-CSRFToken': csrftoken,
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify(requestBody),
+          }).then(response => {
+            if (response.ok) {
+              // Update in UI. Note this might be out of sync with server.
+              var changeSet = vega
+                .changeset()
+                .modify(d => d.date == item.datum.datum.date, 'marker', newMarker);
+              result.view.change('data', changeSet).run();
+            } else {
+              // Server error
+              alert('Something went wrong');
+              console.error(response);
+            }
+          }).catch(error => {
+            // Client error
+            alert('Something went wrong');
+            console.error(error);
+          });
+        }
+      });
+    }).catch(console.warn);;
   {% endfor %}
 </script>
 </div>

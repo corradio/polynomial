@@ -12,7 +12,7 @@ from ..models import Metric
 from ..tasks import google_spreadsheet_export, slack_notifications
 
 # Re-export
-from . import dashboard, metric, organization, organization_invitation  # noqa
+from . import dashboard, marker, metric, organization, organization_invitation  # noqa
 from .utils import add_next
 
 

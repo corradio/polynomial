@@ -238,6 +238,9 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
                         TOP3_MEDAL_IMAGE_PATH,
                     )
                 ),
+                markers={
+                    marker.date: marker.text for marker in metric.marker_set.all()
+                },
             ),
         }
         for metric in Metric.objects.filter(dashboard=dashboard).order_by("name")
