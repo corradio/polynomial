@@ -80,6 +80,7 @@ class Metric(models.Model):
     enable_medals = models.BooleanField(
         default=True, help_text="Highlight the top 3 values"
     )
+    last_collect_attempt = models.DateTimeField(blank=True, null=True)
 
     # The credentials can be saved either in db, or in cache, while the object
     # is temporarily being built. We therefore allow this to be changed later.

@@ -33,6 +33,10 @@ logger = get_task_logger(__name__)
 def collect_latest_task(metric_id: int) -> None:
     logger.info(f"Start collect_latest_task(metric_id={metric_id})")
     metric = Metric.objects.get(pk=metric_id)
+
+    metric.last_collect_attempt = datetime.now()
+    metric.save()
+
     integration_instance = metric.integration_instance
     if integration_instance.can_backfill():
         # Check if we should gather previously missing datapoints
@@ -87,6 +91,10 @@ def backfill_task(metric_id: int, since: Optional[str] = None) -> None:
         )
 
     metric = Metric.objects.get(pk=metric_id)
+
+    metric.last_collect_attempt = datetime.now()
+    metric.save()
+
     if not since:
         start_date: Optional[date] = date.min
     else:
