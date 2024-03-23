@@ -307,12 +307,11 @@ class OrganizationUserCreateForm(BaseModelForm):
 
 
 class DashboardForm(BaseModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         request = kwargs.pop("request")
         super().__init__(*args, **kwargs)
 
         user = request.user
-        organizations = Organization.objects.filter(users=user)
         organization_field = self.fields["organization"]
         assert isinstance(organization_field, forms.ModelChoiceField)
         organization_field.queryset = Organization.objects.filter(users=user)
@@ -320,13 +319,13 @@ class DashboardForm(BaseModelForm):
         # Also make a dict with slugs available
         self.org_slugs = {o.pk: o.slug for o in organization_field.queryset}
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> Dashboard:
         dashboard = super().save(*args, **kwargs)
         # Also make sure that every metric of this dashboard is moved
         # to the organization to keep ACL consistent
         if dashboard.organization:
             for metric in dashboard.metrics.all():
-                metric.organizations.add(dashboard.organization)
+                metric.organization = dashboard.organization
         return dashboard
 
     class Meta:
