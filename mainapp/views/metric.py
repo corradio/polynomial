@@ -12,7 +12,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
-from django.forms.models import model_to_dict
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -196,15 +195,19 @@ class MetricListView(LoginRequiredMixin, ListView):
 
 
 @login_required
-def metric_duplicate(request, pk):
-    metric = get_object_or_404(Metric, pk=pk, user=request.user)
-    # Copy object
-    metric_object = model_to_dict(metric)
-    metric_object["name"] = f"Copy of {metric_object['name']}"
-    metric_object["dashboards"] = [d.pk for d in metric.dashboards.all()]
-    metric_object["organizations"] = [o.pk for o in metric.organizations.all()]
-    del metric_object["id"]
-    del metric_object["user"]
+def metric_duplicate(request, pk) -> HttpResponseRedirect:
+    metric: Metric = get_object_or_404(Metric, pk=pk, user=request.user)
+    # Copy object (except `id`, `user` and some other fields like `created_at`)
+    metric_object = {
+        "name": f"Copy of {metric.name}",
+        "integration_id": metric.integration_id,
+        "integration_credentials": metric.integration_credentials,
+        "organization_id": metric.organization.pk,
+        "dashboards": [d.pk for d in metric.dashboards.all()],
+        "higher_is_better": metric.higher_is_better,
+        "enable_medals": metric.enable_medals,
+        "integration_config": metric.integration_config,
+    }
 
     # Generate a new state to uniquely identify this new creation
     state = secrets.token_urlsafe(32)
@@ -227,7 +230,7 @@ def metric_new(request):
         "metric": {
             "integration_id": request.GET["integration_id"],
             "dashboards": deserialize_int_list(request.GET.get("dashboard_ids")),
-            "organizations": deserialize_int_list(request.GET.get("organization_ids")),
+            "organization": request.GET.get("organization_id"),
         },
         "user_id": request.user.id,
     }
@@ -301,11 +304,7 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
         # object which is capable of updating the cached credentials
         kwargs["instance"] = Metric(
             # Note we have to exclude relations from initialization params
-            **{
-                k: v
-                for (k, v) in kwargs["initial"].items()
-                if k not in ["dashboards", "organizations"]
-            }
+            **{k: v for (k, v) in kwargs["initial"].items() if k not in ["dashboards"]}
         )
 
         def credentials_saver(metric_instance):

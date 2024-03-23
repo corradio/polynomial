@@ -32,7 +32,7 @@
               {{ metric.user.name }}
             {% endif %}
           </td>
-          <td>{{ metric.organizations.all|join:", " }}</td>
+          <td>{{ metric.organization }}</td>
           <td>{{ metric.dashboard_set.all|join:", " }}</td>
           <td>
             {% if metric.user == user %}

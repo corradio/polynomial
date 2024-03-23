@@ -22,8 +22,8 @@ class Metric(models.Model):
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )
     integration_credentials = models.JSONField(blank=True, null=True)
-    organizations: models.ManyToManyField = models.ManyToManyField(
-        "Organization", blank=True
+    organization: models.ForeignKey = models.ForeignKey(
+        "Organization", null=True, blank=True, on_delete=models.CASCADE
     )
     dashboards: models.ManyToManyField = models.ManyToManyField(
         "Dashboard", through="dashboard_metrics", blank=True
@@ -123,14 +123,14 @@ class Metric(models.Model):
         # Owner or org admin
         if self.user == user:
             return True
-        return any(o.is_admin(user) for o in self.organizations.all())
+        return self.organization.is_admin(user)
 
     def can_view(self, user: Union[User, AnonymousUser]):
         if self.can_edit(user):
             return True
         # Check if user is *member* of any of the orgs that this
         # metric belong to
-        return any(o.is_member(user) for o in self.organizations.all())
+        return self.organization.is_member(user)
 
     def can_be_backfilled_by(self, user: Union[User, AnonymousUser]) -> bool:
         if not self.can_backfill:
@@ -139,20 +139,17 @@ class Metric(models.Model):
             return True
         # Check if user is *member* of any of the orgs that this
         # metric belong to
-        return any(o.is_member(user) for o in self.organizations.all())
+        return self.organization.is_member(user)
 
     def can_alter_credentials_by(self, user: Union[User, AnonymousUser]) -> bool:
         if self.can_edit(user):
             return True
         # Check if user is *member* of any of the orgs that this
         # metric belong to
-        return any(o.is_member(user) for o in self.organizations.all())
+        return self.organization.is_member(user)
 
     def __str__(self):
         return f"{self.name}"
-
-    def organizations_pk_list(self):
-        return [x.pk for x in self.organizations.all()]
 
     class Meta:
         constraints = [

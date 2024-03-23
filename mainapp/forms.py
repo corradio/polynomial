@@ -42,11 +42,11 @@ class MetricForm(BaseModelForm):
             for field in self.fields.values():
                 field.disabled = True
 
-        organizations_field = self.fields["organizations"]
-        assert isinstance(organizations_field, forms.ModelChoiceField)
+        organization_field = self.fields["organization"]
+        assert isinstance(organization_field, forms.ModelChoiceField)
         organizations = Organization.objects.filter(users=self.user)
-        organizations_field.queryset = Organization.objects.filter(users=self.user)
-        organizations_field.help_text = "Sharing a metric with an organization will make it usable by all its members"
+        organization_field.queryset = Organization.objects.filter(users=self.user)
+        organization_field.help_text = "Sharing a metric with an organization will make it usable by all its members"
 
         if "dashboards" in self.fields:
             dashboards_field = self.fields["dashboards"]
@@ -58,16 +58,15 @@ class MetricForm(BaseModelForm):
                 "Adding a metric to a dashboard will also add it to its organization"
             )
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> Metric:
         if not self.instance.can_edit(self.user):
             raise PermissionDenied()
-        metric = super().save(*args, **kwargs)
+        metric: Metric = super().save(*args, **kwargs)
         # Also make sure that for each dashboard,
         # the metric is moved to its organization if applicable
         # to keep ACL consistent
         for dashboard in metric.dashboards.all():
-            if dashboard.organization:
-                metric.organizations.add(dashboard.organization)
+            metric.organization = dashboard.organization
         return metric
 
     @property
@@ -80,7 +79,7 @@ class MetricForm(BaseModelForm):
         model = Metric
         fields = [
             "name",
-            "organizations",
+            "organization",
             "enable_medals",
             "higher_is_better",
             "integration_config",
@@ -92,7 +91,7 @@ class MetricForm(BaseModelForm):
         widgets = {
             "integration_id": forms.HiddenInput(),
             "dashboards": forms.MultipleHiddenInput(),
-            "organizations": forms.CheckboxSelectMultiple(),
+            "organization": forms.Select(),
             "higher_is_better": forms.Select(
                 choices=(
                     (True, "Higher values are better"),
@@ -163,7 +162,7 @@ class MetricTransferOwnershipForm(BaseModelForm):
 
         # To avoid leaking all org users, we only show the ones in the organisation
         users = sorted(
-            list({u for o in self.instance.organizations.all() for u in o.users.all()}),
+            self.instance.organization.users.all(),
             key=lambda u: str(u),
         )
         self.fields["user"].widget = forms.Select(choices=[(u.pk, u) for u in users])
@@ -422,9 +421,9 @@ class MetricDashboardAddForm(BaseModelForm):
         if not self.data.get("dashboards") and not self.data.get("dashboard_new"):
             raise forms.ValidationError(f"Dashboard is missing")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> Metric:
         with transaction.atomic():
-            metric = super().save(*args, **kwargs)
+            metric: Metric = super().save(*args, **kwargs)
             if self.data["dashboard_new"]:
                 new_dashboard = Dashboard(
                     name=self.data["dashboard_new"], user=self.user
@@ -435,8 +434,7 @@ class MetricDashboardAddForm(BaseModelForm):
             # the metric is moved to its organization if applicable
             # to keep ACL consistent
             for dashboard in metric.dashboards.all():
-                if dashboard.organization:
-                    metric.organizations.add(dashboard.organization)
+                metric.organization = dashboard.organization
         return metric
 
     class Meta:
