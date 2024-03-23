@@ -30,7 +30,7 @@ from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import Integration, WebAuthIntegration
 
 from .. import forms
-from ..forms import MetricForm
+from ..forms import MetricForm, MetricTransferOwnershipForm
 from ..models import Measurement, Metric, Organization, User
 from ..tasks import backfill_task
 from ..utils.charts import get_vl_spec
@@ -413,6 +413,20 @@ class MetricUpdateView(LoginRequiredMixin, UpdateView):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+
+class MetricTransferOwnershipView(LoginRequiredMixin, UpdateView):
+    model = Metric
+    form_class = MetricTransferOwnershipForm
+
+    def get_success_url(self):
+        return self.request.GET.get("next") or reverse("index")
+
+    def get_object(self, queryset=None):
+        instance = super().get_object(queryset)
+        if not instance.can_view(self.request.user):
+            raise PermissionDenied()
+        return instance
 
 
 @login_required

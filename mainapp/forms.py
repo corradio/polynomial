@@ -157,6 +157,24 @@ class MetricImportForm(BaseModelForm):
         fields: List[str] = []
 
 
+class MetricTransferOwnershipForm(BaseModelForm):
+    def __init__(self, *args, **kwargs):
+        super(MetricTransferOwnershipForm, self).__init__(*args, **kwargs)
+
+        # To avoid leaking all org users, we only show the ones in the organisation
+        users = sorted(
+            list({u for o in self.instance.organizations.all() for u in o.users.all()}),
+            key=lambda u: str(u),
+        )
+        self.fields["user"].widget = forms.Select(choices=[(u.pk, u) for u in users])
+
+    class Meta:
+        model = Metric
+        fields = [
+            "user",
+        ]
+
+
 class OrganizationForm(BaseModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

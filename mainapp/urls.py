@@ -64,6 +64,11 @@ urlpatterns = [
                     name="metric_delete",
                 ),
                 path(
+                    "<int:pk>/transfer_ownership",
+                    views.metric.MetricTransferOwnershipView.as_view(),
+                    name="metric_transfer_ownership",
+                ),
+                path(
                     "<int:pk>/authorize",
                     views.metric.metric_authorize,
                     name="metric-authorize",

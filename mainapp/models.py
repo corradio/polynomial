@@ -59,6 +59,9 @@ class User(AbstractUser):
             return avatar_urls[0]
         return None
 
+    def __str__(self):
+        return f"{self.name} ({self.email})"
+
 
 class Metric(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -123,7 +126,7 @@ class Metric(models.Model):
         schema=callable_config_schema,
         verbose_name="Integration configuration",
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Owner")
 
     def get_absolute_url(self):
         return reverse("metric-details", args=[self.pk])
