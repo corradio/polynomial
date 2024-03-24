@@ -35,14 +35,7 @@ class OrganizationForm(BaseModelForm):
     def save(self, commit=True):
         if not self.instance.pk:
             # This is a CreateForm
-            owner = self.cleaned_data["owner"]
-            # Create the organization
-            org = Organization.objects.create(**self.cleaned_data)
-            # Create the owner
-            OrganizationUser.objects.create(user=owner, organization=org, is_admin=True)
-            # Make sure the owner is part of the members
-            assert owner in org.users.all()
-            return org
+            return Organization.create(**self.cleaned_data)
         else:
             return super().save(commit)
 

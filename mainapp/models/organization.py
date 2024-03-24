@@ -94,6 +94,16 @@ class Organization(models.Model):
         max_length=128, blank=True, null=True
     )
 
+    @classmethod
+    def create(cls, owner: User, **kwargs) -> "Organization":
+        # Create the organization
+        org = Organization.objects.create(owner=owner, **kwargs)
+        # Create the owner
+        OrganizationUser.objects.create(user=owner, organization=org, is_admin=True)
+        # Make sure the owner is part of the members
+        assert owner in org.users.all()
+        return org
+
     def __str__(self):
         return self.name
 
