@@ -10,6 +10,7 @@ from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS, Integration
 from integrations.base import EMPTY_CONFIG_SCHEMA, WebAuthIntegration
 
 from .measurement import Measurement
+from .organization import Organization
 from .user import User
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ class Metric(models.Model):
     )
     integration_credentials = models.JSONField(blank=True, null=True)
     organization: models.ForeignKey = models.ForeignKey(
-        "Organization", null=True, blank=True, on_delete=models.CASCADE
+        Organization, null=True, blank=True, on_delete=models.CASCADE
     )
     dashboards: models.ManyToManyField = models.ManyToManyField(
         "Dashboard", through="dashboard_metrics", blank=True
@@ -119,17 +120,21 @@ class Metric(models.Model):
             logger.exception("Exception while calling `can_backfill`")
             return False
 
-    def can_edit(self, user: Union[User, AnonymousUser]):
+    def can_edit(self, user: Union[User, AnonymousUser]) -> bool:
         # Owner or org admin
         if self.user == user:
             return True
+        if not self.organization:
+            return False
         return self.organization.is_admin(user)
 
-    def can_view(self, user: Union[User, AnonymousUser]):
+    def can_view(self, user: Union[User, AnonymousUser]) -> bool:
         if self.can_edit(user):
             return True
         # Check if user is *member* of any of the orgs that this
         # metric belong to
+        if not self.organization:
+            return False
         return self.organization.is_member(user)
 
     def can_be_backfilled_by(self, user: Union[User, AnonymousUser]) -> bool:
