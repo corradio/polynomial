@@ -54,8 +54,9 @@ class OrganizationUser(models.Model):
 
             # Removing a user from an org also should remove their dashboard from the org
             for dashboard in self.user.dashboard_set.all():
-                dashboard.organization = None
-                dashboard.save()
+                if dashboard.organization == self.organization:
+                    dashboard.organization = None
+                    dashboard.save()
             # Removing a user from an org also should remove their metrics from the org
             for metric in self.user.metric_set.all():
                 if metric.organization == self.organization:
