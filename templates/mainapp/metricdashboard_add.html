@@ -2,11 +2,13 @@
 
 {% block content %}
     <form method="post">{% csrf_token %}
-      <p>Metric "{{ object }}" is not added to any dashboard. Would you like to add it to one?</p>
+      <p>Metric <b>{{ object }}</b> is not added to any dashboard. Would you like to add it to one?</p>
       {{ form.as_p }}
       {% if request.GET.next %}
       <a href="{{ request.GET.next }}"><input type="button" value="Skip"/></a>
       {% endif %}
-      <input type="submit" value="Confirm">
+      <p>
+        <input type="submit" value="Confirm">
+      </p>
   </form>
 {% endblock %}
