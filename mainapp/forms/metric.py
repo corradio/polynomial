@@ -1,10 +1,9 @@
 import csv
 from datetime import date, datetime
 from io import TextIOWrapper
-from typing import List
+from typing import Any, List
 
 from django import forms
-from django.core.exceptions import PermissionDenied
 from django.core.validators import FileExtensionValidator
 from django.db import transaction
 from django.db.models import Q
@@ -14,9 +13,52 @@ from mainapp.models import Dashboard, Measurement, Metric, Organization
 from .base import BaseModelForm
 
 
-class MetricForm(BaseModelForm):
+class MetricBaseForm(BaseModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        if "dashboards" in self.fields:
+            organizations = Organization.objects.filter(users=self.user)
+            dashboards_field = self.fields["dashboards"]
+            assert isinstance(dashboards_field, forms.ModelChoiceField)
+            dashboards_field.queryset = Dashboard.objects.all().filter(
+                Q(user=self.user) | Q(organization__in=organizations)
+            )
+            dashboards_field.help_text = "Note: adding a metric to a dashboard will also add it to its organization"
+
+    def clean(self) -> dict[str, Any] | None:
+        cleaned_data = super().clean()
+        # A metric can't belong to multiple orgs through its dashboards
+        dashboards = {
+            Dashboard.objects.get(pk=pk) for pk in self.data.get("dashboards", [])
+        }
+        related_orgs = {d.organization for d in dashboards if d.organization}
+        if len(related_orgs) > 1:
+            raise forms.ValidationError(
+                "A metric can only belong to dashboards of a single organization"
+            )
+        return cleaned_data
+
+    def save(self, *args, **kwargs) -> Metric:
+        return super().save(*args, **kwargs)
+
+    def _save_m2m(self) -> None:
+        # Ensure the metric belongs to the organisation of its dashboard.
+        # As multiple dashboards can be present, we simply take the first one.
+        # Metrics should never belong to multiple orgs through their dashboards
+        # (see `clean` method above).
+        # Note: this should be kept in sync with DashboardMetricAddForm
+        # (reverse)
+        super()._save_m2m()  # type: ignore[misc]
+        metric: Metric = self.instance
+        for dashboard in metric.dashboards.all():
+            if dashboard.organization:
+                metric.organization = dashboard.organization
+                break
+
+
+class MetricForm(MetricBaseForm):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # manually set the current instance on the widget
         # see https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
@@ -41,17 +83,6 @@ class MetricForm(BaseModelForm):
             dashboards_field.help_text = (
                 "Adding a metric to a dashboard will also add it to its organization"
             )
-
-    def save(self, *args, **kwargs) -> Metric:
-        if not self.instance.can_edit(self.user):
-            raise PermissionDenied()
-        metric: Metric = super().save(*args, **kwargs)
-        # Also make sure that for each dashboard,
-        # the metric is moved to its organization if applicable
-        # to keep ACL consistent
-        for dashboard in metric.dashboards.all():
-            metric.organization = dashboard.organization
-        return metric
 
     @property
     def media(self):
@@ -187,41 +218,24 @@ class MetricIntegrationForm(BaseModelForm):
         fields = ["integration_id"]
 
 
-class MetricDashboardAddForm(BaseModelForm):
+class MetricDashboardAddForm(MetricBaseForm):
     dashboard_new = forms.CharField(required=False, label="Or create a new dashboard")
 
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop("user")
-        super().__init__(*args, **kwargs)
-        organizations = Organization.objects.filter(users=self.user)
-        if "dashboards" in self.fields:
-            dashboards_field = self.fields["dashboards"]
-            assert isinstance(dashboards_field, forms.ModelChoiceField)
-            dashboards_field.queryset = Dashboard.objects.all().filter(
-                Q(user=self.user) | Q(organization__in=organizations)
-            )
-            dashboards_field.help_text = "Note: adding a metric to a dashboard will also add it to its organization"
-
-    def clean(self):
-        super().clean()
+    def clean(self) -> dict[str, Any] | None:
+        cleaned_data = super().clean()
         if not self.data.get("dashboards") and not self.data.get("dashboard_new"):
             raise forms.ValidationError(f"Dashboard is missing")
+        return cleaned_data
 
-    def save(self, *args, **kwargs) -> Metric:
-        with transaction.atomic():
-            metric: Metric = super().save(*args, **kwargs)
-            if self.data["dashboard_new"]:
-                new_dashboard = Dashboard(
-                    name=self.data["dashboard_new"], user=self.user
-                )
-                new_dashboard.save()
-                metric.dashboard_set.add(new_dashboard)
-            # Also make sure that for each dashboard,
-            # the metric is moved to its organization if applicable
-            # to keep ACL consistent
-            for dashboard in metric.dashboards.all():
-                metric.organization = dashboard.organization
-        return metric
+    def _save_m2m(self) -> None:
+        # Note: this method runs after `self.instance` has been saved
+        metric: Metric = self.instance
+        if self.data.get("dashboard_new"):
+            new_dashboard = Dashboard.objects.create(
+                name=self.data["dashboard_new"], user=self.user
+            )
+            metric.dashboards.add(new_dashboard)
+        super()._save_m2m()
 
     class Meta:
         model = Metric

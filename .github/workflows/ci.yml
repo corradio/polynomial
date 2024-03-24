@@ -20,6 +20,6 @@ jobs:
         run: poetry install
       - name: Typecheck
         run: make typecheck
-      # Tests will require static to be collected (and thus JS to be built)
+      # Tests will require static to be collected (and thus JS to be built + database to be available)
       # - name: Test
       #   run: make test

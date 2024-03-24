@@ -46,6 +46,11 @@ make resetdb
 make rundev
 ```
 
+## Run all the tests
+```sh
+make test
+```
+
 
 ## Debug stuff
 ```sh

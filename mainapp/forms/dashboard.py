@@ -56,11 +56,13 @@ class DashboardMetricAddForm(BaseModelForm):
 
     def save(self, *args, **kwargs):
         dashboard = super().save(*args, **kwargs)
-        # Also make sure that every metric is moved to organization
-        # to keep ACL consistent
+        # Ensure the metric belongs to the organisation of its dashboard.
+        # Leave intact if this dashboard is not in an org
+        # Note: this should be kept in sync with MetricBaseForm (reverse)
         if dashboard.organization:
             for metric in dashboard.metrics.all():
-                metric.organizations.add(dashboard.organization)
+                metric.organization = dashboard.organization
+                metric.save()
         return dashboard
 
     class Meta:
