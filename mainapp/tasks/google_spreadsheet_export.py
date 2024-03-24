@@ -152,7 +152,7 @@ def spreadsheet_export(organization_id):
 
     fields_to_fetch = ["metric__name", "date", "updated_at", "value"]
     measurements = (
-        Measurement.objects.filter(metric__organizations=organization)
+        Measurement.objects.filter(metric__organization=organization)
         .select_related("metric")
         .only(*fields_to_fetch)
         .order_by("-updated_at", "-date", "metric__name")[:ROW_LIMIT]
