@@ -45,7 +45,7 @@ class DashboardMetricAddForm(BaseModelForm):
         organizations = Organization.objects.filter(users=user)
         available_metrics = (
             Metric.objects.all()
-            .filter(Q(user=user) | Q(organizations__in=organizations))
+            .filter(Q(user=user) | Q(organization__in=organizations))
             .order_by("name")
         )
         metrics_field = self.fields["metrics"]
