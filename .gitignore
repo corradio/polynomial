@@ -14,3 +14,7 @@ static_root
 
 # Notebooks
 .ipynb_checkpoints
+
+# One-off
+newrelic.ini
+logshipper
