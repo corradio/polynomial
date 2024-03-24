@@ -48,6 +48,19 @@ class OrganizationUser(models.Model):
             raise ValueError(
                 "Cannot delete organization owner before having transferred ownership"
             )
+        if self.user:
+            # Note: remember to keep UI in sync
+
+            # Removing a user from an org also should remove their dashboard from the org
+            for dashboard in self.user.dashboard_set.all():
+                dashboard.organization = None
+                dashboard.save()
+            # Removing a user from an org also should remove their metrics from the org
+            for metric in self.user.metric_set.all():
+                if metric.organization == self.organization:
+                    metric.organization = None
+                    metric.save()
+
         return super().delete(using=using, keep_parents=keep_parents)
 
     def get_absolute_url(self):

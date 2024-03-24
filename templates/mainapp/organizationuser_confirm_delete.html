@@ -1,7 +1,49 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
+<h1>Are you sure?</h1>
 <form action="" method="post">{% csrf_token %}
+    <p>
+      Are you sure you want to remove <b>{{ object.user }}</b> from <b>{{ object.organization }}</b>?
+    </p>
+    <p>
+      {% if object.user.dashboard_set %}
+      The following dashboards will be made unavailable to organization members:
+      {% endif %}
+      <ul class="list-disc list-inside">
+      {% for dashboard in object.user.dashboard_set.all %}
+        <li>
+          {{ dashboard }}
+          <small>
+            (<a href="{% url 'dashboard_edit' dashboard.id %}?next={{ request.get_full_path | urlencode }}">edit</a>)
+          </small>
+        </li>
+      {% endfor %}
+      </ul>
+    </p>
+    <p>
+      {% if object.user.metric_set %}
+      The following metrics will be made unavailable to organization members:
+      {% endif %}
+      <ul class="list-disc list-inside">
+      {% for metric in object.user.metric_set.all %}
+        <li>
+          <a href="{% url 'metric-details' metric.id %}?next={{ request.get_full_path | urlencode }}">
+            {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
+              <img class="integration-icon" src="{% static icon_url %}" alt="">
+            {% endwith %}
+            {{ metric }}
+          </a>
+          <small>
+            (<a href="{% url 'metric_transfer_ownership' metric.id %}?next={{ request.get_full_path | urlencode }}">change owner</a>)
+          </small>
+        </li>
+      {% endfor %}
+      </ul>
+    </p>
     {{ form }}
-    <input type="submit" value="Delete">
+    <p>
+      <input type="submit" value="Confirm">
+    </p>
 </form>
 {% endblock %}
