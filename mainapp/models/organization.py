@@ -4,6 +4,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from django.db.models.manager import Manager
 from django.urls import reverse
+from django.utils.text import slugify
 
 from .user import User
 
@@ -155,6 +156,11 @@ class Organization(models.Model):
 
     def is_member(self, user: Union[User, AnonymousUser]):
         return True if user in self.users.all() else False
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
 
 class OrganizationInvitation(OrganizationUser):
