@@ -58,9 +58,9 @@ def get_vl_spec(
                     "value": filter_nan(m.value),
                     "date": date_to_js_timestamp(m.date),
                     "label": labels.get(m.date, "") if labels else "",
-                    "imageLabelUrl": imageLabelUrls.get(m.date, "")
-                    if imageLabelUrls
-                    else "",
+                    "imageLabelUrl": (
+                        imageLabelUrls.get(m.date, "") if imageLabelUrls else ""
+                    ),
                     "marker": markers.get(m.date, "") if markers else "",
                 }
                 for m in measurements
@@ -189,9 +189,9 @@ def get_vl_spec(
         x_axis = vl_spec["encoding"]["x"]["axis"]
         x_axis["tickCount"] = {"interval": "day", "step": 1}
         # https://d3js.org/d3-time-format#locale_format
-        x_axis[
-            "labelExpr"
-        ] = '[timeFormat(datum.value, "%e"), timeFormat(datum.value, "%d") == "01" ? timeFormat(datum.value, "%b") : ""]'
+        x_axis["labelExpr"] = (
+            '[timeFormat(datum.value, "%e"), timeFormat(datum.value, "%d") == "01" ? timeFormat(datum.value, "%b") : ""]'
+        )
 
     # Only add moving average if there's more than X days of data being non NaN
     if len([m for m in measurements if m.value == m.value]) > 30:

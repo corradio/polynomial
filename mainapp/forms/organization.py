@@ -14,12 +14,12 @@ class OrganizationForm(BaseModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance.google_spreadsheet_export_credentials:
-            self.fields[
-                "google_spreadsheet_export_spreadsheet_id"
-            ].widget = forms.HiddenInput()
-            self.fields[
-                "google_spreadsheet_export_sheet_name"
-            ].widget = forms.HiddenInput()
+            self.fields["google_spreadsheet_export_spreadsheet_id"].widget = (
+                forms.HiddenInput()
+            )
+            self.fields["google_spreadsheet_export_sheet_name"].widget = (
+                forms.HiddenInput()
+            )
         if self.instance.slack_notifications_credentials:
             self.fields["slack_notifications_channel"].widget = forms.Select(
                 choices=(

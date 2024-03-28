@@ -26,8 +26,7 @@ T = TypeVar("T", covariant=True)
 
 
 class RangeCallable(Protocol[T]):
-    def __call__(self, date_start: date, date_end: date) -> Iterable[T]:
-        ...
+    def __call__(self, date_start: date, date_end: date) -> Iterable[T]: ...
 
 
 def batch_range_per_month(

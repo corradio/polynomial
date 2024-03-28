@@ -261,9 +261,9 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         "measurements_by_metric": measurements_by_metric,
         "dashboard": dashboard,
         "dashboards": dashboards_list,
-        "dashboard_index": -1
-        if not dashboards_list
-        else dashboards_list.index(dashboard),
+        "dashboard_index": (
+            -1 if not dashboards_list else dashboards_list.index(dashboard)
+        ),
         "can_edit": dashboard.can_edit(request.user),
         "since_options": since_options,
         "since": since,
