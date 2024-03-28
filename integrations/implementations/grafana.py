@@ -22,6 +22,11 @@ class Grafana(Integration):
                 "required": True,
                 "help_text": "In Grafana, go to Administration > Users and access > Service accounts. Then create new service account with 'viewer' role, and 'Add service account token'",
             },
+            "grafana_domain": {
+                "type": "string",
+                "required": True,
+                "help_text": "This is the <domain> part of https://<domain>.grafana.net/.. in your Grafana dashboard url",
+            },
             "datasource_uid": {
                 "type": "string",
                 "required": True,
@@ -83,7 +88,8 @@ class Grafana(Integration):
         }
 
         response = self.r.post(
-            "https://electricitymap.grafana.net/api/ds/query", json=payload
+            f"https://{self.config['grafana_domain']}.grafana.net/api/ds/query",
+            json=payload,
         )
         try:
             response.raise_for_status()
