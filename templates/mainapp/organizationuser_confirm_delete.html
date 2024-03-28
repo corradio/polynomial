@@ -7,12 +7,11 @@
       Are you sure you want to remove <b>{{ object.user }}</b> from <b>{{ object.organization }}</b>?
     </p>
     <p>
-      {% if object.user.dashboard_set %}
-      The following dashboards will be made unavailable to organization members:
-      {% endif %}
       <ul class="list-disc list-inside">
-      {% for dashboard in object.user.dashboard_set.all|dictsort:"name" %}
-      {% if dashboard.organization == object.organization %}
+      {% for dashboard in object.get_organization_user_dashboards|dictsort:"name" %}
+      {% if forloop.first %}
+        The following dashboards will be made unavailable to organization members:
+      {% endif %}
         <li>
           {{ dashboard }}
           <small>
@@ -20,17 +19,15 @@
             <a href="{% url 'dashboard_transfer_ownership' dashboard.id %}?next={{ request.get_full_path | urlencode }}">change owner</a>)
           </small>
         </li>
-      {% endif %}
       {% endfor %}
       </ul>
     </p>
     <p>
-      {% if object.user.metric_set %}
-      The following metrics will be made unavailable to organization members:
-      {% endif %}
       <ul class="list-disc list-inside">
-      {% for metric in object.user.metric_set.all|dictsort:"name" %}
-      {% if metric.organization == object.organization %}
+      {% for metric in object.get_organization_user_metrics|dictsort:"name" %}
+      {% if forloop.first %}
+        The following metrics will be made unavailable to organization members:
+      {% endif %}
         <li>
           <a href="{% url 'metric-details' metric.id %}?next={{ request.get_full_path | urlencode }}">
             {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
@@ -42,7 +39,6 @@
             (<a href="{% url 'metric_transfer_ownership' metric.id %}?next={{ request.get_full_path | urlencode }}">change owner</a>)
           </small>
         </li>
-      {% endif %}
       {% endfor %}
       </ul>
     </p>

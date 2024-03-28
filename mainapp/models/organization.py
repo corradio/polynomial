@@ -1,4 +1,4 @@
-from typing import Union
+from typing import TYPE_CHECKING, List, Union
 
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
@@ -7,6 +7,10 @@ from django.urls import reverse
 from django.utils.text import slugify
 
 from .user import User
+
+if TYPE_CHECKING:
+    from .dashboard import Dashboard
+    from .metric import Metric
 
 
 class OrganizationUser(models.Model):
@@ -52,18 +56,32 @@ class OrganizationUser(models.Model):
         if self.user:
             # Note: remember to keep UI in sync
 
-            # Removing a user from an org also should remove their dashboard from the org
-            for dashboard in self.user.dashboard_set.all():
-                if dashboard.organization == self.organization:
-                    dashboard.organization = None
-                    dashboard.save()
+            # Removing a user from an org also should remove their dashboards from the org
+            for dashboard in self.get_organization_user_dashboards():
+                dashboard.organization = None
+                dashboard.save()
             # Removing a user from an org also should remove their metrics from the org
-            for metric in self.user.metric_set.all():
-                if metric.organization == self.organization:
-                    metric.organization = None
-                    metric.save()
+            for metric in self.get_organization_user_metrics():
+                metric.organization = None
+                metric.save()
 
         return super().delete(using=using, keep_parents=keep_parents)
+
+    def get_organization_user_dashboards(self) -> List["Dashboard"]:
+        if not self.user:
+            return []
+        return [
+            d
+            for d in self.user.dashboard_set.all()
+            if d.organization == self.organization
+        ]
+
+    def get_organization_user_metrics(self) -> List["Metric"]:
+        if not self.user:
+            return []
+        return [
+            m for m in self.user.metric_set.all() if m.organization == self.organization
+        ]
 
     def get_absolute_url(self):
         if self.user:

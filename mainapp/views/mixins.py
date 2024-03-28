@@ -15,7 +15,7 @@ else:
 
 
 class OrganizationUserMixin(SingleObjectMixin, _Base):
-    def get_object(self):
+    def get_object(self, queryset=None):
         organization_pk = self.kwargs["organization_pk"]
         organization_user_pk = self.kwargs.get("organization_user_pk", None)
         return get_object_or_404(
