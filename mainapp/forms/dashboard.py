@@ -71,3 +71,21 @@ class DashboardMetricAddForm(BaseModelForm):
         widgets = {
             "metrics": forms.CheckboxSelectMultiple(),
         }
+
+
+class DashboardTransferOwnershipForm(BaseModelForm):
+    def __init__(self, *args, **kwargs) -> None:
+        super(DashboardTransferOwnershipForm, self).__init__(*args, **kwargs)
+
+        # To avoid leaking all org users, we only show the ones in the organisation
+        users = sorted(
+            self.instance.organization.users.all(),
+            key=lambda u: str(u),
+        )
+        self.fields["user"].widget = forms.Select(choices=[(u.pk, u) for u in users])
+
+    class Meta:
+        model = Metric
+        fields = [
+            "user",
+        ]

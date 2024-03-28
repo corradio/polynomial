@@ -60,6 +60,13 @@ class Dashboard(models.Model):
     def can_delete(self, user: Union[User, AnonymousUser]):
         return self.user == user
 
+    def can_transfer_ownership(self, user: Union[User, AnonymousUser]) -> bool:
+        if self.user == user:
+            return True
+        if self.organization and self.organization.is_admin(user):
+            return True
+        return False
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)

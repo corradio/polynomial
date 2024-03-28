@@ -7,9 +7,11 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
 from django.views.generic import CreateView, DeleteView, UpdateView
+
+from mainapp.forms.dashboard import DashboardTransferOwnershipForm
 
 from ..forms import DashboardForm, DashboardMetricAddForm
 from ..models import Dashboard, Metric, Organization, User
@@ -268,3 +270,19 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         "since_label": [s["label"] for s in since_options if s["value"] == since][0],
     }
     return render(request, "mainapp/dashboard.html", context)
+
+
+class DashboardTransferOwnershipView(LoginRequiredMixin, UpdateView):
+    model = Dashboard
+    form_class = DashboardTransferOwnershipForm
+
+    def get_success_url(self):
+        return self.request.GET.get("next") or reverse("index")
+
+    def get_object(self, queryset=None) -> Dashboard:
+        instance: Dashboard = super().get_object(queryset)
+        if instance.can_transfer_ownership(self.request.user):
+            return instance
+        raise PermissionDenied(
+            "Only the dashboard owner or the organization admin can transfer its ownership"
+        )

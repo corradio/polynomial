@@ -239,6 +239,11 @@ urlpatterns = [
                     view=views.dashboard.DashboardMetricRemoveView.as_view(),
                     name="dashboardmetric_remove",
                 ),
+                path(
+                    "<int:pk>/transfer_ownership",
+                    views.dashboard.DashboardTransferOwnershipView.as_view(),
+                    name="dashboard_transfer_ownership",
+                ),
             ]
         ),
     ),
