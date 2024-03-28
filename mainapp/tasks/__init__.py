@@ -196,7 +196,8 @@ def check_notify_metric_changed_task(metric_id: int) -> None:
         # Check for slack messages
         organization = metric.organization
         if (
-            organization.slack_notifications_credentials
+            organization
+            and organization.slack_notifications_credentials
             and organization.slack_notifications_channel
         ):
             # Send slack message

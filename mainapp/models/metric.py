@@ -23,7 +23,7 @@ class Metric(models.Model):
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )
     integration_credentials = models.JSONField(blank=True, null=True)
-    organization: models.ForeignKey = models.ForeignKey(
+    organization = models.ForeignKey(
         Organization, null=True, blank=True, on_delete=models.CASCADE
     )
     dashboards: models.ManyToManyField = models.ManyToManyField(
@@ -144,14 +144,25 @@ class Metric(models.Model):
             return True
         # Check if user is *member* of any of the orgs that this
         # metric belong to
-        return self.organization.is_member(user)
+        if self.organization:
+            return self.organization.is_member(user)
+        return False
+
+    def can_transfer_ownership(self, user: Union[User, AnonymousUser]) -> bool:
+        if self.user == user:
+            return True
+        if self.organization and self.organization.is_admin(user):
+            return True
+        return False
 
     def can_alter_credentials_by(self, user: Union[User, AnonymousUser]) -> bool:
         if self.can_edit(user):
             return True
         # Check if user is *member* of any of the orgs that this
         # metric belong to
-        return self.organization.is_member(user)
+        if self.organization:
+            return self.organization.is_member(user)
+        return False
 
     def __str__(self):
         return f"{self.name}"

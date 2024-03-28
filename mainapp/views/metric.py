@@ -202,7 +202,7 @@ def metric_duplicate(request, pk) -> HttpResponseRedirect:
         "name": f"Copy of {metric.name}",
         "integration_id": metric.integration_id,
         "integration_credentials": metric.integration_credentials,
-        "organization_id": metric.organization.pk,
+        "organization_id": metric.organization and metric.organization.pk,
         "dashboards": [d.pk for d in metric.dashboards.all()],
         "higher_is_better": metric.higher_is_better,
         "enable_medals": metric.enable_medals,
@@ -421,11 +421,13 @@ class MetricTransferOwnershipView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return self.request.GET.get("next") or reverse("index")
 
-    def get_object(self, queryset=None):
-        instance = super().get_object(queryset)
-        if not instance.can_view(self.request.user):
-            raise PermissionDenied()
-        return instance
+    def get_object(self, queryset=None) -> Metric:
+        instance: Metric = super().get_object(queryset)
+        if instance.can_transfer_ownership(self.request.user):
+            return instance
+        raise PermissionDenied(
+            "Only the metric owner or the organization admin can transfer its ownership"
+        )
 
 
 @login_required
