@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+
+{% load widget_tweaks %}
+
 {% block content %}
 <h1>{{ organization }}</h1>
 <form action="" method="post">{% csrf_token %}
@@ -7,7 +10,14 @@
         <p>
             {{ field.errors }}
             {{ field.label_tag }}
-            {{ field }}
+            {% if field.name == 'slug' %}
+              <div class="flex">
+                <span id="id_slug_prefix" class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">polynomial.so/</span>
+                {{ field|add_class:"!rounded-none !rounded-r-lg"|append_attr:"placeholder:my-organization" }}
+              </div>
+            {% else %}
+              {{ field }}
+            {% endif %}
             {% if field.help_text %}
               <span class="helptext">{{ field.help_text|safe }}</span>
             {% endif %}
@@ -46,4 +56,22 @@
       <input type="submit" value="submit">
     </p>
 </form>
+
+<script>
+  function slugify(s) {
+    return s.toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+  function onNameChange(e) {
+    var slugEl = document.getElementById('id_slug');
+    if (!slugEl.value) {
+      slugEl.value = slugify(e.target.value);
+    }
+  }
+  document.getElementById('id_name').addEventListener('change', onNameChange);
+</script>
+
 {% endblock %}

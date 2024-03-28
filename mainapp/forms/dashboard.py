@@ -16,7 +16,7 @@ class DashboardForm(BaseModelForm):
         assert isinstance(organization_field, forms.ModelChoiceField)
         organization_field.queryset = Organization.objects.filter(users=user)
         organization_field.help_text = "Dashboard and associated metrics will be made accessible to all organization members"
-        # Also make a dict with slugs available
+        # Also make a dict with slugs available for template
         self.org_slugs = {o.pk: o.slug for o in organization_field.queryset}
 
     def save(self, *args, **kwargs) -> Dashboard:
