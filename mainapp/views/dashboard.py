@@ -5,8 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseBase,
+    HttpResponseRedirect,
+)
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.response import TemplateResponse
 from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
 from django.views.generic import CreateView, DeleteView, UpdateView
@@ -88,11 +95,24 @@ class DashboardMetricAddView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return self.request.GET.get("next") or super().get_success_url()
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs) -> HttpResponseBase:
         dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
         if not dashboard.can_edit(request.user):
             raise PermissionDenied("You don't have the rights to edit this dashboard")
         return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs) -> HttpResponse:
+        response = super().get(request, *args, **kwargs)
+        assert isinstance(response, TemplateResponse)
+        assert response.context_data is not None
+        # Check if the form contains any metrics to add.
+        # If not, redirect to creation view directly
+        dashboard = self.object
+        if not response.context_data["form"].fields["metrics"].queryset:
+            return redirect(
+                f"{reverse('integrations')}?dashboard_ids={dashboard.pk}&next={dashboard.get_absolute_url()}"
+            )
+        return response
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

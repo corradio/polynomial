@@ -39,14 +39,15 @@ class DashboardForm(BaseModelForm):
 
 
 class DashboardMetricAddForm(BaseModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
         organizations = Organization.objects.filter(users=user)
         available_metrics = (
             Metric.objects.all()
             .filter(Q(user=user) | Q(organization__in=organizations))
-            .order_by("name")
+            .exclude(dashboard=self.instance)
+            .order_by("integration_id", "name")
         )
         metrics_field = self.fields["metrics"]
         assert isinstance(metrics_field, forms.ModelChoiceField)
@@ -55,6 +56,8 @@ class DashboardMetricAddForm(BaseModelForm):
             metrics_field.help_text = f"Note: metrics selected will automatically be added to the {self.instance.organization} organization"
 
     def save(self, *args, **kwargs):
+        # Join form metrics to be added with existing metrics
+        self.cleaned_data["metrics"] |= self.instance.metrics.all()
         dashboard = super().save(*args, **kwargs)
         # Ensure the metric belongs to the organisation of its dashboard.
         # Leave intact if this dashboard is not in an org

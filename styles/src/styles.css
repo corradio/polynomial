@@ -24,9 +24,10 @@
   .rjf-add-button {
     /* note button.primaryAction is used in django-allauth */
     @apply no-underline hover:no-underline
-      text-black font-medium text-sm px-4 py-2
+      text-black font-medium text-sm px-5 py-2.5
       rounded-lg border;
-    /* make sure the sizing of a and input are equal */
+    @apply hover:bg-slate-50;
+    /* makes sure the sizing of a and input are equal */
     line-height: initial;
   }
   /* CTA */
@@ -35,7 +36,6 @@
       text-white
       focus:ring-4 focus:ring-blue-300 focus:outline-none
       bg-blue-600 hover:bg-blue-700;
-    @apply px-5 py-2.5;
   }
   form > div label, form > p label, .rjf-form-group-title {
     @apply block mb-2 text-sm font-medium text-gray-900;

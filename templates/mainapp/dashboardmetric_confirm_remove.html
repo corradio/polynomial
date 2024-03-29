@@ -2,8 +2,10 @@
 
 {% block content %}
     <form method="post">{% csrf_token %}
-      <p>Are you sure you want to remove "{{ object }}" from the dashboard "{{ dashboard }}"?</p>
+      <p>Are you sure you want to remove the metric <b>{{ object }}</b> from the dashboard <b>{{ dashboard }}</b>?</p>
       {{ form }}
-      <input type="submit" value="Confirm">
+      <p>
+        <input type="submit" value="Confirm">
+      </p>
   </form>
 {% endblock %}

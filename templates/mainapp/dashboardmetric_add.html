@@ -3,13 +3,14 @@
 {% load debug_tags %}
 
 {% block content %}
-<h1>Metrics added to {{object}}:</h1>
+<h2>Select metrics to add to <b>{{object}}</b>:</h2>
 <form method="post">{% csrf_token %}
   {{ form.non_field_errors }}
   <div id="id_{{ form.metrics.name }}">
     {% for checkbox in form.metrics %}
     <div>
         <label for="{{ checkbox.id_for_label }}">
+          {{ checkbox.errors }}
           {{ checkbox.tag }}
           {% with "integrations/icons/"|add:checkbox.data.value.instance.integration_id|add:".png" as icon_url %}
             <img class="integration-icon" src="{% static icon_url %}" alt="">
@@ -17,8 +18,13 @@
           {{ checkbox.choice_label }}
         </label>
     </div>
+    {{ form.metrics.errors }}
     {% endfor %}
   </div>
-  <input type="submit" value="Confirm">
+  <div class="flex my-2 items-center pt-2">
+    <input type="submit" value="Add existing metrics">
+    <div class="px-5 text-gray-500">or</div>
+    <a href="{% url 'integrations' %}?dashboard_ids={{ dashboard.pk }}&next={{ dashboard.get_absolute_url }}" class="btn">Create new metric</a>
+  </div>
 </form>
 {% endblock %}
