@@ -26,7 +26,7 @@
     @apply no-underline hover:no-underline
       text-black font-medium text-sm px-5 py-2.5
       rounded-lg border;
-    @apply hover:bg-slate-50;
+    @apply hover:bg-slate-50 hover:border-slate-300;
     /* makes sure the sizing of a and input are equal */
     line-height: initial;
   }
@@ -135,8 +135,8 @@
 }
 
 img.integration-icon {
-  height: .9em;
-  @apply inline;
+  height: 1em;
+  @apply inline align-text-top;
 }
 
 .chevron-after::after {
