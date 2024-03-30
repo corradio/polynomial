@@ -17,6 +17,8 @@ class GoogleSheets(OAuth2Integration):
     scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
     authorize_extras = {"access_type": "offline", "prompt": "consent"}
 
+    description = "Import any data from a Google Sheet."
+
     config_schema = {
         "type": "dict",
         "keys": {

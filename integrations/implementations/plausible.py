@@ -36,6 +36,10 @@ class Plausible(Integration):
         },
     }
 
+    description = (
+        "Daily visitors, pageviews, visits or events for your Plausible website."
+    )
+
     def __enter__(self):
         assert (
             self.config is not None

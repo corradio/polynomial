@@ -52,7 +52,11 @@ class IntegrationListView(ListView):
 
     def get_queryset(self):
         return [
-            {"id": k, "label": INTEGRATION_CLASSES[k].get_label()}
+            {
+                "id": k,
+                "label": INTEGRATION_CLASSES[k].get_label(),
+                "description": INTEGRATION_CLASSES[k].description,
+            }
             for k in get_integration_ids()
         ]
 

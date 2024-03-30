@@ -31,6 +31,8 @@ class GooglePlayStore(OAuth2Integration):
     scopes = ["https://www.googleapis.com/auth/devstorage.read_only"]
     authorize_extras = {"access_type": "offline", "prompt": "consent"}
 
+    description = "Extract installs are ratings for your Google Play app."
+
     # Use https://bhch.github.io/react-json-form/playground
     config_schema = {
         "type": "dict",

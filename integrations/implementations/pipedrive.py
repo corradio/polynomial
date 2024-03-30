@@ -16,6 +16,8 @@ class Pipedrive(OAuth2Integration):
     refresh_url = "https://oauth.pipedrive.com/oauth/token"
     scopes = ["base", "deals:read"]
 
+    description = "Pipedrive deals by pipeline, status or stage."
+
     def callable_config_schema(self):
         # Get all pipelines
         response = self.session.get(

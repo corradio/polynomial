@@ -48,6 +48,8 @@ class Twitter(Integration):
         },
     }
 
+    description = "Followers and mentions of your Twitter account."
+
     def __enter__(self):
         super().__enter__()
         self.session = requests.Session()

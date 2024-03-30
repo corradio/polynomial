@@ -88,6 +88,8 @@ class LinkedIn(OAuth2Integration):
     scopes = ["r_organization_admin"]
     token_extras = {"include_client_id": True}
 
+    description = "Followers, shares and mentions of your LinkedIn page and content."
+
     def callable_config_schema(self):
         request_params = {
             "projection": "(elements*(*,organization~(localizedName)))",

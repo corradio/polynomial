@@ -40,6 +40,8 @@ class Grafana(Integration):
         },
     }
 
+    description = "Extract data from a Grafana dashboard."
+
     def __enter__(self):
         assert (
             self.config is not None

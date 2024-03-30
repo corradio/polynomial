@@ -18,6 +18,8 @@ class GoogleSearchConsole(OAuth2Integration):
     scopes = ["https://www.googleapis.com/auth/webmasters.readonly"]
     authorize_extras = {"access_type": "offline", "prompt": "consent"}
 
+    description = "SEO position, clicks, impressions and CTR on Google Search."
+
     def callable_config_schema(self):
         if not self.is_authorized:
             return self.config_schema

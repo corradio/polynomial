@@ -21,6 +21,8 @@ class GoogleBigQuery(OAuth2Integration):
     ]
     authorize_extras = {"access_type": "offline", "prompt": "consent"}
 
+    description = "Use SQL to query Google BigQuery."
+
     def _parse_response(self, response):
         try:
             response.raise_for_status()

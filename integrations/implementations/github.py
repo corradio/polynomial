@@ -36,6 +36,10 @@ class Github(OAuth2Integration):
     token_url = "https://github.com/login/oauth/access_token"
     refresh_url = None
 
+    description = (
+        "Github repository metrics such as stars, issues, page views and visitors."
+    )
+
     def callable_config_schema(self):
         r = self.session.get("https://api.github.com/user/repos")
         r.raise_for_status()

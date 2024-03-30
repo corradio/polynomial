@@ -37,7 +37,9 @@ class Youtube(OAuth2Integration):
     ]
     authorize_extras = {"access_type": "offline", "prompt": "consent"}
 
-    # 'statistics': {'viewCount': '96160', 'subscriberCount': '443', 'hiddenSubscriberCount': False, 'videoCount': '20'}}
+    description = (
+        "Track subscribers, views, likes and comments of your Youtube account."
+    )
 
     def callable_config_schema(self):
         if not self.is_authorized:

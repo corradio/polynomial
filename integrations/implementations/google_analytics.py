@@ -23,6 +23,8 @@ class GoogleAnalytics(OAuth2Integration):
     scopes = ["https://www.googleapis.com/auth/analytics.readonly"]
     authorize_extras = {"access_type": "offline", "prompt": "consent"}
 
+    description = "Website sessions and visitors with the ability to filter based on various dimensions."
+
     def callable_config_schema(self):
         if not self.is_authorized:
             return self.config_schema

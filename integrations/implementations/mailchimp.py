@@ -17,6 +17,10 @@ class Mailchimp(OAuth2Integration):
     token_extras = {"include_client_id": True}
     scopes = []
 
+    description = (
+        "Mailchimp list metrics such as subscribers, email opens and bounce rates."
+    )
+
     @classmethod
     def process_callback(
         cls,
@@ -53,7 +57,7 @@ class Mailchimp(OAuth2Integration):
             "keys": {
                 "list": {
                     "type": "string",
-                    # "required": True,
+                    "required": True,
                     "choices": sorted(
                         [{"title": l["name"], "value": l["id"]} for l in obj["lists"]],
                         key=lambda l: l["title"],

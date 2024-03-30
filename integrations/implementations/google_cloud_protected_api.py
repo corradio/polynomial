@@ -20,6 +20,8 @@ class GoogleSheets(OAuth2Integration):
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
     authorize_extras = {"access_type": "offline", "prompt": "consent"}
 
+    description = "Query a private endpoint within the Google Cloud ecosystem."
+
     def callable_config_schema(self):
         # Get projects
         response = self.session.get(

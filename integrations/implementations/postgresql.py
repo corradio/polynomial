@@ -38,6 +38,8 @@ class Postgresql(Integration):
         },
     }
 
+    description = "Use SQL to query your PostgreSQL database."
+
     def __enter__(self):
         assert (
             self.config is not None

@@ -40,6 +40,8 @@ class Integration:
     # Use https://bhch.github.io/react-json-form/playground
     config_schema: ClassVar[Dict] = EMPTY_CONFIG_SCHEMA
 
+    description: Optional[str] = None
+
     def __init__(self, config: Optional[Dict], *args, **kwargs):
         self.config = config or {}
 
