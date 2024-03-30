@@ -2,5 +2,9 @@
 
 {% block content %}
   <h1>This is a private dashboard</h1>
+  {% if user.is_authenticated %}
   Ask the administrator to either make the dashboard public, or to invite you to its organization.
+  {% else %}
+  You may want to <a href="{% url 'account_login' %}?next={{ request.get_full_path | urlencode }}">login</a> in order to see it.
+  {% endif %}
 {% endblock %}
