@@ -27,6 +27,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import Integration, WebAuthIntegration
+from integrations.utils import deofuscate_protected_fields
 
 from .. import forms
 from ..forms import MetricForm, MetricTransferOwnershipForm
@@ -157,6 +158,14 @@ def metric_new_test(request, state):
     integration_id = metric_cache.get("integration_id")
     integration_credentials = metric_cache.get("integration_credentials")
     integration_class = INTEGRATION_CLASSES[integration_id]
+
+    # Deobfuscate
+    if config and metric_cache.get("integration_config"):
+        schema = integration_class(config).callable_config_schema()
+        config = deofuscate_protected_fields(
+            config, metric_cache.get("integration_config"), schema
+        )
+
     # Save the config in the cache so a page reload keeps it
     metric_cache["integration_config"] = config
     metric_cache["name"] = data.get("name")
@@ -469,6 +478,11 @@ def metric_test(request, pk):
     integration_id = metric.integration_id
     integration_credentials = metric.integration_credentials
     integration_class = INTEGRATION_CLASSES[integration_id]
+
+    # Deobfuscate
+    if config and metric.integration_config:
+        schema = metric.callable_config_schema()
+        config = deofuscate_protected_fields(config, metric.integration_config, schema)
 
     def credentials_updater(arg):
         metric.integration_credentials = arg

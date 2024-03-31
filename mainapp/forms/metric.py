@@ -1,23 +1,17 @@
 import csv
 from datetime import date, datetime
 from io import TextIOWrapper
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List
 
 from django import forms
 from django.core.validators import FileExtensionValidator
 from django.db import transaction
 from django.db.models import Q
 
+from integrations.utils import deofuscate_protected_fields, obfuscate_protected_fields
 from mainapp.models import Dashboard, Measurement, Metric, Organization
 
 from .base import BaseModelForm
-
-
-def get_nested_dict(arg: Dict[str, Any], path: Sequence[str]) -> Any:
-    d = arg
-    for p in path:
-        d = d[p]
-    return d
 
 
 class MetricBaseForm(BaseModelForm):
@@ -36,47 +30,11 @@ class MetricBaseForm(BaseModelForm):
 
         # Remove any sensitive password data
         if "integration_config" in self.fields and self.initial["integration_config"]:
-            schema: Dict = self.instance.callable_config_schema()
-            self.password_protected_configs: Dict[Tuple[str], str] = {}
-
-            def recursive_protect(
-                config: Dict[str, Any],
-                schema: Dict[str, Any],
-                path_prefix: Optional[List] = None,
-            ) -> Dict[str, Any]:
-                if not path_prefix:
-                    path_prefix = []
-                for schema_k, schema_v in schema.items():
-                    if isinstance(schema_v, dict):
-                        if schema_k == "keys":
-                            config = recursive_protect(config, schema_v, path_prefix)
-                        elif schema_v.get("format") == "password":
-                            path = path_prefix + [schema_k]
-                            # Back up original value
-                            self.password_protected_configs[tuple(path)] = config[
-                                schema_k
-                            ]
-                            # config[schema_k] = (
-                            #     "password_has_been_hidden_for_security_reasons"
-                            # )
-                            config = {
-                                **config,
-                                schema_k: "password_has_been_hidden_for_security_reasons",
-                            }
-                        elif (
-                            schema_k in config
-                        ):  # It could very well be that the config is not fully filled
-                            config = {
-                                **config,
-                                schema_k: recursive_protect(
-                                    config[schema_k], schema_v, path_prefix + [schema_k]
-                                ),
-                            }
-                return config
-
+            self.schema: Dict = self.instance.callable_config_schema()
+            self.unprotected_integration_config = self.initial["integration_config"]
             assert isinstance(self.initial, dict)
-            self.initial["integration_config"] = recursive_protect(
-                self.initial["integration_config"], schema
+            self.initial["integration_config"] = obfuscate_protected_fields(
+                self.initial["integration_config"], self.schema
             )
 
     def clean(self) -> dict[str, Any] | None:
@@ -94,16 +52,11 @@ class MetricBaseForm(BaseModelForm):
         if "integration_config" in self.fields and self.initial["integration_config"]:
             # Restore hidden passwords if needed
             assert cleaned_data is not None
-            # breakpoint()
-            for path, original in self.password_protected_configs.items():
-                k = path[-1]
-                obj = get_nested_dict(cleaned_data["integration_config"], path[:1])
-                submitted = obj[k]
-                assert original != "password_has_been_hidden_for_security_reasons"
-                if submitted == "password_has_been_hidden_for_security_reasons":
-                    # Replace with original value
-                    obj[k] = original
-
+            cleaned_data["integration_config"] = deofuscate_protected_fields(
+                cleaned_data["integration_config"],
+                self.unprotected_integration_config,
+                self.schema,
+            )
         return cleaned_data
 
     def save(self, *args, **kwargs) -> Metric:
