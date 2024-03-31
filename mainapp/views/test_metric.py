@@ -27,11 +27,11 @@ class UnitTestCase(TestCase):
             msg_prefix="integration_credential should not appear in form HTML",
         )
 
-    # def test_password_leak(self):
-    #     response = self.client.get(reverse("metric-details", args=(self.metric.pk,)))
-    #     self.assertNotContains(
-    #         response,
-    #         "very_secret_password",
-    #         status_code=200,
-    #         msg_prefix="password from integration_config should not appear in form HTML",
-    #     )
+    def test_password_leak(self):
+        response = self.client.get(reverse("metric-details", args=(self.metric.pk,)))
+        self.assertNotContains(
+            response,
+            "very_secret_password",
+            status_code=200,
+            msg_prefix="password from integration_config should not appear in form HTML",
+        )

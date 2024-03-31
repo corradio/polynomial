@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
@@ -43,7 +43,7 @@ class Metric(models.Model):
     def save_integration_credentials(self):
         self.save()
 
-    def callable_config_schema(model_instance: Optional["Metric"] = None):
+    def callable_config_schema(model_instance: Optional["Metric"] = None) -> Dict:
         # See https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         # `model_instance` will be None while creating new object
         if model_instance and model_instance.integration_id:

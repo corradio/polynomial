@@ -245,8 +245,8 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
     model = Metric
     form_class = MetricForm
 
-    def dispatch(self, request, state, *args, **kwargs):
-        self.state = state
+    def dispatch(self, request, *args, **kwargs):
+        self.state = kwargs.pop("state")
         # Make sure someone with the link can't impersonate a user
         if request.session.get(self.state, {}).get("user_id") != request.user.id:
             raise PermissionDenied

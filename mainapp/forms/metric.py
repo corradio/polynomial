@@ -1,7 +1,7 @@
 import csv
 from datetime import date, datetime
 from io import TextIOWrapper
-from typing import Any, List
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from django import forms
 from django.core.validators import FileExtensionValidator
@@ -13,10 +13,18 @@ from mainapp.models import Dashboard, Measurement, Metric, Organization
 from .base import BaseModelForm
 
 
+def get_nested_dict(arg: Dict[str, Any], path: Sequence[str]) -> Any:
+    d = arg
+    for p in path:
+        d = d[p]
+    return d
+
+
 class MetricBaseForm(BaseModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
+
         if "dashboards" in self.fields:
             organizations = Organization.objects.filter(users=self.user)
             dashboards_field = self.fields["dashboards"]
@@ -25,6 +33,51 @@ class MetricBaseForm(BaseModelForm):
                 Q(user=self.user) | Q(organization__in=organizations)
             )
             dashboards_field.help_text = "Note: adding a metric to a dashboard will also add it to its organization"
+
+        # Remove any sensitive password data
+        if "integration_config" in self.fields and self.initial["integration_config"]:
+            schema: Dict = self.instance.callable_config_schema()
+            self.password_protected_configs: Dict[Tuple[str], str] = {}
+
+            def recursive_protect(
+                config: Dict[str, Any],
+                schema: Dict[str, Any],
+                path_prefix: Optional[List] = None,
+            ) -> Dict[str, Any]:
+                if not path_prefix:
+                    path_prefix = []
+                for schema_k, schema_v in schema.items():
+                    if isinstance(schema_v, dict):
+                        if schema_k == "keys":
+                            config = recursive_protect(config, schema_v, path_prefix)
+                        elif schema_v.get("format") == "password":
+                            path = path_prefix + [schema_k]
+                            # Back up original value
+                            self.password_protected_configs[tuple(path)] = config[
+                                schema_k
+                            ]
+                            # config[schema_k] = (
+                            #     "password_has_been_hidden_for_security_reasons"
+                            # )
+                            config = {
+                                **config,
+                                schema_k: "password_has_been_hidden_for_security_reasons",
+                            }
+                        elif (
+                            schema_k in config
+                        ):  # It could very well be that the config is not fully filled
+                            config = {
+                                **config,
+                                schema_k: recursive_protect(
+                                    config[schema_k], schema_v, path_prefix + [schema_k]
+                                ),
+                            }
+                return config
+
+            assert isinstance(self.initial, dict)
+            self.initial["integration_config"] = recursive_protect(
+                self.initial["integration_config"], schema
+            )
 
     def clean(self) -> dict[str, Any] | None:
         cleaned_data = super().clean()
@@ -37,6 +90,20 @@ class MetricBaseForm(BaseModelForm):
             raise forms.ValidationError(
                 "A metric can only belong to dashboards of a single organization"
             )
+
+        if "integration_config" in self.fields and self.initial["integration_config"]:
+            # Restore hidden passwords if needed
+            assert cleaned_data is not None
+            # breakpoint()
+            for path, original in self.password_protected_configs.items():
+                k = path[-1]
+                obj = get_nested_dict(cleaned_data["integration_config"], path[:1])
+                submitted = obj[k]
+                assert original != "password_has_been_hidden_for_security_reasons"
+                if submitted == "password_has_been_hidden_for_security_reasons":
+                    # Replace with original value
+                    obj[k] = original
+
         return cleaned_data
 
     def save(self, *args, **kwargs) -> Metric:
