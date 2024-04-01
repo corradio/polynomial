@@ -157,7 +157,7 @@ class OAuth2Integration(WebAuthIntegration):
     # Declare some required attribute
     # TODO: How do we make sure mypy understand that this attribute need
     # to be set in concrete (final) class implementation?
-    scopes: ClassVar[List[str]]
+    scopes: ClassVar[Optional[List[str]]] = None
     client_id: ClassVar[str]
     client_secret: ClassVar[str]
     authorization_url: ClassVar[str]
