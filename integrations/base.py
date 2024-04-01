@@ -69,6 +69,7 @@ class Integration:
         return date(2016, 1, 1)
 
     def collect_latest(self) -> MeasurementTuple:
+        """Will be called when `can_backfill` returns False"""
         # Default implementation uses `collect_past` through `collect_past_range`,
         # and thus assumes integration can backfill
         if not self.can_backfill():
@@ -97,11 +98,13 @@ class Integration:
             return results[-1]
 
     def collect_past(self, date: date) -> MeasurementTuple:
+        """Will be called by `collect_past_range` when `can_backfill` returns True"""
         raise NotImplementedError()
 
     def collect_past_range(
         self, date_start: date, date_end: date
     ) -> Iterable[MeasurementTuple]:
+        """Will be called by `collect_past_range` when `can_backfill` returns True"""
         # Default implementation uses `collect_past` for each date,
         # and thus assumes integration can backfill
         assert self.can_backfill()
@@ -236,7 +239,6 @@ class OAuth2Integration(WebAuthIntegration):
             cls.token_url,
             client_secret=cls.client_secret,
             authorization_response=uri,
-            state=state,
             code_verifier=code_verifier,
             **cls.token_extras,
         )
