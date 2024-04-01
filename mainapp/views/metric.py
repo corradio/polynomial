@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
 from django.http import (
+    HttpRequest,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
@@ -159,9 +160,17 @@ def metric_new_test(request, state):
     integration_credentials = metric_cache.get("integration_credentials")
     integration_class = INTEGRATION_CLASSES[integration_id]
 
+    def credentials_updater(arg):
+        metric_cache["integration_credentials"] = arg
+        request.session.modified = True
+
     # Deobfuscate
     if config and metric_cache.get("integration_config"):
-        schema = integration_class(config).callable_config_schema()
+        schema = integration_class(
+            config,
+            credentials=integration_credentials,
+            credentials_updater=credentials_updater,
+        ).callable_config_schema()
         config = deofuscate_protected_fields(
             config, metric_cache.get("integration_config"), schema
         )
@@ -170,10 +179,6 @@ def metric_new_test(request, state):
     metric_cache["integration_config"] = config
     metric_cache["name"] = data.get("name")
     request.session.modified = True
-
-    def credentials_updater(arg):
-        metric_cache["integration_credentials"] = arg
-        request.session.modified = True
 
     return process_metric_test(
         config, integration_credentials, integration_class, credentials_updater
@@ -348,7 +353,7 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
 
 
 @login_required
-def metric_new_authorize(request, state):
+def metric_new_authorize(request: HttpRequest, state):
     # Get session state
     metric_data = request.session[state]["metric"]
     integration_id = metric_data["integration_id"]
