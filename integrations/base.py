@@ -166,6 +166,7 @@ class OAuth2Integration(WebAuthIntegration):
     code_challenge_method: ClassVar[Optional[Literal["S256"]]] = None
     authorize_extras: ClassVar[Dict] = {}
     token_extras: ClassVar[Dict] = {}
+    compliance_hooks: ClassVar[Dict[str, Callable]] = {}
 
     session: OAuth2Session
 
@@ -183,12 +184,14 @@ class OAuth2Integration(WebAuthIntegration):
             auto_refresh_url=self.refresh_url,
             # If the token gets refreshed, we will have to save it
             token_updater=credentials_updater,
-            # For Google, the client_id+secret must be supplied for refresh tokens
+            # For Google, the client_id+secret must be supplied as body for refresh tokens
             auto_refresh_kwargs={
                 "client_id": self.client_id,
                 "client_secret": self.client_secret,
             },
         )
+        for k, v in self.compliance_hooks.items():
+            self.session.register_compliance_hook(k, v)
 
     def __enter__(self) -> "OAuth2Integration":
         assert self.session.authorized
@@ -231,8 +234,10 @@ class OAuth2Integration(WebAuthIntegration):
         state: str,
         authorize_callback_uri: str,
         code_verifier: Optional[str] = None,
-    ):
+    ) -> dict:
         client = OAuth2Session(cls.client_id, redirect_uri=authorize_callback_uri)
+        for k, v in cls.compliance_hooks.items():
+            client.register_compliance_hook(k, v)
         # Checks that the state is valid, will raise
         # MismatchingStateError if not.
         client.fetch_token(

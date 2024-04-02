@@ -1,8 +1,50 @@
+import json
+import time
 from datetime import date, datetime
-from typing import Iterator, Optional, Tuple, final
+from typing import Any, Iterator, Optional, Tuple, final
+from urllib import parse
+
+from requests import Response
 
 from ..base import MeasurementTuple, OAuth2Integration
 from ..utils import get_secret
+
+
+def access_token_hook(r: Response) -> Response:
+    token = json.loads(r.text)
+    if "expires_at" not in token:
+        # See https://docs.stripe.com/stripe-apps/api-authentication/oauth#refresh-access-token
+        expires_in = 3600 - 1
+        token["expires_at"] = time.time() + int(expires_in)
+    r._content = json.dumps(token).encode()
+    return r
+
+
+def refresh_token_hook(r: Response) -> Response:
+    token = json.loads(r.text)
+    if "expires_at" not in token:
+        # See https://docs.stripe.com/stripe-apps/api-authentication/oauth#refresh-access-token
+        expires_in = 3600 * 24 * 365 - 1
+        token["expires_at"] = time.time() + int(expires_in)
+    r._content = json.dumps(token).encode()
+    return r
+
+
+def refresh_token_request_hook(token_url, headers, data) -> Tuple[Any, Any, Any]:
+    # For some reason the `params` and `allow_redirects` requests params are passed
+    # on to the `refresh_token` method. That shouldn't be the case.
+    parsed_data = dict(parse.parse_qsl(data))
+    if "params" in parsed_data:
+        del parsed_data["params"]
+    if "allow_redirects" in parsed_data:
+        del parsed_data["allow_redirects"]
+    new_data = parse.urlencode(parsed_data)
+    # Ensure we authorize with our API key to ensure we can refresh the token
+    return (
+        token_url,
+        {**headers, "Authorization": f"Bearer {get_secret('STRIPE_API_KEY')}"},
+        new_data,
+    )
 
 
 @final
@@ -50,12 +92,24 @@ class Stripe(OAuth2Integration):
         },
     }
 
+    """
+        - tokens received don't have expired_at/in: they must be set manually
+        - refresh_token API calls require passing Bearer (client_id) to /token endpoint.
+          This happens automatically for `self.session.fetch_token` (through the `include_client_id` kwarg)
+          but not for `self.session.refresh_token`. We therefore use a hook to manually set it.
+    """
+    compliance_hooks = {
+        "access_token_response": access_token_hook,
+        "refresh_token_response": refresh_token_hook,
+        "refresh_token_request": refresh_token_request_hook,
+    }
+
     @classmethod
     def get_authorization_uri_and_code_verifier(
         cls, state: str, authorize_callback_uri: str
     ) -> Tuple[str, Optional[str]]:
         # When issuing the autorization call, the client_id used must the client_id and not the
-        # API KEY (which is used as client_id later on in the process)
+        # API key (which is used as client_id for all other token requests)
         # Also, make sure we force https:// instead of http://.
         client_id = get_secret("STRIPE_CLIENT_ID")
         return (
