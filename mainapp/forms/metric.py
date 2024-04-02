@@ -1,7 +1,7 @@
 import csv
 from datetime import date, datetime
 from io import TextIOWrapper
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List
 
 from django import forms
 from django.core.validators import FileExtensionValidator
@@ -39,10 +39,9 @@ class MetricBaseForm(BaseModelForm):
 
     def clean(self) -> dict[str, Any] | None:
         cleaned_data = super().clean()
+        assert cleaned_data is not None
         # A metric can't belong to multiple orgs through its dashboards
-        dashboards = {
-            Dashboard.objects.get(pk=pk) for pk in self.data.get("dashboards", [])
-        }
+        dashboards: Iterable[Dashboard] = cleaned_data.get("dashboards", [])
         related_orgs = {d.organization for d in dashboards if d.organization}
         if len(related_orgs) > 1:
             raise forms.ValidationError(
