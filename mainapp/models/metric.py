@@ -137,6 +137,14 @@ class Metric(models.Model):
             return False
         return self.organization.is_member(user)
 
+    def can_delete(self, user: Union[User, AnonymousUser]) -> bool:
+        # Owner or org admin
+        if self.user == user:
+            return True
+        if not self.organization:
+            return False
+        return self.organization.is_admin(user)
+
     def can_be_backfilled_by(self, user: Union[User, AnonymousUser]) -> bool:
         if not self.can_backfill:
             return False

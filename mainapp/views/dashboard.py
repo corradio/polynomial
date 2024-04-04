@@ -248,6 +248,7 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             "metric_name": metric.name,
             "integration_id": metric.integration_id,
             "can_edit": metric.can_edit(request.user),
+            "can_delete": metric.can_delete(request.user),
             "can_web_auth": metric.can_web_auth,
             "can_alter_credentials": metric.can_alter_credentials_by(request.user),
             "can_be_backfilled_by_user": metric.can_be_backfilled_by(request.user),

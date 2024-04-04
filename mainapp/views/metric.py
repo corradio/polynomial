@@ -387,9 +387,13 @@ class MetricDeleteView(LoginRequiredMixin, DeleteView):
     def get_success_url(self):
         return self.request.GET.get("next") or reverse("index")
 
-    def get_queryset(self, *args, **kwargs):
-        # Only show metric if user can access it
-        return super().get_queryset(*args, **kwargs).filter(user=self.request.user)
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset=queryset)
+        if not obj.can_delete(self.request.user):
+            raise PermissionDenied(
+                "Only the metric owner or the organization admin can delete a metric"
+            )
+        return obj
 
 
 class MetricUpdateView(LoginRequiredMixin, UpdateView):

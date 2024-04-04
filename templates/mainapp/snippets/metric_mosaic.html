@@ -49,7 +49,7 @@
         {% if can_edit %}
           <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'dashboardmetric_remove' dashboard.pk metric.metric_id %}?next={{ request.get_full_path | urlencode }}">hide</a></li>
         {% endif %}
-        {% if metric.can_edit %}
+        {% if metric.can_delete %}
           <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric_delete' metric.metric_id %}?next={{ request.get_full_path | urlencode }}">delete</a></li>
         {% endif %}
         {% if metric.can_web_auth and metric.can_alter_credentials %}

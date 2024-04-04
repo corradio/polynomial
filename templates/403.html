@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>{{ exception|default:"403 Forbidden" }}</h1>
+<h1>Forbidden</h1>
+{{ exception|default:"403 Forbidden" }}
 {% endblock %}
