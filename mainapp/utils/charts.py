@@ -119,7 +119,11 @@ def get_vl_spec(
                     "domain": False,
                     "ticks": False,
                     "offset": 4,
-                    "format": ".3s",  # will show SI units (k, M, G...)
+                    # https://d3js.org/d3-format#locale_format
+                    # - `s` will show SI units (k, M, G...)
+                    # - `~` removes insignificant trailing zeros
+                    # - The integer represents number of significant digits
+                    "format": ".3~s",
                     "orient": "right",
                     "labelColor": "gray",
                 },
