@@ -189,7 +189,9 @@ class MetricListView(LoginRequiredMixin, ListView):
 
 @login_required
 def metric_duplicate(request, pk) -> HttpResponseRedirect:
-    metric: Metric = get_object_or_404(Metric, pk=pk, user=request.user)
+    metric = get_object_or_404(Metric, pk=pk)
+    if not metric.can_edit(request.user):
+        raise PermissionDenied()
     # Copy object (except `id`, `user` and some other fields like `created_at`)
     metric_object = {
         "name": f"Copy of {metric.name}",
@@ -466,7 +468,9 @@ def metric_test(request, pk):
     config = data.get("integration_config")
     config = config and json.loads(config)
     # Get server side information
-    metric = get_object_or_404(Metric, pk=pk, user=request.user)
+    metric = get_object_or_404(Metric, pk=pk)
+    if not metric.can_edit(request.user):
+        raise PermissionDenied()
     integration_id = metric.integration_id
     integration_credentials = metric.integration_credentials
     integration_class = INTEGRATION_CLASSES[integration_id]
