@@ -13,7 +13,17 @@
 {% block content %}
   <form action="" method="post">
     {% csrf_token %}
-    {{ form.as_p }}
+    {% for field in form.visible_fields %}
+        <p>
+            {{ field.label_tag }}
+            {{ field.errors }}
+            {{ field }}
+            {% if field.help_text %}
+              <span class="helptext">{{ field.help_text|safe }}</span>
+            {% endif %}
+        </p>
+    {% endfor %}
+    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
 
     {% if metric %}
     <p>

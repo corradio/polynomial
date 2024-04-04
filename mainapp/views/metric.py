@@ -318,7 +318,11 @@ class MetricCreateView(LoginRequiredMixin, CreateView):
         # object which is capable of updating the cached credentials
         kwargs["instance"] = Metric(
             # Note we have to exclude relations from initialization params
-            **{k: v for (k, v) in kwargs["initial"].items() if k not in ["dashboards"]}
+            **{
+                k: v
+                for (k, v) in kwargs["initial"].items()
+                if k not in ["dashboards", "organization"]
+            }
         )
 
         def credentials_saver(metric_instance):

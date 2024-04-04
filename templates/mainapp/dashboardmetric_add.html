@@ -24,7 +24,7 @@
   <div class="flex my-2 items-center pt-2">
     <input type="submit" value="Add existing metrics">
     <div class="px-5 text-gray-500">or</div>
-    <a href="{% url 'integrations' %}?dashboard_ids={{ dashboard.pk }}&next={{ dashboard.get_absolute_url }}" class="btn">Create new metric</a>
+    <a href="{% url 'integrations' %}?dashboard_ids={{ dashboard.pk }}&organization_id={{ dashboard.organization.pk }}&next={{ dashboard.get_absolute_url }}" class="btn">Create new metric</a>
   </div>
 </form>
 {% endblock %}

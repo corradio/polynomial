@@ -7,6 +7,7 @@ from django import forms
 from django.core.validators import FileExtensionValidator
 from django.db import transaction
 from django.db.models import Q
+from django.utils.datastructures import MultiValueDict
 
 from integrations.utils import deofuscate_protected_fields, obfuscate_protected_fields
 from mainapp.models import Dashboard, Measurement, Metric, Organization
@@ -37,19 +38,47 @@ class MetricBaseForm(BaseModelForm):
                 self.initial["integration_config"], self.schema
             )
 
-    def clean(self) -> dict[str, Any] | None:
-        cleaned_data = super().clean()
-        assert cleaned_data is not None
+    def clean_dashboards(self) -> Iterable[Dashboard]:
         # A metric can't belong to multiple orgs through its dashboards
-        dashboards: Iterable[Dashboard] = cleaned_data.get("dashboards", [])
+        dashboards: Iterable[Dashboard] = self.cleaned_data.get("dashboards", [])
         related_orgs = {d.organization for d in dashboards if d.organization}
         if len(related_orgs) > 1:
             raise forms.ValidationError(
                 "A metric can only belong to dashboards of a single organization"
             )
+        return dashboards
 
+    def clean_organization(self) -> Organization | None:
+        organization = self.cleaned_data.get("organization")
+        if isinstance(self.data, MultiValueDict):
+            dashboard_pks = self.data.getlist("dashboards", [])
+        elif isinstance(self.data, dict):
+            dashboard_pks = self.data.get("dashboards", [])
+        else:
+            raise ValueError(f"Unexpected type {type(self.data)} for self.data")
+        dashboards: Iterable[Dashboard] = (
+            Dashboard.objects.get(pk=pk) for pk in dashboard_pks
+        )
+
+        # The metric must be part of the organisation(s) of all of its dashboards
+        for dashboard in dashboards:
+            if dashboard.organization and organization != dashboard.organization:
+                raise forms.ValidationError(
+                    "Metric should belong to the same organisation (%(dashboard_organization)s) as its dashboard (%(dashboard)s).",
+                    params={
+                        "dashboard_organization": dashboard.organization.name,
+                        "dashboard": dashboard.name,
+                    },
+                )
+
+        return organization
+
+    def clean(self) -> dict[str, Any] | None:
+        cleaned_data = super().clean()
+        assert cleaned_data is not None
+
+        # Restore hidden passwords if needed
         if "integration_config" in self.fields and self.initial["integration_config"]:
-            # Restore hidden passwords if needed
             assert cleaned_data is not None
             cleaned_data["integration_config"] = deofuscate_protected_fields(
                 cleaned_data["integration_config"],
