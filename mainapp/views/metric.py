@@ -127,27 +127,6 @@ def metric_backfill(request, pk):
 
 
 @login_required
-def metric_collect_latest(request, pk):
-    if not request.method == "POST":
-        return HttpResponseNotAllowed(["POST"])
-    metric = get_object_or_404(Metric, pk=pk, user=request.user)
-    try:
-        with metric.integration_instance as inst:
-            measurement = inst.collect_latest()
-    except Exception as e:
-        exc_info = sys.exc_info()
-        return HttpResponseBadRequest("\n".join(traceback.format_exception(*exc_info)))
-    Measurement.objects.update_or_create(
-        metric=metric,
-        date=measurement.date,
-        defaults={
-            "value": measurement.value,
-        },
-    )
-    return HttpResponse(f"Success!")
-
-
-@login_required
 def metric_new_test(request, state):
     if not request.method == "POST":
         return HttpResponseNotAllowed(["POST"])
