@@ -58,13 +58,17 @@ class GoogleSheets(OAuth2Integration):
     def can_backfill(self):
         return True
 
-    def _serial_date_to_date(self, xldate: float) -> date:
+    def _try_convert_serial_date_to_date(self, xldate: str, row_index: int) -> date:
         # See https://github.com/python-excel/xlrd/blob/f45f6304e1ca00d7268ab5ca9bac5103417e8be2/xlrd/xldate.py
         epoch = datetime(1899, 12, 30)
         # The integer part of the Excel date stores the number of days since
         # the epoch and the fractional part stores the percentage of the day.
-        assert xldate != "", "Empty date detected in date column"
-        days = int(xldate)
+        try:
+            days = int(xldate)
+        except ValueError as e:
+            raise UserFixableError(
+                f'Could not convert cell value "{xldate}" to date at row {row_index + 1}.'
+            ) from e
         return (epoch + timedelta(days, 0, 0, 0)).date()
 
     def collect_latest(self) -> MeasurementTuple:
@@ -109,7 +113,7 @@ class GoogleSheets(OAuth2Integration):
         header = data[0]
         data = data[1:]
 
-        def get_cell(row, column_name):
+        def get_cell(row: dict, column_name: str) -> str:
             if not column_name in header:
                 raise UserFixableError(
                     f"Column '{column_name}' wasn't found in the header (should be one of {header})."
@@ -121,7 +125,7 @@ class GoogleSheets(OAuth2Integration):
                 # the row vector will be shorter. We simply mark this as empty.
                 return ""
 
-        def try_convert_cell_to_float(cell_value, row_index):
+        def try_convert_cell_to_float(cell_value: str, row_index: int) -> float:
             try:
                 return float("nan") if cell_value == "" else float(cell_value)
             except ValueError as e:
@@ -132,7 +136,9 @@ class GoogleSheets(OAuth2Integration):
         # Parse data
         measurements = [
             MeasurementTuple(
-                date=self._serial_date_to_date(float(get_cell(row, date_column))),
+                date=self._try_convert_serial_date_to_date(
+                    get_cell(row, date_column), row_index
+                ),
                 value=try_convert_cell_to_float(get_cell(row, value_column), row_index),
             )
             for row_index, row in enumerate(data)
