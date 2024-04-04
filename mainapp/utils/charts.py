@@ -119,7 +119,7 @@ def get_vl_spec(
                     "domain": False,
                     "ticks": False,
                     "offset": 4,
-                    "format": ".2s",  # will show SI units (k, M, G...)
+                    "format": ".3s",  # will show SI units (k, M, G...)
                     "orient": "right",
                     "labelColor": "gray",
                 },

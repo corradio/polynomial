@@ -34,7 +34,7 @@ class Metric(models.Model):
         help_text="Whether or not high values are considered a good outcome",
     )
     enable_medals = models.BooleanField(
-        default=True, help_text="Highlight the top 3 values"
+        default=False, help_text="Highlight the top 3 values"
     )
     last_collect_attempt = models.DateTimeField(blank=True, null=True)
 
