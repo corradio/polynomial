@@ -168,6 +168,11 @@ urlpatterns = [
                                 name="organization_user_new",
                             ),
                             path(
+                                "orgusers/<int:organization_user_pk>",
+                                views.organization.OrganizationUserUpdateView.as_view(),
+                                name="organization_user_edit",
+                            ),
+                            path(
                                 "orgusers/<int:organization_user_pk>/delete",
                                 views.organization.OrganizationUserDeleteView.as_view(),
                                 name="organization_user_delete",

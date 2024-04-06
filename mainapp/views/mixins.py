@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.views.generic.base import View
 from django.views.generic.detail import SingleObjectMixin
 
@@ -15,6 +16,9 @@ else:
 
 
 class OrganizationUserMixin(SingleObjectMixin, _Base):
+    object: OrganizationUser
+    model = OrganizationUser
+
     def get_object(self, queryset=None):
         organization_pk = self.kwargs["organization_pk"]
         organization_user_pk = self.kwargs.get("organization_user_pk", None)
@@ -22,6 +26,12 @@ class OrganizationUserMixin(SingleObjectMixin, _Base):
             OrganizationUser.objects.select_related(),
             pk=organization_user_pk,
             organization__pk=organization_pk,
+        )
+
+    def get_success_url(self):
+        return reverse(
+            "organization_user_list",
+            kwargs={"organization_pk": self.object.organization.pk},
         )
 
 

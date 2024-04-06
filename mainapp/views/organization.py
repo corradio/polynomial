@@ -111,11 +111,16 @@ class OrganizationUserDeleteView(
     object: OrganizationUser
     model = OrganizationUser
 
-    def get_success_url(self):
-        return reverse(
-            "organization_user_list",
-            kwargs={"organization_pk": self.object.organization.pk},
-        )
+
+class OrganizationUserUpdateView(
+    LoginRequiredMixin,
+    OrganizationAdminRequiredMixin,
+    OrganizationUserMixin,
+    UpdateView,
+):
+    object: OrganizationUser
+    model = OrganizationUser
+    fields = ["is_admin"]
 
 
 @login_required

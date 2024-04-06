@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load organization_tags %}
 {% block content %}
 <h1>{{ organization }} members</h1>
 
@@ -43,6 +44,9 @@
                     Administrator
                 {% else %}
                     Member
+                {% endif %}
+                {% if organization|is_admin:user and organization_user.user != user and not organization_user.is_owner %}
+                    (<a href="{% url 'organization_user_edit' organization.pk organization_user.pk %}">edit</a>)
                 {% endif %}
             </td>
             <td>
