@@ -224,11 +224,15 @@ class MetricTransferOwnershipForm(BaseModelForm):
         super(MetricTransferOwnershipForm, self).__init__(*args, **kwargs)
 
         # To avoid leaking all org users, we only show the ones in the organisation
-        users = sorted(
-            self.instance.organization.users.all(),
-            key=lambda u: str(u),
-        )
+        if self.instance.organization:
+            users = sorted(
+                self.instance.organization.users.all(),
+                key=lambda u: str(u),
+            )
+        else:
+            users = []
         self.fields["user"].widget = forms.Select(choices=[(u.pk, u) for u in users])
+        self.fields["user"].label = "New owner"
 
     class Meta:
         model = Metric
