@@ -7,7 +7,7 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("health", views.health.health, name="health"),
     path(
-        "privacy/",
+        "privacy",
         TemplateView.as_view(template_name="mainapp/privacy.html"),
         name="privacy",
     ),
@@ -16,6 +16,8 @@ urlpatterns = [
         views.AuthorizeCallbackView.as_view(),
         name="authorize-callback",
     ),
+    path("me/", views.user.UserUpdateView.as_view(), name="profile"),
+    path("me/delete", views.user.UserDeleteView.as_view(), name="profile_delete"),
     # Metrics
     path(
         "metrics/",

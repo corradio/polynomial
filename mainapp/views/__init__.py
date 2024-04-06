@@ -19,6 +19,7 @@ from . import (  # noqa
     metric,
     organization,
     organization_invitation,
+    user,
 )
 from .utils import add_next
 

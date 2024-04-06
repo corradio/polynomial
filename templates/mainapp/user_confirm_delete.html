@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h1>Are you sure?</h1>
+<form method="post">{% csrf_token %}
+  <p>Are you sure you want to delete your account?</p>
+  <p>
+    <ul class="list-disc list-inside">
+    {% for metric in object.metric_set.all|dictsort:"name" %}
+    {% if forloop.first %}
+      The following metrics will be deleted:
+    {% endif %}
+      <li>
+        <a href="{% url 'metric-details' metric.id %}?next={{ request.get_full_path | urlencode }}">
+          {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
+            <img class="integration-icon" src="{% static icon_url %}" alt="">
+          {% endwith %}
+          {{ metric }}
+        </a>
+        <small>
+          (<a href="{% url 'metric_transfer_ownership' metric.id %}?next={{ request.get_full_path | urlencode }}">change owner</a>)
+        </small>
+      </li>
+    {% endfor %}
+    </ul>
+  </p>
+  {{ form }}
+  <p>
+    <input type="submit" value="Confirm">
+  </p>
+</form>
+{% endblock %}

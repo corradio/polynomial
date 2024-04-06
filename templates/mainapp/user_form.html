@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% load widget_tweaks %}
+
+{% block content %}
+<h1>Your profile</h1>
+
+<h2>Connect a social account</h2>
+<ul class="socialaccount_providers w-72">
+{% include "socialaccount/snippets/provider_list.html" with process="redirect" %}
+</ul>
+
+<h2>Edit profile</h2>
+<form action="" method="post">{% csrf_token %}
+    {{ form.errors }}
+    {% for field in form.visible_fields %}
+        <p>
+            {{ field.errors }}
+            {{ field.label_tag }}
+            {% if field.name == 'slug' %}
+              <div class="flex">
+                <span id="id_slug_prefix" class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">polynomial.so/</span>
+                {{ field|add_class:"!rounded-none !rounded-r-lg"|append_attr:"placeholder:my-organization" }}
+              </div>
+            {% else %}
+              {{ field }}
+            {% endif %}
+            {% if field.help_text %}
+              <span class="helptext">{{ field.help_text|safe }}</span>
+            {% endif %}
+        </p>
+    {% endfor %}
+    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+    <p>
+      <input type="submit" value="Update"> <a href="{% url 'profile_delete' %}" class="btn btn-delete">Delete account</a>
+    </p>
+</form>
+
+{% endblock %}
