@@ -215,7 +215,10 @@ def get_vl_spec(
             {
                 "name": "moving_average",
                 "mark": {"type": "line", "color": "red", "opacity": 0.5},
-                "encoding": {"y": {"field": "rolling_mean", "title": "Value"}},
+                "encoding": {
+                    "x": {"field": "date", "type": "temporal"},
+                    "y": {"field": "rolling_mean", "title": "Value"},
+                },
             }
         )
     day_span = (end_date - start_date).days
