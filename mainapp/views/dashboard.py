@@ -264,6 +264,7 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
                 markers={
                     marker.date: marker.text for marker in metric.marker_set.all()
                 },
+                target=metric.target,
             ),
         }
         for metric in Metric.objects.filter(dashboard=dashboard).order_by("name")

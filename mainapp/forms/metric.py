@@ -144,6 +144,7 @@ class MetricForm(MetricBaseForm):
             "name",
             "organization",
             "enable_medals",
+            "target",
             "higher_is_better",
             "integration_config",
             "integration_id",

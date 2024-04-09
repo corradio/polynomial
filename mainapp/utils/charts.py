@@ -35,6 +35,7 @@ def get_vl_spec(
     labels: Optional[Dict[date, str]] = None,
     imageLabelUrls: Optional[Dict[date, str]] = None,
     markers: Optional[Dict[date, str]] = None,
+    target: Optional[float] = None,
 ):
     if not measurements:
         return {}
@@ -90,7 +91,6 @@ def get_vl_spec(
         ],
         "encoding": {
             "x": {
-                "field": "date",
                 "type": "temporal",
                 "axis": {
                     "title": None,
@@ -111,7 +111,6 @@ def get_vl_spec(
                 },
             },
             "y": {
-                "field": "value",
                 "type": "quantitative",
                 "axis": {
                     "title": False,
@@ -131,7 +130,14 @@ def get_vl_spec(
         },
         "layer": [
             # Line
-            {"name": "line", "mark": {"type": "line"}},
+            {
+                "name": "line",
+                "mark": {"type": "line"},
+                "encoding": {
+                    "x": {"field": "date", "type": "temporal"},
+                    "y": {"field": "value", "type": "quantitative"},
+                },
+            },
             # Labels
             {
                 "name": "labels",
@@ -233,6 +239,8 @@ def get_vl_spec(
                     "name": "points",
                     "mark": {"type": "circle", "tooltip": True},
                     "encoding": {
+                        "x": {"field": "date", "type": "temporal"},
+                        "y": {"field": "value", "type": "quantitative"},
                         "size": {
                             "condition": {
                                 "test": {
@@ -242,7 +250,7 @@ def get_vl_spec(
                                 "value": 200,
                             },
                             "value": 20,  # default value
-                        }
+                        },
                     },
                 }
             )
@@ -253,6 +261,8 @@ def get_vl_spec(
                     "name": "points",
                     "mark": {"type": "circle", "tooltip": True},
                     "encoding": {
+                        "x": {"field": "date", "type": "temporal"},
+                        "y": {"field": "value", "type": "quantitative"},
                         "size": {
                             "condition": {
                                 "param": "highlight",
@@ -260,7 +270,7 @@ def get_vl_spec(
                                 "value": 200,
                             },
                             "value": 20,  # default value
-                        }
+                        },
                     },
                 }
             )
@@ -276,7 +286,17 @@ def get_vl_spec(
                         "value": "gray",  # default value,
                     }
                     break
-    # Only add points if we're dealing with less than X points
+
+    if target is not None:
+        vl_spec["layer"].append(
+            {
+                # "name": "target",
+                "mark": {"type": "rule", "color": "blue", "strokeDash": [4, 4]},
+                "data": {"values": [{}]},
+                "encoding": {"y": {"datum": target, "type": "quantitative"}},
+            }
+        )
+
     return vl_spec
 
 
@@ -309,6 +329,7 @@ def metric_chart_vl_spec(
             height=280,
             imageLabelUrls=imageLabelUrls,
             markers=markers,
+            target=metric.target,
         )
     )
 

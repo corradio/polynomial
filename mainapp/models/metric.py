@@ -37,6 +37,7 @@ class Metric(models.Model):
         default=False, help_text="Highlight the top 3 values"
     )
     last_collect_attempt = models.DateTimeField(blank=True, null=True)
+    target = models.FloatField(blank=True, null=True, help_text="Target value")
 
     # The credentials can be saved either in db, or in cache, while the object
     # is temporarily being built. We therefore allow this to be changed later.
