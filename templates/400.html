@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Error</h1>
+{{ exception|default:"400 Bad request" }}
+{% endblock %}

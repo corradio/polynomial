@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpRequest, HttpResponseNotFound, HttpResponseRedirect
+from django.http import Http404, HttpRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
@@ -127,7 +127,7 @@ class OrganizationUserUpdateView(
 def authorize_google_spreadsheet_export(request: HttpRequest, organization_pk: int):
     organization = get_object_or_404(Organization, pk=organization_pk)
     if not organization.is_admin(request.user):
-        return HttpResponseNotFound()
+        raise Http404()
     uri, state = google_spreadsheet_export.authorize(request)
     assert uri is not None
     # Save parameters in session
@@ -142,7 +142,7 @@ def authorize_google_spreadsheet_export(request: HttpRequest, organization_pk: i
 def authorize_slack_notifications(request: HttpRequest, organization_pk: int):
     organization = get_object_or_404(Organization, pk=organization_pk)
     if not organization.is_admin(request.user):
-        return HttpResponseNotFound()
+        raise Http404()
     uri, state = slack_notifications.authorize(request)
     assert uri is not None
     # Save parameters in session

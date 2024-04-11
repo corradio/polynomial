@@ -3,12 +3,11 @@ from datetime import date, datetime, timedelta, timezone
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import BadRequest, PermissionDenied
 from django.db.models import Q
 from django.http import (
     HttpRequest,
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponseBase,
     HttpResponseRedirect,
 )
@@ -228,7 +227,7 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         if not start_date:
             interval = parse_duration(since)  # e.g. "3 days"
             if not interval:
-                return HttpResponseBadRequest(
+                raise BadRequest(
                     f"Invalid argument `since`: should be a date or a duration."
                 )
         if interval is None:

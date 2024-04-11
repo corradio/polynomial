@@ -1,5 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseBadRequest
+from django.core.exceptions import BadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import ListView, TemplateView
@@ -66,7 +66,7 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         state = self.request.GET["state"]
         if state not in self.request.session:
-            return HttpResponseBadRequest()
+            raise BadRequest()
         else:
             cache_obj = self.request.session[state]
             # The cache object can have either:
