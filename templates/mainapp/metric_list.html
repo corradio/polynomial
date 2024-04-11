@@ -1,51 +1,58 @@
 {% extends "base.html" %}
 {% load static %}
+{% load metric_tags %}
 
 {% block content %}
-  <h1>Metrics</h1>
-  {% if not object_list %}
-    You don't have a metric yet. <a href="{% url 'integrations' %}">Add one now</a>.
-  {% else %}
-    <table class="table">
-      <thead>
-        <th>Metric</th>
-        <th>Owner</th>
-        <th>Shared with</th>
-        <th>Used by</th>
-        <th>Actions</th>
-      </thead>
-      <tbody>
-        {% for metric in object_list %}
-        <tr>
-          <th class="py-1">
-            <div>
-              {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
-                <img class="integration-icon" src="{% static icon_url %}" alt="">
-              {% endwith %}
-              {{ metric.name }}
-            </div>
-          </th>
-          <td>
-            {% if metric.user == user %}
-              Me
-            {% else %}
-              {{ metric.user.name }}
-            {% endif %}
-          </td>
-          <td>{{ metric.organization }}</td>
-          <td>{{ metric.dashboard_set.all|join:", " }}</td>
-          <td>
-            {% if metric.user == user %}
-              <a href="{% url 'metric-details' metric.id %}?next={{ request.get_full_path | urlencode }}">Edit</a>
-              <a href="{% url 'metric-duplicate' metric.id %}?next={{ request.get_full_path | urlencode }}">Duplicate</a>
-              <a href="{% url 'metric-import' metric.id %}?next={{ request.get_full_path | urlencode }}">Import CSV</a>
-              <a href="{% url 'metric-backfill' metric.id %}?next={{ request.get_full_path | urlencode }}">Backfill</a>
-              <a href="{% url 'metric_delete' metric.id %}?next={{ request.get_full_path | urlencode }}">Delete</a>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% endif %}
+  {% regroup object_list by organization as metrics_by_org %}
+
+  {% for group in metrics_by_org %}
+    <h1 class="mt-6">{{ group.grouper|default_if_none:"My metrics" }}</h1>
+    {% if not group.list %}
+      You don't have a metric yet. <a href="{% url 'integrations' %}">Add one now</a>.
+    {% else %}
+      <table class="table">
+        <thead>
+          <th>Metric</th>
+          <th>Owner</th>
+          <th>Used by</th>
+          <th>Actions</th>
+        </thead>
+        <tbody>
+          {% for metric in group.list|dictsort:"name" %}
+          <tr>
+            <th class="py-1">
+              <div>
+                {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
+                  <img class="integration-icon" src="{% static icon_url %}" alt="">
+                {% endwith %}
+                {{ metric.name }}
+              </div>
+            </th>
+            <td>
+              {% if metric.user == user %}
+                Me
+              {% else %}
+                {{ metric.user.name }}
+              {% endif %}
+            </td>
+            <td>{{ metric.dashboard_set.all|join:", " }}</td>
+            <td>
+              {% if metric|can_edit:user %}
+                <a href="{% url 'metric-details' metric.id %}?next={{ request.get_full_path | urlencode }}">Edit</a>
+                <a href="{% url 'metric-duplicate' metric.id %}?next={{ request.get_full_path | urlencode }}">Duplicate</a>
+                <a href="{% url 'metric-import' metric.id %}?next={{ request.get_full_path | urlencode }}">Import CSV</a>
+              {% endif %}
+              {% if metric|can_be_backfilled_by:user %}
+                <a href="{% url 'metric-backfill' metric.id %}?next={{ request.get_full_path | urlencode }}">Backfill</a>
+              {% endif %}
+              {% if metric|can_delete:user %}
+                <a href="{% url 'metric_delete' metric.id %}?next={{ request.get_full_path | urlencode }}">Delete</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  {% endfor %}
 {% endblock %}

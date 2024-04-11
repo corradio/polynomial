@@ -11,11 +11,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import BadRequest, PermissionDenied
+from django.db.models import F, Q
 from django.http import (
     HttpRequest,
     HttpResponse,
-    HttpResponseForbidden,
     HttpResponseNotAllowed,
     HttpResponseRedirect,
     JsonResponse,
@@ -111,8 +111,10 @@ def process_metric_test(
 def metric_backfill(request, pk):
     # Check if user has access to metric
     metric = get_object_or_404(Metric, pk=pk)
+    if not metric.can_backfill:
+        raise BadRequest("This metric can't be backfilled")
     if not metric.can_be_backfilled_by(request.user):
-        return HttpResponseForbidden()
+        raise PermissionDenied()
     if request.method == "POST":
         since = request.POST.get("since")
         backfill_task.delay(metric_id=pk, since=since)
@@ -169,11 +171,15 @@ class MetricListView(LoginRequiredMixin, ListView):
         # This is useful for developing new integrations,
         # as having data in the db without having it present on the branch
         # might crash
+        assert isinstance(self.request.user, User)
         return (
             Metric.objects.all()
-            .filter(user=self.request.user)
+            .filter(
+                Q(user=self.request.user)
+                | Q(organization__in=self.request.user.organization_set.all())
+            )
             .filter(integration_id__in=INTEGRATION_IDS)
-            .order_by("name")
+            .order_by(F("organization__name").asc(nulls_first=True))
         )
 
     def get_context_data(self, *args, **kwargs):
