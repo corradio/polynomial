@@ -186,7 +186,7 @@ def check_notify_metric_changed_task(metric_id: int) -> None:
         # when calling `metric_analyse.detected_spike`
         img_data = charts.generate_png(
             charts.metric_chart_vl_spec(
-                metric_id, highlight_date=spike_date, lookback_days=30
+                metric_id, highlight_date=spike_date, lookback_days=60
             )
         )
         image = MIMEImage(img_data)
