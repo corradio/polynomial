@@ -44,7 +44,7 @@ def get_vl_spec(
     max_value = max((filter_nan(m.value) or 0 for m in measurements))
     value_extent = max_value - min((filter_nan(m.value) or 0 for m in measurements))
     vl_spec = {
-        "$schema": "https:#vega.github.io/schema/vega-lite/v5.json",
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
         "width": width,
         "height": height,
         "view": {"stroke": "transparent"},  # Remove background rectangle
