@@ -7,7 +7,7 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("health", views.health.health, name="health"),
     path(
-        "privacy",
+        "privacy/",
         TemplateView.as_view(template_name="mainapp/privacy.html"),
         name="privacy",
     ),
