@@ -237,9 +237,12 @@ def metric_new(request):
     )
 
 
-class MetricCreateView(LoginRequiredMixin, CreateView):
+class MetricCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Metric
     form_class = MetricForm
+    success_message = (
+        "Metric successfully created. New measurements will show up starting tomorrow."
+    )
 
     def dispatch(self, request, *args, **kwargs):
         self.state = kwargs.pop("state")
