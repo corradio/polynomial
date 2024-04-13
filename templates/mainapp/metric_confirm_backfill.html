@@ -13,9 +13,11 @@
           <option value="">As far back as possible</option>
         </select>
       </p>
+      <p>
       {% if request.GET.next %}
       <a href="{{ request.GET.next }}"><input type="button" value="Skip"/></a>
       {% endif %}
-      <input type="submit" value="Collect">
+        <input type="submit" value="Collect">
+      </p>
   </form>
 {% endblock %}

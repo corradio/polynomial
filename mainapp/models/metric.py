@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Optional, Union
+from typing import TYPE_CHECKING, Dict, Optional, Union
 
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
@@ -11,7 +11,9 @@ from integrations.base import EMPTY_CONFIG_SCHEMA, WebAuthIntegration
 
 from .measurement import Measurement
 from .organization import Organization
-from .user import User
+
+if TYPE_CHECKING:
+    from .user import User
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +82,7 @@ class Metric(models.Model):
         schema=callable_config_schema,
         verbose_name="Integration configuration",
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Owner")
+    user = models.ForeignKey("User", on_delete=models.CASCADE, verbose_name="Owner")
 
     def get_absolute_url(self):
         return reverse("metric-details", args=[self.pk])
@@ -121,7 +123,7 @@ class Metric(models.Model):
             logger.exception("Exception while calling `can_backfill`")
             return False
 
-    def can_edit(self, user: Union[User, AnonymousUser]) -> bool:
+    def can_edit(self, user: Union["User", AnonymousUser]) -> bool:
         # Owner or org admin
         if self.user == user:
             return True
@@ -129,7 +131,7 @@ class Metric(models.Model):
             return False
         return self.organization.is_admin(user)
 
-    def can_view(self, user: Union[User, AnonymousUser]) -> bool:
+    def can_view(self, user: Union["User", AnonymousUser]) -> bool:
         if self.can_edit(user):
             return True
         # Check if user is *member* of any of the orgs that this
@@ -138,7 +140,7 @@ class Metric(models.Model):
             return False
         return self.organization.is_member(user)
 
-    def can_delete(self, user: Union[User, AnonymousUser]) -> bool:
+    def can_delete(self, user: Union["User", AnonymousUser]) -> bool:
         # Owner or org admin
         if self.user == user:
             return True
@@ -146,7 +148,7 @@ class Metric(models.Model):
             return False
         return self.organization.is_admin(user)
 
-    def can_be_backfilled_by(self, user: Union[User, AnonymousUser]) -> bool:
+    def can_be_backfilled_by(self, user: Union["User", AnonymousUser]) -> bool:
         if not self.can_backfill:
             return False
         if self.can_edit(user):
@@ -157,14 +159,14 @@ class Metric(models.Model):
             return self.organization.is_member(user)
         return False
 
-    def can_transfer_ownership(self, user: Union[User, AnonymousUser]) -> bool:
+    def can_transfer_ownership(self, user: Union["User", AnonymousUser]) -> bool:
         if self.user == user:
             return True
         if self.organization and self.organization.is_admin(user):
             return True
         return False
 
-    def can_alter_credentials_by(self, user: Union[User, AnonymousUser]) -> bool:
+    def can_alter_credentials_by(self, user: Union["User", AnonymousUser]) -> bool:
         if self.can_edit(user):
             return True
         # Check if user is *member* of any of the orgs that this

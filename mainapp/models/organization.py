@@ -6,17 +6,16 @@ from django.db.models.manager import Manager
 from django.urls import reverse
 from django.utils.text import slugify
 
-from .user import User
-
 if TYPE_CHECKING:
     from .dashboard import Dashboard
     from .metric import Metric
+    from .user import User
 
 
 class OrganizationUser(models.Model):
     is_admin = models.BooleanField(default=False)
     user = models.ForeignKey(
-        User,
+        "User",
         on_delete=models.CASCADE,
         null=True,  # Can be null if user is invited but has no account
     )
@@ -28,7 +27,7 @@ class OrganizationUser(models.Model):
     invitation_key = models.UUIDField(unique=True, editable=False, null=True)
     invitee_email = models.EmailField(null=True)
     inviter = models.ForeignKey(
-        User, on_delete=models.SET_NULL, related_name="inviter", null=True
+        "User", on_delete=models.SET_NULL, related_name="inviter", null=True
     )
 
     class Meta:
@@ -106,12 +105,12 @@ class Organization(models.Model):
     slug = models.SlugField(unique=True)
     organizationuser_set: Manager[OrganizationUser]
     users = models.ManyToManyField(
-        User,
+        "User",
         through=OrganizationUser,
         related_name="organization_users",
         through_fields=("organization", "user"),
     )
-    owner = models.ForeignKey(User, on_delete=models.PROTECT)
+    owner = models.ForeignKey("User", on_delete=models.PROTECT)
 
     # Used for spreadsheet export
     google_spreadsheet_export_credentials = models.JSONField(blank=True, null=True)
@@ -128,7 +127,7 @@ class Organization(models.Model):
     )
 
     @classmethod
-    def create(cls, owner: User, **kwargs) -> "Organization":
+    def create(cls, owner: "User", **kwargs) -> "Organization":
         # Create the organization
         org = Organization.objects.create(owner=owner, **kwargs)
         # Create the owner
@@ -157,11 +156,11 @@ class Organization(models.Model):
 
         return org_user
 
-    def remove_user(self, user: User):
+    def remove_user(self, user: "User"):
         org_user = OrganizationUser.objects.get(user=user, organization=self)
         org_user.delete()
 
-    def is_admin(self, user: Union[User, AnonymousUser]):
+    def is_admin(self, user: Union["User", AnonymousUser]):
         if isinstance(user, AnonymousUser):
             return False
         return (
@@ -170,10 +169,10 @@ class Organization(models.Model):
             else False
         )
 
-    def is_owner(self, user: Union[User, AnonymousUser]):
+    def is_owner(self, user: Union["User", AnonymousUser]):
         return self.owner == user
 
-    def is_member(self, user: Union[User, AnonymousUser]):
+    def is_member(self, user: Union["User", AnonymousUser]):
         return True if user in self.users.all() else False
 
     def save(self, *args, **kwargs):

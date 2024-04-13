@@ -28,6 +28,7 @@ from ..utils.charts import TOP3_MEDAL_IMAGE_PATH, get_vl_spec
 @login_required
 def index(request):
     user = request.user
+    assert isinstance(user, User)
     organizations = Organization.objects.filter(users=user)
     dashboard = (
         Dashboard.objects.all()
@@ -37,7 +38,11 @@ def index(request):
     if dashboard:
         return redirect(dashboard.get_absolute_url())
 
-    return render(request, "mainapp/dashboards.html", {})
+    return render(
+        request,
+        "mainapp/dashboards.html",
+        {"metric_count": user.get_viewable_metrics().count()},
+    )
 
 
 class DashboardCreateView(LoginRequiredMixin, CreateView):

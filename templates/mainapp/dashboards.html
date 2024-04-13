@@ -4,6 +4,10 @@
 {% block content %}
   <h1>Welcome to Polynomial 👋</h1>
   <p>
+    {% if metric_count > 0 %}
     You have no dashboard yet. Let's <a href="{% url 'dashboard_new' %}">create one now</a>!
+    {% else %}
+    You have no metrics yet. Let's <a href="{% url 'integrations' %}">create one now</a>!
+    {% endif %}
   </p>
 {% endblock %}

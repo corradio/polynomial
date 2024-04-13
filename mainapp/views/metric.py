@@ -12,7 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import BadRequest, PermissionDenied
-from django.db.models import F, Q
+from django.db.models import F
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -173,11 +173,7 @@ class MetricListView(LoginRequiredMixin, ListView):
         # might crash
         assert isinstance(self.request.user, User)
         return (
-            Metric.objects.all()
-            .filter(
-                Q(user=self.request.user)
-                | Q(organization__in=self.request.user.organization_set.all())
-            )
+            self.request.user.get_viewable_metrics()
             .filter(integration_id__in=INTEGRATION_IDS)
             .order_by(F("organization__name").asc(nulls_first=True))
         )

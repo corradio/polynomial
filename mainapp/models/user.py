@@ -4,7 +4,10 @@ from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Q
 from django.db.models.manager import Manager
+
+from .metric import Metric
 
 
 class User(AbstractUser):
@@ -48,6 +51,11 @@ class User(AbstractUser):
         if avatar_urls:
             return avatar_urls[0]
         return None
+
+    def get_viewable_metrics(self) -> models.QuerySet[Metric]:
+        return Metric.objects.all().filter(
+            Q(user=self) | Q(organization__in=self.organization_set.all())
+        )
 
     def __str__(self):
         return f"{self.name} ({self.email})"
