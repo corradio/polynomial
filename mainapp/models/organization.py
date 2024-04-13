@@ -104,7 +104,7 @@ class Organization(models.Model):
     name = models.CharField(max_length=128)
     slug = models.SlugField(unique=True)
     organizationuser_set: Manager[OrganizationUser]
-    users = models.ManyToManyField(
+    users: "models.ManyToManyField[User, OrganizationUser]" = models.ManyToManyField(
         "User",
         through=OrganizationUser,
         related_name="organization_users",
