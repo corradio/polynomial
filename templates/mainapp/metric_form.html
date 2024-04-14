@@ -62,6 +62,9 @@
     <input type="button" id="button-test" value="Preview">
     <input type="submit" id="button-submit" value="Save">
     {% endif %}
+    {% if metric.id and metric|can_delete:user %}
+    <a href="{% url 'metric_delete' metric.id %}" class="btn btn-delete">Delete metric</a>
+    {% endif %}
 
     <script>
       var testButton = document.getElementById("button-test");
@@ -174,7 +177,6 @@
   </form>
   {% if not metric or metric|can_edit:user %}
     {% if metric.id %}
-    <a href="{% url 'metric_delete' metric.id %}">Delete metric</a>
     <a href="{% url 'metric_transfer_ownership' metric.id %}?next={{ request.get_full_path | urlencode }}">Transfer ownership</a>
     {% endif %}
     <a href="select-integration">Change integration</a>
