@@ -29,6 +29,7 @@ def filter_nan(value: float) -> Optional[float]:
 
 def get_vl_spec(
     measurements: List[Measurement],
+    measurements_other_period: Optional[List[Measurement]] = None,
     highlight_date: Optional[date] = None,
     width="container",
     height="container",
@@ -39,6 +40,10 @@ def get_vl_spec(
 ):
     if not measurements:
         return {}
+    if measurements_other_period:
+        assert len(measurements) == len(
+            measurements_other_period
+        ), "Both measurements series should have same length"
     start_date = measurements[0].date
     end_date = measurements[-1].date
     max_value = max((filter_nan(m.value) or 0 for m in measurements))
@@ -57,6 +62,8 @@ def get_vl_spec(
                 {
                     # NaN should be returned None in order to be JSON compliant
                     "value": filter_nan(m.value),
+                    "value_prev": measurements_other_period
+                    and filter_nan(measurements_other_period[i].value),
                     "date": date_to_js_timestamp(m.date),
                     "label": labels.get(m.date, "") if labels else "",
                     "imageLabelUrl": (
@@ -64,7 +71,7 @@ def get_vl_spec(
                     ),
                     "marker": markers.get(m.date, "") if markers else "",
                 }
-                for m in measurements
+                for (i, m) in enumerate(measurements)
             ],
         },
         "params": [
@@ -129,6 +136,15 @@ def get_vl_spec(
             },
         },
         "layer": [
+            # Line of last period
+            {
+                "name": "line_prev",
+                "mark": {"type": "line", "strokeDash": [4, 2], "opacity": 0.3},
+                "encoding": {
+                    "x": {"field": "date", "type": "temporal"},
+                    "y": {"field": "value_prev", "type": "quantitative"},
+                },
+            },
             # Line
             {
                 "name": "line",

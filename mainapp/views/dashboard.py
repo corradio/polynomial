@@ -246,6 +246,15 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         days = (datetime.now(timezone.utc) - last_non_nan_measurement.updated_at).days
         return days > 14
 
+    # Define measurements from last period
+    delta_days = (end_date - start_date).days
+    if delta_days > 30:
+        period_days = 365  # YoY
+    elif delta_days > 7:
+        period_days = 30  # MoM
+    else:
+        period_days = 7  # WoW
+
     measurements_by_metric = [
         {
             "metric_id": metric.id,
@@ -258,7 +267,14 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             "can_be_backfilled_by_user": metric.can_be_backfilled_by(request.user),
             "has_outdated_measurements": has_outdated_measurements(metric),
             "vl_spec": get_vl_spec(
-                query_measurements_without_gaps(start_date, end_date, metric.pk),
+                measurements=query_measurements_without_gaps(
+                    start_date, end_date, metric.pk
+                ),
+                measurements_other_period=query_measurements_without_gaps(
+                    start_date - timedelta(days=period_days),
+                    end_date - timedelta(days=period_days),
+                    metric.pk,
+                ),
                 imageLabelUrls=dict(
                     zip(
                         query_topk_dates(metric.pk) if metric.enable_medals else [],
