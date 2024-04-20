@@ -84,7 +84,9 @@ def collect_all_latest_task() -> None:
 
 
 @shared_task(max_retries=10)
-def backfill_task(metric_id: int, since: Optional[str] = None) -> None:
+def backfill_task(
+    metric_id: int, since: Optional[str] = None, num_collected: float = 0
+) -> None:
     if backfill_task.request.retries:
         logger.info(
             f"Retrying backfill_task {backfill_task.request.retries}/{backfill_task.max_retries} resuming at {since}"
@@ -130,6 +132,7 @@ def backfill_task(metric_id: int, since: Optional[str] = None) -> None:
                         "metric": metric,
                     },
                 )
+                num_collected += 1
                 retry_since = (measurement.date + timedelta(days=1)).isoformat()
         except RequestException as e:
             # This will retry the task. Countdown needs to be manually set, but
@@ -138,8 +141,23 @@ def backfill_task(metric_id: int, since: Optional[str] = None) -> None:
             raise backfill_task.retry(
                 exc=e,
                 countdown=countdown,
-                kwargs={"metric_id": metric_id, "since": retry_since},
+                kwargs={
+                    "metric_id": metric_id,
+                    "since": retry_since,
+                    "num_collected": num_collected,
+                },
             )
+    # Success
+    message = f"""Hello {metric.user.first_name} 👋
+
+Your metric "{metric.name}" has successfully been backfilled with {num_collected} measurements.
+    """
+    send_mail(
+        subject=f"Your metric {metric.name} has successfully been backfilled",
+        message=message,
+        from_email="Polynomial <olivier@polynomial.so>",
+        recipient_list=[metric.user.email],
+    )
 
 
 @shared_task

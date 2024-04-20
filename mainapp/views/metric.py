@@ -118,7 +118,10 @@ def metric_backfill(request, pk):
     if request.method == "POST":
         since = request.POST.get("since")
         backfill_task.delay(metric_id=pk, since=since)
-        messages.success(request, f"Data will be fetched in the background")
+        messages.success(
+            request,
+            f"Backfill initiated. You'll receive an email when the task has been completed.",
+        )
         return redirect(request.GET.get("next") or reverse("index"))
     elif request.method == "GET":
         return render(
