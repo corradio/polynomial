@@ -17,6 +17,12 @@ TOP3_MEDAL_IMAGE_PATH = [
     static("images/medal_3rd.png"),  # 🥉
 ]
 
+# https://d3js.org/d3-format#locale_format
+# - `s` will show SI units (k, M, G...)
+# - `~` removes insignificant trailing zeros
+# - The integer represents number of significant digits
+VALUE_FORMAT = ".3~s"
+
 
 def date_to_js_timestamp(d: date):
     return int(datetime.fromisoformat(d.isoformat()).timestamp() * 1000)
@@ -29,7 +35,8 @@ def filter_nan(value: float) -> Optional[float]:
 
 def get_vl_spec(
     measurements: List[Measurement],
-    measurements_other_period: Optional[List[Measurement]] = None,
+    # Some measurements of the other period might be missing due to leap years
+    measurements_other_period: Optional[List[Optional[Measurement]]] = None,
     highlight_date: Optional[date] = None,
     width="container",
     height="container",
@@ -44,10 +51,29 @@ def get_vl_spec(
         assert len(measurements) == len(
             measurements_other_period
         ), "Both measurements series should have same length"
+
     start_date = measurements[0].date
     end_date = measurements[-1].date
     max_value = max((filter_nan(m.value) or 0 for m in measurements))
     value_extent = max_value - min((filter_nan(m.value) or 0 for m in measurements))
+    values = [
+        {
+            # NaN should be returned None in order to be JSON compliant
+            "value": filter_nan(m.value),
+            "date": date_to_js_timestamp(m.date),
+            "label": labels.get(m.date, "") if labels else "",
+            "imageLabelUrl": (imageLabelUrls.get(m.date, "") if imageLabelUrls else ""),
+            "marker": markers.get(m.date, "") if markers else "",
+        }
+        for m in measurements
+    ]
+    for i, _ in enumerate(measurements):
+        if measurements_other_period:
+            m_prev = measurements_other_period[i]
+            if m_prev:
+                values[i]["value_prev"] = (filter_nan(m_prev.value),)
+                values[i]["date_prev"] = (date_to_js_timestamp(m_prev.date),)
+
     vl_spec = {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
         "width": width,
@@ -58,21 +84,7 @@ def get_vl_spec(
         "padding": {"right": 30, "left": 30, "top": 15, "bottom": 30},
         "data": {
             "name": "data",
-            "values": [
-                {
-                    # NaN should be returned None in order to be JSON compliant
-                    "value": filter_nan(m.value),
-                    "value_prev": measurements_other_period
-                    and filter_nan(measurements_other_period[i].value),
-                    "date": date_to_js_timestamp(m.date),
-                    "label": labels.get(m.date, "") if labels else "",
-                    "imageLabelUrl": (
-                        imageLabelUrls.get(m.date, "") if imageLabelUrls else ""
-                    ),
-                    "marker": markers.get(m.date, "") if markers else "",
-                }
-                for (i, m) in enumerate(measurements)
-            ],
+            "values": values,
         },
         "params": [
             {
@@ -125,11 +137,7 @@ def get_vl_spec(
                     "domain": False,
                     "ticks": False,
                     "offset": 4,
-                    # https://d3js.org/d3-format#locale_format
-                    # - `s` will show SI units (k, M, G...)
-                    # - `~` removes insignificant trailing zeros
-                    # - The integer represents number of significant digits
-                    "format": ".3~s",
+                    "format": VALUE_FORMAT,
                     "orient": "right",
                     "labelColor": "gray",
                 },
@@ -252,43 +260,56 @@ def get_vl_spec(
         pass
     else:
         # < Quarter/month graph
+        vl_spec["layer"].append(
+            {
+                "name": "points",
+                "mark": {
+                    "type": "circle",
+                    "tooltip": {"content": "data"},  # Pass all data to tooltip plugin
+                    # The following doesn't work as it formats `value_prev` nulls as 0
+                    # "tooltip": {"expr": f"datum.datum && {{'Day': timeFormat(datum.datum.date, '%b %d, %Y'), 'Value': format(datum.datum.value, '{VALUE_FORMAT}'), 'Value {str_ago}': format(datum.datum.value_prev, '{VALUE_FORMAT}')}}"}
+                },
+                "encoding": {
+                    "x": {"field": "date", "type": "temporal"},
+                    "y": {"field": "value", "type": "quantitative"},
+                },
+            }
+        )
         if highlight_date:
-            vl_spec["layer"].append(
-                {
-                    "name": "points",
-                    "mark": {"type": "circle", "tooltip": True},
-                    "encoding": {
-                        "x": {"field": "date", "type": "temporal"},
-                        "y": {"field": "value", "type": "quantitative"},
-                        "size": {
-                            "condition": {
-                                "test": {
-                                    "field": "date",
-                                    "oneOf": [date_to_js_timestamp(highlight_date)],
-                                },
-                                "value": 200,
-                            },
-                            "value": 20,  # default value
-                        },
+            vl_spec["layer"][-1]["encoding"]["size"] = {
+                "condition": {
+                    "test": {
+                        "field": "date",
+                        "oneOf": [date_to_js_timestamp(highlight_date)],
                     },
-                }
-            )
+                    "value": 200,
+                },
+                "value": 20,  # default value
+            }
         else:
             # Highlight points based on mouseover
+            vl_spec["layer"][-1]["encoding"]["size"] = {
+                "condition": {
+                    "param": "highlight",
+                    "empty": False,
+                    "value": 200,
+                },
+                "value": 20,  # default value
+            }
             vl_spec["layer"].append(
                 {
-                    "name": "points",
-                    "mark": {"type": "circle", "tooltip": True},
+                    "name": "points_prev",
+                    "mark": {"type": "circle", "opacity": 0.3},
                     "encoding": {
                         "x": {"field": "date", "type": "temporal"},
-                        "y": {"field": "value", "type": "quantitative"},
+                        "y": {"field": "value_prev", "type": "quantitative"},
                         "size": {
                             "condition": {
                                 "param": "highlight",
                                 "empty": False,
-                                "value": 200,
+                                "value": 50,
                             },
-                            "value": 20,  # default value
+                            "value": 0,  # default value
                         },
                     },
                 }

@@ -72,17 +72,50 @@
   </div>
 {% endif %}
 
-{{ vl_spec | json_script:"vl_spec" }}
-
 {% csrf_token %}
 
 <script type="text/javascript">
+  var formatNumber = d3.format('.3~s');
+  var formatTime = d3.utcFormat("%b %d, %Y");
+
   {% for metric in measurements_by_metric %}
     var vlSpec = JSON.parse(document.getElementById('metric-spec-{{ metric.metric_id }}').textContent);
+
+    var tooltipOptions = {
+      formatTooltip: (value, sanitize) => {
+        var content = '<table>';
+        content += `<tr><td class="key">${sanitize(formatTime(value.date))}</td><td class="value">${sanitize(formatNumber(value.value))}`;
+        if (value.value_prev) {
+          pct_change = Math.round((value.value / value.value_prev - 1) * 100);
+          if (isFinite(pct_change)) {
+            content += ' (';
+            // Positive change
+            if (pct_change > 0) {
+              content += '<span class="{{ metric.higher_is_better|yesno:'text-green-500,text-red-700' }}">';
+              content += `+${pct_change}%`;
+              content += '</span>';
+            } else {
+              // Negative change
+              content += '<span class="{{ metric.higher_is_better|yesno:'text-red-700,text-green-500' }}">';
+              content += `${pct_change}%`;
+              content += '</span>';
+            }
+            content += ` YoY)`;
+          }
+        }
+        content += "</td></tr>";
+        if (value.value_prev) {
+          content += `<tr><td class="key">${sanitize(formatTime(value.date_prev))}<td class="value">${sanitize(formatNumber(value.value_prev))}</td></tr>`;
+        }
+        content += "</table>";
+        return content;
+      }
+    };
+
     vegaEmbed(
       '#chart-{{ metric.metric_id }}',
       vlSpec,
-      {"actions": false}
+      { "actions": false, "tooltip": tooltipOptions }
     ).then(result => {
       {% if metric.can_edit %}
       result.view.addEventListener('click', function(event, item) {

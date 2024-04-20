@@ -197,5 +197,5 @@ table.table tbody td {
   background-size: 40px;
 }
 .rjf-remove-button {
-  @apply text-red-500;
+  @apply text-red-700;
 }

@@ -21,7 +21,11 @@ from mainapp.forms.dashboard import DashboardTransferOwnershipForm
 
 from ..forms import DashboardForm, DashboardMetricAddForm
 from ..models import Dashboard, Metric, Organization, User
-from ..queries import query_measurements_without_gaps, query_topk_dates
+from ..queries import (
+    query_measurements_for_dates,
+    query_measurements_without_gaps,
+    query_topk_dates,
+)
 from ..utils.charts import TOP3_MEDAL_IMAGE_PATH, get_vl_spec
 
 
@@ -247,17 +251,20 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         return days > 14
 
     # Define measurements from last period
-    delta_days = (end_date - start_date).days
-    if delta_days > 30:
-        period_days = 365  # YoY
-    elif delta_days > 7:
-        period_days = 30  # MoM
-    else:
-        period_days = 7  # WoW
+    # For now we only support YoY (beware of leap years!)
+    def year_ago(d: date) -> date | None:
+        try:
+            return date(d.year - 1, d.month, d.day)
+        except ValueError:
+            assert d.month == 2  # Leap year!
+            return None
 
-    measurements_by_metric = [
-        {
-            "metric_id": metric.id,
+    measurements_by_metric = []
+    for metric in Metric.objects.filter(dashboard=dashboard).order_by("name"):
+        measurements = query_measurements_without_gaps(start_date, end_date, metric.pk)
+        days_prev = [year_ago(m.date) for m in measurements]
+        obj = {
+            "metric_id": metric.pk,
             "metric_name": metric.name,
             "integration_id": metric.integration_id,
             "can_edit": metric.can_edit(request.user),
@@ -266,14 +273,11 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             "can_alter_credentials": metric.can_alter_credentials_by(request.user),
             "can_be_backfilled_by_user": metric.can_be_backfilled_by(request.user),
             "has_outdated_measurements": has_outdated_measurements(metric),
+            "higher_is_better": metric.higher_is_better,
             "vl_spec": get_vl_spec(
-                measurements=query_measurements_without_gaps(
-                    start_date, end_date, metric.pk
-                ),
-                measurements_other_period=query_measurements_without_gaps(
-                    start_date - timedelta(days=period_days),
-                    end_date - timedelta(days=period_days),
-                    metric.pk,
+                measurements=measurements,
+                measurements_other_period=query_measurements_for_dates(
+                    days_prev, metric.pk
                 ),
                 imageLabelUrls=dict(
                     zip(
@@ -287,8 +291,8 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
                 target=metric.target,
             ),
         }
-        for metric in Metric.objects.filter(dashboard=dashboard).order_by("name")
-    ]
+        measurements_by_metric.append(obj)
+
     since_options = [
         {"label": "last 10 years", "value": "3650 days"},
         {"label": "last 5 years", "value": "1825 days"},
