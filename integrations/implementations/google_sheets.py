@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-from typing import List, final
+from typing import Iterable, final
 
 import requests
 
@@ -58,17 +58,12 @@ class GoogleSheets(OAuth2Integration):
     def can_backfill(self):
         return True
 
-    def _try_convert_serial_date_to_date(self, xldate: str, row_index: int) -> date:
+    def _try_convert_serial_date_to_date(self, xldate: str) -> date:
         # See https://github.com/python-excel/xlrd/blob/f45f6304e1ca00d7268ab5ca9bac5103417e8be2/xlrd/xldate.py
         epoch = datetime(1899, 12, 30)
         # The integer part of the Excel date stores the number of days since
         # the epoch and the fractional part stores the percentage of the day.
-        try:
-            days = int(xldate)
-        except ValueError as e:
-            raise UserFixableError(
-                f'Could not convert cell value "{xldate}" to date at row {row_index + 1}.'
-            ) from e
+        days = int(xldate)
         return (epoch + timedelta(days, 0, 0, 0)).date()
 
     def collect_latest(self) -> MeasurementTuple:
@@ -78,11 +73,11 @@ class GoogleSheets(OAuth2Integration):
         )
         if not results:
             raise UserFixableError("No matching rows were found")
-        return results[-1]
+        return list(results)[-1]
 
     def collect_past_range(
         self, date_start: date, date_end: date
-    ) -> List[MeasurementTuple]:
+    ) -> Iterable[MeasurementTuple]:
         # Parameters
         spreadsheet_id = self.config["spreadsheet_id"]
         sheet_range = self.config["sheet_range"]
@@ -125,24 +120,30 @@ class GoogleSheets(OAuth2Integration):
                 # the row vector will be shorter. We simply mark this as empty.
                 return ""
 
-        def try_convert_cell_to_float(cell_value: str, row_index: int) -> float:
-            try:
-                return float("nan") if cell_value == "" else float(cell_value)
-            except ValueError as e:
-                raise UserFixableError(
-                    f'Could not convert cell value "{cell_value}" to number at row {row_index + 1}'
-                ) from e
+        def try_convert_cell_to_float(cell_value: str) -> float:
+            return float("nan") if cell_value == "" else float(cell_value)
 
         # Parse data
-        measurements = [
-            MeasurementTuple(
-                date=self._try_convert_serial_date_to_date(
-                    get_cell(row, date_column), row_index
-                ),
-                value=try_convert_cell_to_float(get_cell(row, value_column), row_index),
-            )
-            for row_index, row in enumerate(data)
-            if all([get_cell(row, f["column"]) == f["value"] for f in filters])
-        ]
-
-        return [m for m in measurements if m.date >= date_start and m.date <= date_end]
+        for row_index, row in enumerate(data):
+            if not all([get_cell(row, f["column"]) == f["value"] for f in filters]):
+                continue
+            date_cell = get_cell(row, date_column)
+            if date_cell == "":
+                # Silently ignore if the date is empty
+                continue
+            try:
+                dt = self._try_convert_serial_date_to_date(date_cell)
+            except ValueError as e:
+                raise UserFixableError(
+                    f'Could not convert cell value "{date_cell}" to date at row {row_index + 1}.'
+                ) from e
+            if not (dt >= date_start and dt <= date_end):
+                continue
+            value_cell = get_cell(row, value_column)
+            try:
+                value = try_convert_cell_to_float(value_cell)
+            except ValueError as e:
+                raise UserFixableError(
+                    f'Could not convert cell value "{value_cell}" to number at row {row_index + 1}'
+                ) from e
+            yield MeasurementTuple(date=dt, value=value)
