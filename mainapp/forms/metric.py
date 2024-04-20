@@ -162,6 +162,7 @@ class MetricForm(MetricBaseForm):
                     (False, "Lower values are better"),
                 )
             ),
+            "target": forms.TextInput(),  # Disable up/down arrows in field (scrolling)
         }
 
 
