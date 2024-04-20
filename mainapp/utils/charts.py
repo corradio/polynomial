@@ -71,8 +71,8 @@ def get_vl_spec(
         if measurements_other_period:
             m_prev = measurements_other_period[i]
             if m_prev:
-                values[i]["value_prev"] = (filter_nan(m_prev.value),)
-                values[i]["date_prev"] = (date_to_js_timestamp(m_prev.date),)
+                values[i]["value_prev"] = filter_nan(m_prev.value)
+                values[i]["date_prev"] = date_to_js_timestamp(m_prev.date)
 
     vl_spec = {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
