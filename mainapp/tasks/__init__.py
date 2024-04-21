@@ -18,6 +18,7 @@ from requests.exceptions import RequestException
 
 from config.settings import CSRF_TRUSTED_ORIGINS
 from integrations.base import UserFixableError
+from mainapp.models.user import User
 
 from ..models import Measurement, Metric, Organization
 from ..utils import charts
@@ -85,7 +86,10 @@ def collect_all_latest_task() -> None:
 
 @shared_task(max_retries=10)
 def backfill_task(
-    metric_id: int, since: Optional[str] = None, num_collected: float = 0
+    requester_user_id: int,
+    metric_id: int,
+    since: Optional[str] = None,
+    num_collected: float = 0,
 ) -> None:
     if backfill_task.request.retries:
         logger.info(
@@ -142,21 +146,23 @@ def backfill_task(
                 exc=e,
                 countdown=countdown,
                 kwargs={
+                    "requester_user_id": requester_user_id,
                     "metric_id": metric_id,
                     "since": retry_since,
                     "num_collected": num_collected,
                 },
             )
     # Success
-    message = f"""Hello {metric.user.first_name} 👋
+    requester_user = User.objects.get(pk=requester_user_id)
+    message = f"""Hello {requester_user.first_name} 👋
 
-Your metric "{metric.name}" has successfully been backfilled with {num_collected} measurements.
+Metric "{metric.name}" has successfully been backfilled with {num_collected} measurements.
     """
     send_mail(
         subject=f"Your metric {metric.name} has successfully been backfilled",
         message=message,
         from_email="Polynomial <olivier@polynomial.so>",
-        recipient_list=[metric.user.email],
+        recipient_list=[requester_user.email],
     )
 
 

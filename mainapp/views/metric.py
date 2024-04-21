@@ -117,7 +117,9 @@ def metric_backfill(request, pk):
         raise PermissionDenied()
     if request.method == "POST":
         since = request.POST.get("since")
-        backfill_task.delay(metric_id=pk, since=since)
+        backfill_task.delay(
+            requester_user_id=request.user.pk, metric_id=pk, since=since
+        )
         messages.success(
             request,
             f"Backfill initiated. You'll receive an email when the task has been completed.",
