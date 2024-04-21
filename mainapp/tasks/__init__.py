@@ -10,15 +10,13 @@ from celery import shared_task
 from celery.signals import task_failure
 from celery.utils.log import get_task_logger
 from django.core.mail import EmailMultiAlternatives, mail_admins, send_mail
-from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.dateparse import parse_date, parse_duration
-from oauthlib import oauth2
 from requests.exceptions import RequestException
 
 from config.settings import CSRF_TRUSTED_ORIGINS
-from integrations.base import UserFixableError
 from mainapp.models.user import User
+from mainapp.tasks.error_handling import notify_metric_exception
 
 from ..models import Measurement, Metric, Organization
 from ..utils import charts
@@ -270,62 +268,26 @@ def celery_task_failure_email(sender, *args, **kwargs) -> None:
     if sender == collect_latest_task:
         metric_pk = kwargs["args"][0]
         metric = Metric.objects.get(pk=metric_pk)
-        extras = {"metric": model_to_dict(metric)}
-
-        if isinstance(exception, oauth2.rfc6749.errors.InvalidGrantError):
-            # Handler for expired OAuth
-            subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
-            message = f"""Hello {metric.user.first_name} 👋
-
-Unfortunately, something went wrong last night when attempting to collect the latest data for the {metric.name} metric.
-It seems like the authorization expired.
-
-To fix the error, you will have to re-authorize by following the link below:
-{BASE_URL}{reverse('metric-authorize', args=[metric_pk])}
-"""
-        elif isinstance(exception, (UserFixableError, requests.HTTPError)):
-            # If it's an HTTPError, only handle certain error codes
-            # - 401 Unauthorized: client provides no credentials or invalid credentials
-            # - 403 Forbidden: has valid credentials but not enough privileges
-            if not isinstance(exception, requests.HTTPError) or (
-                exception.response is not None
-                and exception.response.status_code in [400, 401, 402, 403]
-            ):
-                # Handler for exceptions that can be fixed by the user
-                subject = (
-                    f"Aw snap, collecting data for the {metric.name} metric failed 😟"
-                )
-                more_detail = None
-                if (
-                    isinstance(exception, requests.HTTPError)
-                    and exception.response is not None
-                ):
-                    try:
-                        more_detail = exception.response.json()
-                    except json.decoder.JSONDecodeError:
-                        pass
-                message = f"""Hello {metric.user.first_name} 👋
-
-Unfortunately, something went wrong last night when attempting to collect the latest data for the {metric.name} metric.
-The error was: {exception}"""
-                if more_detail:
-                    message += f"\n\nAdditional information: {more_detail}"
-
-                message += f"""
-
-To fix this error, you might have to reconfigure your metric by following the link below:
-{BASE_URL}{reverse('metric-details', args=[metric_pk])}
-"""
-        if subject and message:
-            send_mail(
-                subject,
-                message,
-                from_email="Polynomial <olivier@polynomial.so>",
-                recipient_list=[metric.user.email],
-            )
+        if notify_metric_exception(
+            metric=metric,
+            friendly_context_message=f"Unfortunately, something went wrong last night when attempting to collect the latest data for the {metric.name} metric.",
+            exception=exception,
+            recipient_email=metric.user.email,
+        ):
+            return
+    elif sender == backfill_task:
+        requester_user_id, metric_pk, *_ = kwargs["args"]
+        metric = Metric.objects.get(pk=metric_pk)
+        requester_user = User.objects.get(pk=requester_user_id)
+        if notify_metric_exception(
+            metric=metric,
+            friendly_context_message=f"Unfortunately, something went wrong when attempting to backfill the {metric.name} metric.",
+            exception=exception,
+            recipient_email=requester_user.email,
+        ):
             return
 
-    # Generic handler
+    # Generic handler for unhandled exceptions
     extras = {}
 
     # Add some details if this is a HTTPError
