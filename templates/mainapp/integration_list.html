@@ -2,34 +2,6 @@
 {% load static %}
 
 {% block content %}
-    <h2>Select integration</h2>
-    <p class="text-sm text-gray-500">
-      Not on the list? Request a new integration <a href="https://docs.google.com/forms/d/e/1FAIpQLScYQROio_QR2F8FFtalrE-4TXvJ8lsJEIrJ7W8-ZULcUxLVqw/viewform">here</a>, or contribute by <a href="https://github.com/corradio/polynomial/tree/master/integrations">building it</a>.
-    </p>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
-        {% for integration in object_list %}
-          <div class="flex flex-col p-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800">
-              <h5 class="mb-2 font-bold tracking-tight text-gray-900">
-                {% with "integrations/icons/"|add:integration.id|add:".png" as icon_url %}
-                  <img class="integration-icon" src="{% static icon_url %}" alt="">
-                {% endwith %}
-                {{ integration.label }}
-              </h5>
-              {% if integration.description %}
-              <p class="mb-3 text-xs text-gray-500">
-                {{ integration.description }}
-              </p>
-              {% endif %}
-              <div class="flex-grow content-end">
-                <a
-                    href="{% url 'metric_new' %}?integration_id={{ integration.id }}&{{ request.META.QUERY_STRING }}"
-                    class="mt-2 btn inline-flex items-center px-3 py-2"
-                >
-                    Select
-                    <svg aria-hidden="true" class="w-4 h-4 ml-2 -mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                </a>
-              </div>
-          </div>
-        {% endfor %}
-    </div>
+  {% url 'metric_new' as metric_new_url %}
+  {% include "mainapp/snippets/integration_mosaic.html" with object_list=object_list action=metric_new_url additional_query_string=request.META.QUERY_STRING %}
 {% endblock %}
