@@ -141,7 +141,8 @@ class DashboardMetricRemoveView(LoginRequiredMixin, DeleteView):
 
     def dispatch(self, request, *args, **kwargs):
         self.dashboard = get_object_or_404(Dashboard, pk=kwargs["dashboard_pk"])
-        if not self.dashboard.can_delete(request.user):
+        # If you can edit the dashboard, then you can remove metrics
+        if not self.dashboard.can_edit(request.user):
             raise PermissionDenied(
                 "You don't have the rights to remove a metric from this dashboard"
             )
