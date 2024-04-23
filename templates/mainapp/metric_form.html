@@ -81,8 +81,8 @@
       // Test
       testButton.onclick = function(e) {
         var configElement = document.getElementById('id_integration_config');
-        // Validate form (this happens automatically when calling onSubmit)
-        if (!configElement.form.reportValidity()) {
+        // Validate integration config
+        if (!configElement.reportValidity()) {
           e.preventDefault();
           return;
         }
@@ -102,7 +102,6 @@
         var csrftoken = document.querySelector('input[name=csrfmiddlewaretoken]').value;
         var data = JSON.stringify({
           integration_config: configElement.value,
-          name: document.getElementById('id_name').value,
         });
         fetch(location.origin + location.pathname + 'test', {
           method: 'POST', headers: {
