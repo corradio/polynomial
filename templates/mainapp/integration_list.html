@@ -2,6 +2,8 @@
 {% load static %}
 
 {% block content %}
-  {% url 'metric_new' as metric_new_url %}
-  {% include "mainapp/snippets/integration_mosaic.html" with object_list=object_list action=metric_new_url additional_query_string=request.META.QUERY_STRING %}
+  {% url 'metric_new' as metric_url %}
+  {% firstof request.GET.action metric_url as action_url %}
+  {# Note: action is still in QUERY_STRING. A clean implementation would remove it #}
+  {% include "mainapp/snippets/integration_mosaic.html" with object_list=object_list action=action_url additional_query_string=request.META.QUERY_STRING %}
 {% endblock %}

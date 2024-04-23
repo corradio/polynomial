@@ -115,16 +115,18 @@ class DashboardMetricAddView(LoginRequiredMixin, UpdateView):
         assert response.context_data is not None
         # Check if the form contains any metrics to add.
         # If not, redirect to creation view directly
+        integration_id = self.request.GET["integration_id"]
         dashboard = self.object
         if not response.context_data["form"].fields["metrics"].queryset:
             return redirect(
-                f"{reverse('integrations')}?dashboard_ids={dashboard.pk}&next={dashboard.get_absolute_url()}"
+                f"{reverse('metric_new')}?integration_id={integration_id}&dashboard_ids={dashboard.pk}&next={dashboard.get_absolute_url()}"
             )
         return response
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
+        kwargs["integration_id"] = self.request.GET["integration_id"]
         return kwargs
 
 

@@ -41,6 +41,7 @@ class DashboardForm(BaseModelForm):
 class DashboardMetricAddForm(BaseModelForm):
     def __init__(self, *args, **kwargs) -> None:
         user = kwargs.pop("user")
+        integration_id = kwargs.pop("integration_id", None)
         super().__init__(*args, **kwargs)
         organizations = Organization.objects.filter(users=user)
         available_metrics = (
@@ -49,6 +50,8 @@ class DashboardMetricAddForm(BaseModelForm):
             .exclude(dashboard=self.instance)
             .order_by("integration_id", "name")
         )
+        if integration_id:
+            available_metrics = available_metrics.filter(integration_id=integration_id)
         metrics_field = self.fields["metrics"]
         assert isinstance(metrics_field, forms.ModelChoiceField)
         metrics_field.queryset = available_metrics

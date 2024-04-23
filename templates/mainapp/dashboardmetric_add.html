@@ -3,7 +3,7 @@
 {% load debug_tags %}
 
 {% block content %}
-<h2>Select metrics to add to <b>{{object}}</b>:</h2>
+<h2>Available metrics to add to <b>{{object}}</b>:</h2>
 <form method="post">{% csrf_token %}
   {{ form.non_field_errors }}
   <div id="id_{{ form.metrics.name }}">
@@ -24,7 +24,11 @@
   <div class="flex my-2 items-center pt-2">
     <input type="submit" value="Add selected">
     <div class="px-5 text-gray-500">or</div>
+    {% if request.GET.integration_id %}
+    <a href="{% url 'metric_new' %}?integration_id={{ request.GET.integration_id }}&dashboard_ids={{ dashboard.pk }}&organization_id={{ dashboard.organization.pk }}&next={{ dashboard.get_absolute_url }}" class="btn">Create new</a>
+    {% else %}
     <a href="{% url 'integrations' %}?dashboard_ids={{ dashboard.pk }}&organization_id={{ dashboard.organization.pk }}&next={{ dashboard.get_absolute_url }}" class="btn">Create new</a>
+    {% endif %}
   </div>
 </form>
 {% endblock %}
