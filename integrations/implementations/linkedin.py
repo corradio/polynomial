@@ -13,54 +13,57 @@ METRICS: List[Dict[str, Any]] = [
     # Share statistics
     # See https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/organizations/share-statistics?view=li-lms-2022-12&tabs=http#share-statistics-data-schema
     {
-        "title": "Content impressions (unique)",
+        "title": "Post impressions (unique)",
         "value": "uniqueImpressionsCount",
         "endpoint": "organizationalEntityShareStatistics",
     },
     {
-        "title": "Content impressions (total)",
+        "title": "Post impressions (total)",
         "value": "impressionCount",
         "endpoint": "organizationalEntityShareStatistics",
     },
     {
-        "title": "Content shares",
+        "title": "Post shares",
         "value": "shareCount",
         "endpoint": "organizationalEntityShareStatistics",
     },
     {
-        "title": "Content engagement",
+        "title": "Post engagement",
         "value": "engagement",
         "endpoint": "organizationalEntityShareStatistics",
     },
     {
-        "title": "Content clicks",
+        "title": "Post clicks",
         "value": "clickCount",
         "endpoint": "organizationalEntityShareStatistics",
     },
     {
-        "title": "Content likes",
+        "title": "Post likes",
         "value": "likeCount",
         "endpoint": "organizationalEntityShareStatistics",
     },
     {
-        "title": "Content comments",
+        "title": "Post comments",
         "value": "commentCount",
         "endpoint": "organizationalEntityShareStatistics",
     },
+    # For some reason these two endpoints only have lifetime statistics
+    # I believe it is because these are only available for a given time period
+    # if a specific post is selected
     {
-        "title": "Mentions (in shares)",
+        "title": "Lifetime company mentions (in shares)",
         "endpoint": "organizationalEntityShareStatistics",
         "value": "shareMentionsCount",
-        "can_backfill": False,
+        "can_backfill": False,  # Set to False to ensure lifetime stats
         "value_getter": lambda element: element["totalShareStatistics"][
             "shareMentionsCount"
         ],
     },
     {
-        "title": "Mentions (in comments)",
+        "title": "Lifetime company mentions (in comments)",
         "endpoint": "organizationalEntityShareStatistics",
         "value": "commentMentionsCount",
-        "can_backfill": False,
+        "can_backfill": False,  # Set to False to ensure lifetime stats
         "value_getter": lambda element: element["totalShareStatistics"][
             "commentMentionsCount"
         ],
@@ -125,6 +128,7 @@ class LinkedIn(OAuth2Integration):
                     "type": "string",
                     "required": True,
                     "choices": org_choices,
+                    "title": "Organization",
                 },
                 "metric": {
                     "type": "string",
