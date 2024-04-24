@@ -137,6 +137,8 @@ def backfill_task(
                 num_collected += 1
                 retry_since = (measurement.date + timedelta(days=1)).isoformat()
         except RequestException as e:
+            if not (e.response and e.response == 429):
+                raise e
             # This will retry the task. Countdown needs to be manually set, but
             # max_retries will follow task configuration
             countdown = 10 * (2 ** (backfill_task.request.retries + 1))
