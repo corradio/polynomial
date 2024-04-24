@@ -276,7 +276,11 @@ def celery_task_failure_email(sender, *args, **kwargs) -> None:
         ):
             return
     elif sender == backfill_task:
-        requester_user_id, metric_pk, *_ = kwargs["args"]
+        if kwargs["args"]:
+            requester_user_id, metric_pk, *_ = kwargs["args"]
+        else:
+            requester_user_id = kwargs["kwargs"]["requester_user_id"]
+            metric_pk = kwargs["kwargs"]["metric_id"]
         metric = Metric.objects.get(pk=metric_pk)
         requester_user = User.objects.get(pk=requester_user_id)
         if notify_metric_exception(
