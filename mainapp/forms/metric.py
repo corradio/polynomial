@@ -288,7 +288,9 @@ class MetricDashboardAddForm(MetricBaseForm):
             new_dashboard = Dashboard.objects.create(
                 name=self.data["dashboard_new"], user=self.user
             )
-            metric.dashboards.add(new_dashboard)
+            self.cleaned_data["dashboards"] |= Dashboard.objects.filter(
+                pk=new_dashboard.pk
+            )
         super()._save_m2m()
 
     class Meta:
