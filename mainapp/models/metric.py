@@ -15,10 +15,20 @@ from .organization import Organization
 if TYPE_CHECKING:
     from .user import User
 
+import uuid
+
 logger = logging.getLogger(__name__)
 
 
 class Metric(models.Model):
+    id = models.UUIDField(
+        auto_created=True,
+        primary_key=True,
+        serialize=False,
+        verbose_name="ID",
+        default=uuid.uuid4,
+        editable=False,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=128)
     integration_id = models.CharField(

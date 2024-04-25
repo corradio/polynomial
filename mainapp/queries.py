@@ -1,5 +1,6 @@
 from datetime import date
 from typing import Iterable, List, Optional, Tuple
+from uuid import UUID
 
 from django.db import connection
 
@@ -7,7 +8,7 @@ from .models import Measurement, Metric
 
 
 def query_measurements_without_gaps(
-    start_date: date, end_date: date, metric_id: int
+    start_date: date, end_date: date, metric_id: UUID
 ) -> List[Measurement]:
     """Will return Measurements with NaN value if missing"""
     assert start_date <= end_date, "start_date should be before end_date"
@@ -37,7 +38,7 @@ def query_measurements_without_gaps(
 
 
 def query_measurements_for_dates(
-    dates: List[date | None], metric_id: int
+    dates: List[date | None], metric_id: UUID
 ) -> List[Measurement | None]:
     """Will return Measurements with NaN value if missing. If date is missing, then will return None"""
     with connection.cursor() as cursor:
@@ -68,7 +69,7 @@ def query_measurements_for_dates(
         ]
 
 
-def query_topk_dates(metric_id: int, topk=3) -> Iterable[date]:
+def query_topk_dates(metric_id: UUID, topk=3) -> Iterable[date]:
     sort_field_arg = "value"
     metric = Metric.objects.get(pk=metric_id)
     if metric.higher_is_better:

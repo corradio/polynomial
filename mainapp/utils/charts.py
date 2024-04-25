@@ -2,6 +2,7 @@ import base64
 import json
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional
+from uuid import UUID
 
 import vl_convert as vlc
 from django.templatetags.static import static
@@ -341,7 +342,7 @@ def get_vl_spec(
 
 
 def metric_chart_vl_spec(
-    metric_id: int, highlight_date: Optional[date] = None, lookback_days: int = 30
+    metric_id: UUID, highlight_date: Optional[date] = None, lookback_days: int = 30
 ):
     end_date = date.today()
     start_date = end_date - timedelta(days=lookback_days)

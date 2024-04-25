@@ -25,7 +25,7 @@ urlpatterns = [
             [
                 path("", views.metric.MetricListView.as_view(), name="metrics"),
                 path(
-                    "<int:pk>/",
+                    "<uuid:pk>/",
                     include(
                         [
                             path(
@@ -51,47 +51,47 @@ urlpatterns = [
                     ),
                 ),
                 path(
-                    "<int:pk>/backfill",
+                    "<uuid:pk>/backfill",
                     views.metric.metric_backfill,
                     name="metric-backfill",
                 ),
                 path(
-                    "<int:pk>/delete",
+                    "<uuid:pk>/delete",
                     views.metric.MetricDeleteView.as_view(),
                     name="metric_delete",
                 ),
                 path(
-                    "<int:pk>/transfer_ownership",
+                    "<uuid:pk>/transfer_ownership",
                     views.metric.MetricTransferOwnershipView.as_view(),
                     name="metric_transfer_ownership",
                 ),
                 path(
-                    "<int:pk>/authorize",
+                    "<uuid:pk>/authorize",
                     views.metric.metric_authorize,
                     name="metric-authorize",
                 ),
                 path(
-                    "<int:pk>/select-integration",
+                    "<uuid:pk>/select-integration",
                     views.metric.MetricIntegrationUpdateView.as_view(),
                     name="metric-select-integration",
                 ),
                 path(
-                    "<int:pk>/test",
+                    "<uuid:pk>/test",
                     views.metric.metric_test,
                     name="metric-test",
                 ),
                 path(
-                    "<int:pk>/duplicate",
+                    "<uuid:pk>/duplicate",
                     views.metric.metric_duplicate,
                     name="metric-duplicate",
                 ),
                 path(
-                    "<int:pk>/import",
+                    "<uuid:pk>/import",
                     views.metric.MetricImportView.as_view(),
                     name="metric-import",
                 ),
                 path(
-                    "<int:pk>/dashboards/add",
+                    "<uuid:pk>/dashboards/add",
                     views.metric.MetricDashboardAddView.as_view(),
                     name="metricdashboard_add",
                 ),
@@ -237,7 +237,7 @@ urlpatterns = [
                     name="dashboardmetric_add",
                 ),
                 path(
-                    "<int:dashboard_pk>/metrics/<int:metric_pk>/remove",
+                    "<int:dashboard_pk>/metrics/<uuid:metric_pk>/remove",
                     view=views.dashboard.DashboardMetricRemoveView.as_view(),
                     name="dashboardmetric_remove",
                 ),

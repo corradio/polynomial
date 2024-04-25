@@ -33,7 +33,7 @@ class OrganizationForm(BaseModelForm):
             self.fields["slack_notifications_channel"].widget = forms.HiddenInput()
 
     def save(self, commit=True):
-        if not self.instance.pk:
+        if self.instance._state.adding:
             # This is a CreateForm
             return Organization.create(**self.cleaned_data)
         else:

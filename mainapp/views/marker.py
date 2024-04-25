@@ -1,4 +1,5 @@
 import json
+from uuid import UUID
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -10,7 +11,7 @@ from ..models import Marker, Metric
 
 
 @login_required
-def marker_with_date(request, pk: int, marker_date_str: str):
+def marker_with_date(request, pk: UUID, marker_date_str: str):
     if not request.method in ["DELETE"]:
         return HttpResponseNotAllowed(["DELETE"])
     # Get marker
@@ -23,7 +24,7 @@ def marker_with_date(request, pk: int, marker_date_str: str):
 
 
 @login_required
-def marker(request, pk: int):
+def marker(request, pk: UUID):
     if not request.method in ["POST"]:
         return HttpResponseNotAllowed(["POST"])
     metric = Metric.objects.get(pk=pk)

@@ -1,6 +1,7 @@
 import logging
 from datetime import date, timedelta
 from typing import List, Optional
+from uuid import UUID
 
 import pandas as pd
 
@@ -39,7 +40,7 @@ def extract_spikes(measurements: List[Measurement]) -> List[date]:
     return list(spike_index.date)
 
 
-def detected_spike(metric_id: int) -> Optional[date]:
+def detected_spike(metric_id: UUID) -> Optional[date]:
     logger.info(f"Starting spike detection for metric_id={metric_id}")
     # Query
     end_date = date.today()

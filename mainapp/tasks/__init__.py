@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 from email.mime.image import MIMEImage
 from pprint import pformat
 from typing import Optional
+from uuid import UUID
 
 import requests
 from celery import shared_task
@@ -29,7 +30,7 @@ logger = get_task_logger(__name__)
 
 
 @shared_task(max_retries=5, autoretry_for=(RequestException,), retry_backoff=10)
-def collect_latest_task(metric_id: int) -> None:
+def collect_latest_task(metric_id: UUID) -> None:
     logger.info(f"Start collect_latest_task(metric_id={metric_id})")
     metric = Metric.objects.get(pk=metric_id)
 
@@ -85,7 +86,7 @@ def collect_all_latest_task() -> None:
 @shared_task(max_retries=10)
 def backfill_task(
     requester_user_id: int,
-    metric_id: int,
+    metric_id: UUID,
     since: Optional[str] = None,
     num_collected: float = 0,
 ) -> None:
@@ -183,7 +184,7 @@ def spreadsheet_export_all() -> None:
 
 
 @shared_task
-def check_notify_metric_changed_task(metric_id: int) -> None:
+def check_notify_metric_changed_task(metric_id: UUID) -> None:
     metric = Metric.objects.get(pk=metric_id)
     spike_date = metric_analyse.detected_spike(metric.pk)
     if spike_date:
@@ -235,7 +236,7 @@ def check_notify_metric_changed_task(metric_id: int) -> None:
 
 
 @shared_task
-def verify_inactive_task(metric_id: int) -> None:
+def verify_inactive_task(metric_id: UUID) -> None:
     metric = Metric.objects.get(pk=metric_id)
     # How long since last successful collect?
     last_non_nan_measurement = metric.last_non_nan_measurement

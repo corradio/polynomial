@@ -112,7 +112,7 @@ class MetricForm(MetricBaseForm):
         # see https://django-jsonform.readthedocs.io/en/latest/fields-and-widgets.html#accessing-model-instance-in-callable-schema
         self.fields["integration_config"].widget.instance = self.instance
 
-        if self.instance.pk and not self.instance.can_edit(self.user):
+        if not self.instance._state.adding and not self.instance.can_edit(self.user):
             for field in self.fields.values():
                 field.disabled = True
 
@@ -254,7 +254,7 @@ class MetricIntegrationForm(BaseModelForm):
     def save(self, *args, **kwargs):
         if self.has_changed():
             # Reset other fields as well
-            if self.instance.pk:
+            if not self.instance._state.adding:
                 # Update
                 self.instance.integration_credentials = None
                 self.instance.integration_config = None

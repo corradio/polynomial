@@ -11,8 +11,6 @@ cleardb:
 	docker-compose stop pgdb
 	docker-compose rm -v -f pgdb
 	docker-compose up -d pgdb
-	rm -rf mainapp/migrations/* && git checkout mainapp/migrations
-	$(MANAGE) makemigrations
 
 initdb:
 	$(MANAGE) migrate
