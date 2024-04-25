@@ -28,6 +28,9 @@ class MetricBaseForm(BaseModelForm):
                 Q(user=self.user) | Q(organization__in=organizations)
             )
             dashboards_field.help_text = "Note: adding a metric to a dashboard will also add it to its organization"
+            self.fields["dashboards"].initial = [
+                d.pk for d in self.instance.dashboard_set.all()
+            ]
 
         # Remove any sensitive password data
         if "integration_config" in self.fields and self.initial["integration_config"]:
