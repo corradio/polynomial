@@ -95,6 +95,11 @@ urlpatterns = [
                     views.metric.MetricDashboardAddView.as_view(),
                     name="metricdashboard_add",
                 ),
+                path(
+                    "<uuid:pk>/embed",
+                    views.metric.MetricEmbedView.as_view(),
+                    name="metric_embed",
+                ),
                 # These are metric creation routes, which use the cache as backend
                 path(
                     "new",

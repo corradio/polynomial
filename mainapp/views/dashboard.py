@@ -159,6 +159,48 @@ class DashboardMetricRemoveView(LoginRequiredMixin, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
+# Define measurements from last period
+# For now we only support YoY (beware of leap years!)
+def year_ago(d: date) -> date | None:
+    try:
+        return date(d.year - 1, d.month, d.day)
+    except ValueError:
+        assert d.month == 2  # Leap year!
+        return None
+
+
+def has_outdated_measurements(metric) -> bool:
+    last_non_nan_measurement = metric.last_non_nan_measurement
+    if last_non_nan_measurement is None:
+        return False
+    days = (datetime.now(timezone.utc) - last_non_nan_measurement.updated_at).days
+    return days > 14
+
+
+def get_metric_data(metric: Metric, start_date: date, end_date: date) -> dict:
+    measurements = query_measurements_without_gaps(start_date, end_date, metric.pk)
+    days_prev = [year_ago(m.date) for m in measurements]
+    return {
+        "metric_object": metric,
+        "has_outdated_measurements": has_outdated_measurements(metric),
+        "higher_is_better": metric.higher_is_better,
+        "vl_spec": get_vl_spec(
+            measurements=measurements,
+            measurements_other_period=query_measurements_for_dates(
+                days_prev, metric.pk
+            ),
+            imageLabelUrls=dict(
+                zip(
+                    query_topk_dates(metric.pk) if metric.enable_medals else [],
+                    TOP3_MEDAL_IMAGE_PATH,
+                )
+            ),
+            markers={marker.date: marker.text for marker in metric.marker_set.all()},
+            target=metric.target,
+        ),
+    }
+
+
 def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     try:
         user = User.objects.get(username=username_or_org_slug)
@@ -246,55 +288,10 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
             interval = timedelta(days=60)
         start_date = end_date - interval
 
-    def has_outdated_measurements(metric) -> bool:
-        last_non_nan_measurement = metric.last_non_nan_measurement
-        if last_non_nan_measurement is None:
-            return False
-        days = (datetime.now(timezone.utc) - last_non_nan_measurement.updated_at).days
-        return days > 14
-
-    # Define measurements from last period
-    # For now we only support YoY (beware of leap years!)
-    def year_ago(d: date) -> date | None:
-        try:
-            return date(d.year - 1, d.month, d.day)
-        except ValueError:
-            assert d.month == 2  # Leap year!
-            return None
-
-    measurements_by_metric = []
-    for metric in Metric.objects.filter(dashboard=dashboard).order_by("name"):
-        measurements = query_measurements_without_gaps(start_date, end_date, metric.pk)
-        days_prev = [year_ago(m.date) for m in measurements]
-        obj = {
-            "metric_id": metric.pk,
-            "metric_name": metric.name,
-            "integration_id": metric.integration_id,
-            "can_edit": metric.can_edit(request.user),
-            "can_delete": metric.can_delete(request.user),
-            "can_web_auth": metric.can_web_auth,
-            "can_alter_credentials": metric.can_alter_credentials_by(request.user),
-            "can_be_backfilled_by_user": metric.can_be_backfilled_by(request.user),
-            "has_outdated_measurements": has_outdated_measurements(metric),
-            "higher_is_better": metric.higher_is_better,
-            "vl_spec": get_vl_spec(
-                measurements=measurements,
-                measurements_other_period=query_measurements_for_dates(
-                    days_prev, metric.pk
-                ),
-                imageLabelUrls=dict(
-                    zip(
-                        query_topk_dates(metric.pk) if metric.enable_medals else [],
-                        TOP3_MEDAL_IMAGE_PATH,
-                    )
-                ),
-                markers={
-                    marker.date: marker.text for marker in metric.marker_set.all()
-                },
-                target=metric.target,
-            ),
-        }
-        measurements_by_metric.append(obj)
+    measurements_by_metric = [
+        get_metric_data(metric, start_date, end_date)
+        for metric in Metric.objects.filter(dashboard=dashboard).order_by("name")
+    ]
 
     since_options = [
         {"label": "last 10 years", "value": "3650 days"},

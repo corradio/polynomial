@@ -4,7 +4,7 @@ import sys
 import traceback
 from datetime import date, datetime, timedelta
 from types import MethodType
-from typing import List, Optional, Type
+from typing import Any, List, Optional, Type
 
 import requests
 from django.contrib import messages
@@ -16,18 +16,28 @@ from django.db.models import F
 from django.http import (
     HttpRequest,
     HttpResponse,
+    HttpResponseBase,
     HttpResponseNotAllowed,
     HttpResponseRedirect,
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.utils.decorators import method_decorator
+from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 
 from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
 from integrations.base import Integration, WebAuthIntegration
 from integrations.utils import deofuscate_protected_fields
+from mainapp.views.dashboard import get_metric_data
 
 from .. import forms
 from ..forms import MetricForm, MetricTransferOwnershipForm
@@ -581,3 +591,20 @@ class MetricDashboardAddView(LoginRequiredMixin, UpdateView):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+
+class MetricEmbedView(DetailView):
+    template_name = "mainapp/metric_embed.html"
+
+    def get_object(self, queryset=None):
+        metric = get_object_or_404(Metric, pk=self.kwargs["pk"])
+        end_date = date.today()
+        start_date = end_date - timedelta(days=6 * 30)
+        return get_metric_data(metric, start_date, end_date)
+
+    @method_decorator(xframe_options_exempt)  # Enable embedding in iFrames
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseBase:
+        response = super().dispatch(request, *args, **kwargs)
+        return response
