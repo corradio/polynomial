@@ -472,7 +472,7 @@ def metric_authorize(request, pk):
     assert uri is not None
     # Save parameters in session
     request.session[state] = {
-        "metric_id": metric.id,
+        "metric_id": str(metric.pk),
         "code_verifier": code_verifier,
         "next": request.GET.get("next"),
     }
