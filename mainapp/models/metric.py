@@ -38,9 +38,6 @@ class Metric(models.Model):
     organization = models.ForeignKey(
         Organization, null=True, blank=True, on_delete=models.CASCADE
     )
-    dashboards: models.ManyToManyField = models.ManyToManyField(
-        "Dashboard", through="dashboard_metrics", blank=True
-    )
     higher_is_better = models.BooleanField(
         default=True,
         help_text="Whether or not high values are considered a good outcome",

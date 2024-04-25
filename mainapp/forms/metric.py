@@ -91,21 +91,34 @@ class MetricBaseForm(BaseModelForm):
         return super().save(*args, **kwargs)
 
     def _save_m2m(self) -> None:
+        super()._save_m2m()  # type: ignore[misc]
+        metric: Metric = self.instance
+
+        # Save the reverse relationship `dashboards`
+        if "dashboards" in self.fields:
+            metric.dashboard_set.set(self.cleaned_data["dashboards"])
+
         # Ensure the metric belongs to the organisation of its dashboard.
         # As multiple dashboards can be present, we simply take the first one.
         # Metrics should never belong to multiple orgs through their dashboards
         # (see `clean` method above).
         # Note: this should be kept in sync with DashboardMetricAddForm
         # (reverse)
-        super()._save_m2m()  # type: ignore[misc]
-        metric: Metric = self.instance
-        for dashboard in metric.dashboards.all():
+        for dashboard in metric.dashboard_set.all():
             if dashboard.organization:
                 metric.organization = dashboard.organization
                 break
 
 
 class MetricForm(MetricBaseForm):
+    # The following are required to be able to save that info when creating
+    # The reverse relation is not available, so we have to create the field here
+    dashboards = forms.ModelMultipleChoiceField(
+        queryset=Dashboard.objects.all(),
+        widget=forms.MultipleHiddenInput(),
+        required=False,
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # manually set the current instance on the widget
@@ -148,13 +161,10 @@ class MetricForm(MetricBaseForm):
             "higher_is_better",
             "integration_config",
             "integration_id",
-            # The following are required to be able to save that info when creating
-            "dashboards",
         ]
 
         widgets = {
             "integration_id": forms.HiddenInput(),
-            "dashboards": forms.MultipleHiddenInput(),
             "organization": forms.Select(),
             "higher_is_better": forms.Select(
                 choices=(
@@ -273,6 +283,13 @@ class MetricIntegrationForm(BaseModelForm):
 
 
 class MetricDashboardAddForm(MetricBaseForm):
+    # The reverse relation is not available, so we have to create the field here
+    dashboards = forms.ModelMultipleChoiceField(
+        queryset=Dashboard.objects.all(),
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+    )
+
     dashboard_new = forms.CharField(required=False, label="Or create a new dashboard")
 
     def clean(self) -> dict[str, Any] | None:
@@ -294,8 +311,5 @@ class MetricDashboardAddForm(MetricBaseForm):
         super()._save_m2m()
 
     class Meta:
+        fields: List[str] = []
         model = Metric
-        fields = ["dashboards"]
-        widgets = {
-            "dashboards": forms.CheckboxSelectMultiple(),
-        }

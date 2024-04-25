@@ -204,7 +204,7 @@ def metric_duplicate(request, pk) -> HttpResponseRedirect:
         "integration_id": metric.integration_id,
         "integration_credentials": metric.integration_credentials,
         "organization_id": metric.organization and metric.organization.pk,
-        "dashboards": [d.pk for d in metric.dashboards.all()],
+        "dashboards": [d.pk for d in metric.dashboard_set.all()],
         "higher_is_better": metric.higher_is_better,
         "enable_medals": metric.enable_medals,
         "integration_config": metric.integration_config,
