@@ -18,9 +18,17 @@ def generate_uuids(apps, schema_editor):
                 "UPDATE mainapp_metric SET id=%s WHERE id=%s",
                 [str(new_metric_id), str(old_metric_id)],
             )
-            # # Update any related keys
+            # Update any related keys
             cursor.execute(
                 "UPDATE mainapp_dashboard_metrics SET metric_id=%s WHERE metric_id=%s",
+                [new_metric_id, old_metric_id],
+            )
+            cursor.execute(
+                "UPDATE mainapp_measurement SET metric_id=%s WHERE metric_id=%s",
+                [new_metric_id, old_metric_id],
+            )
+            cursor.execute(
+                "UPDATE mainapp_marker SET metric_id=%s WHERE metric_id=%s",
                 [new_metric_id, old_metric_id],
             )
 
