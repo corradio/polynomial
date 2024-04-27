@@ -1,9 +1,23 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 
 {% block content %}
     <form method="post">{% csrf_token %}
       <p>Metric <b>{{ object }}</b> is not added to any dashboard. Would you like to add it to one?</p>
-      {{ form.as_p }}
+      {% for field in form.visible_fields %}
+        <p>
+          {% if field.name != 'dashboards' or field.field.choices|length > 0 %}
+            {# Only show list of dashboards if list is non-empty #}
+            {{ field.errors }}
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}
+              <span class="helptext">{{ field.help_text|safe }}</span>
+            {% endif %}
+          {% endif %}
+        </p>
+      {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+      {% endfor %}
       <p>
         {% if request.GET.next %}
         <a href="{{ request.GET.next }}"><input type="button" value="Skip"/></a>

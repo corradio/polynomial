@@ -293,7 +293,7 @@ class MetricDashboardAddForm(MetricBaseForm):
         required=False,
     )
 
-    dashboard_new = forms.CharField(required=False, label="Or create a new dashboard")
+    dashboard_new = forms.CharField(required=False, label="Create a new dashboard")
 
     def clean(self) -> dict[str, Any] | None:
         cleaned_data = super().clean()
