@@ -179,15 +179,19 @@ def has_outdated_measurements(metric) -> bool:
 
 def get_metric_data(metric: Metric, start_date: date, end_date: date) -> dict:
     measurements = query_measurements_without_gaps(start_date, end_date, metric.pk)
-    days_prev = [year_ago(m.date) for m in measurements]
+    days_prev = None
+    if (end_date - start_date).days <= 365:
+        days_prev = [year_ago(m.date) for m in measurements]
     return {
         "metric_object": metric,
         "has_outdated_measurements": has_outdated_measurements(metric),
         "higher_is_better": metric.higher_is_better,
         "vl_spec": get_vl_spec(
             measurements=measurements,
-            measurements_other_period=query_measurements_for_dates(
-                days_prev, metric.pk
+            measurements_other_period=(
+                query_measurements_for_dates(days_prev, metric.pk)
+                if days_prev
+                else None
             ),
             imageLabelUrls=dict(
                 zip(
