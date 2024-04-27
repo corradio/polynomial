@@ -94,6 +94,24 @@
             return;
           }
         }
+
+        // Manual browser-side validation of subfields
+        // just like onSubmit.
+        var isValid = Array.from(
+          // https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#validating_forms_using_javascript
+          // says `reportValidity` can be done on
+          // - HTMLFieldSetElement
+          // - HTMLInputElement
+          // - HTMLSelectElement
+          // - HTMLTextAreaElement
+          // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#input_types
+          document.querySelectorAll('#id_integration_config_jsonform textarea,select,fieldset,checkbox,color,date,email,file,image,month,number,password,radio,range,search,tel,text,time,url,week')
+        ).every(d => d.reportValidity());
+        if (!isValid) {
+          e.preventDefault();
+          return;
+        }
+
         document.querySelector('#integration-test-container').style.color = 'gray';
         var testLabel = document.querySelector('#integration-test-container span.label');
         testLabel.innerText = '[' + new Date() + '] Testing..';
