@@ -172,6 +172,7 @@ class Stripe(OAuth2Integration):
                 [
                     subscription_item["price"]["unit_amount"]
                     * subscription_item["quantity"]
+                    / 100
                     for subscription in self.paginated_request(
                         f"https://api.stripe.com/v1/subscriptions",
                         params={"status": status, "limit": 50},
