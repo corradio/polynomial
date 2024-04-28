@@ -118,9 +118,10 @@ class DashboardMetricAddView(LoginRequiredMixin, UpdateView):
         integration_id = self.request.GET["integration_id"]
         dashboard = self.object
         if not response.context_data["form"].fields["metrics"].queryset:
-            return redirect(
-                f"{reverse('metric_new')}?integration_id={integration_id}&dashboard_ids={dashboard.pk}&next={dashboard.get_absolute_url()}"
-            )
+            url = f"{reverse('metric_new')}?integration_id={integration_id}&dashboard_ids={dashboard.pk}&next={dashboard.get_absolute_url()}"
+            if dashboard.organization:
+                url += f"&organization_id={dashboard.organization.pk}"
+            return redirect(url)
         return response
 
     def get_form_kwargs(self):
