@@ -30,7 +30,7 @@ class Instagram(OAuth2Integration):
         return date.today() - timedelta(days=365 * 2)
 
     def can_backfill(self):
-        return True
+        return self.config["metric"] != "followers_count"
 
     def callable_config_schema(self):
         if not self.is_authorized:
@@ -55,10 +55,6 @@ class Instagram(OAuth2Integration):
             key=lambda d: d["title"],
         )
 
-        # response = self.session.get(
-        #     f'https://graph.facebook.com/v19.0/{data[1]["instagram_business_account"]["id"]}?fields=followers_count,username&access_token={data[1]["access_token"]}'
-        # )
-        # print(response.json())
         return {
             "type": "dict",
             "keys": {
@@ -72,15 +68,32 @@ class Instagram(OAuth2Integration):
                     "type": "string",
                     "required": True,
                     # https://developers.facebook.com/docs/instagram-api/reference/ig-user/insights#metrics-and-periods
-                    "choices": [
-                        # Total number of times the IG User's IG Media have been viewed. Includes ad activity generated through the API, Facebook ads interfaces, and the Promote feature. Does not include profile views.
-                        {"title": "Impressions", "value": "impressions"},
-                        # Total number of unique users who have viewed at least one of the IG User's IG Media. Repeat views and views across different IG Media owned by the IG User by the same user are only counted as a single view. Includes ad activity generated through the API, Facebook ads interfaces, and the Promote feature.
-                        {"title": "Reached users", "value": "reach"},
-                    ],
+                    "choices": sorted(
+                        [
+                            # Total number of times the IG User's IG Media have been viewed. Includes ad activity generated through the API, Facebook ads interfaces, and the Promote feature. Does not include profile views.
+                            {"title": "Impressions", "value": "impressions"},
+                            # Total number of unique users who have viewed at least one of the IG User's IG Media. Repeat views and views across different IG Media owned by the IG User by the same user are only counted as a single view. Includes ad activity generated through the API, Facebook ads interfaces, and the Promote feature.
+                            {"title": "Reached users", "value": "reach"},
+                            # Total number of new followers each day within the specified range (only when 100+ followers).
+                            {"title": "New followers", "value": "follower_count"},
+                            # Total followers (can't backfill)
+                            {"title": "Followers", "value": "followers_count"},
+                        ],
+                        key=lambda o: o["title"],
+                    ),
                 },
             },
         }
+
+    def collect_latest(self) -> MeasurementTuple:
+        assert self.config["metric"] == "followers_count"
+        response = self.session.get(
+            f'https://graph.facebook.com/v19.0/{self.config["account_id"]}?fields=followers_count'
+        )
+        response.raise_for_status()
+        return MeasurementTuple(
+            date=date.today(), value=response.json()["followers_count"]
+        )
 
     def collect_past_range(
         self, date_start: date, date_end: date
