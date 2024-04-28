@@ -26,6 +26,7 @@ class DashboardForm(BaseModelForm):
         if dashboard.organization:
             for metric in dashboard.metrics.all():
                 metric.organization = dashboard.organization
+                metric.save()
         return dashboard
 
     class Meta:

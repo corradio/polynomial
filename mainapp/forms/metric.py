@@ -110,6 +110,7 @@ class MetricBaseForm(BaseModelForm):
         for dashboard in metric.dashboard_set.all():
             if dashboard.organization:
                 metric.organization = dashboard.organization
+                metric.save()
                 break
 
 
