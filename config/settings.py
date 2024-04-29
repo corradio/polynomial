@@ -251,8 +251,8 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute="0", hour="4"),
     },
 }
-CELERY_TASK_TIME_LIMIT = 11 * 60  # seconds
-CELERY_TASK_SOFT_TIME_LIMIT = 10 * 60  # seconds
+CELERY_TASK_TIME_LIMIT = 16 * 60  # seconds
+CELERY_TASK_SOFT_TIME_LIMIT = 15 * 60  # seconds
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "socket_timeout": 30,
     "retry_on_timeout": True,
