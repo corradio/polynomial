@@ -1,8 +1,11 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import BadRequest
+from django.core.exceptions import BadRequest, PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import ListView, TemplateView
+from oauthlib.oauth2 import AccessDeniedError
+from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 
 from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
@@ -119,14 +122,29 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
             )
             integration_class = INTEGRATION_CLASSES[integration_id]
             assert issubclass(integration_class, WebAuthIntegration)
-            integration_credentials = integration_class.process_callback(
-                uri=request.build_absolute_uri(request.get_full_path()),
-                state=state,
-                authorize_callback_uri=request.build_absolute_uri(
-                    reverse("authorize-callback")
-                ),
-                code_verifier=cache_obj.get("code_verifier"),
-            )
+            try:
+                integration_credentials = integration_class.process_callback(
+                    uri=request.build_absolute_uri(request.get_full_path()),
+                    state=state,
+                    authorize_callback_uri=request.build_absolute_uri(
+                        reverse("authorize-callback")
+                    ),
+                    code_verifier=cache_obj.get("code_verifier"),
+                )
+            except (AccessDeniedError, CustomOAuth2Error) as e:
+                # Add a message and redirect
+                messages.error(request, f"Something went wrong: {e.description}")
+                # This will show an error screen to the user
+                if metric:
+                    return redirect(
+                        add_next(metric.get_absolute_url(), next=cache_obj.get("next"))
+                    )
+                else:
+                    # This is a new metric being created
+                    # We don't know where the user exactly came from,
+                    # so redirect to next or root
+                    return redirect(cache_obj.get("next") or "/")
+
             # Save credentials
             if metric:
                 metric.integration_credentials = integration_credentials
