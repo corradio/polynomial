@@ -127,8 +127,6 @@ class WebAuthIntegration(Integration):
         credentials_updater: Callable[[Dict], None],
     ):
         super().__init__(config)
-        credentials = credentials
-        credentials_updater = credentials_updater
         assert credentials is not None, "Credentials need to be supplied"
         assert (
             credentials_updater is not None

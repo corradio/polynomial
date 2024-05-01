@@ -1,59 +1,25 @@
-import json
-import time
 from datetime import date, datetime
-from typing import Any, Iterator, Optional, Tuple, final
-from urllib import parse
+from typing import Callable, Dict, Iterator, Optional, Tuple, final
 
-from requests import Response
+import requests
+from oauthlib.oauth2.rfc6749.parameters import parse_authorization_code_response
+from requests.auth import HTTPBasicAuth
 
-from ..base import MeasurementTuple, OAuth2Integration
+from ..base import MeasurementTuple, WebAuthIntegration
 from ..utils import get_secret
 
 
-def access_token_hook(r: Response) -> Response:
-    token = json.loads(r.text)
-    if "expires_at" not in token:
-        # See https://docs.stripe.com/stripe-apps/api-authentication/oauth#refresh-access-token
-        expires_in = 3600 - 1
-        token["expires_at"] = time.time() + int(expires_in)
-    r._content = json.dumps(token).encode()
-    return r
-
-
-def refresh_token_hook(r: Response) -> Response:
-    token = json.loads(r.text)
-    if "expires_at" not in token:
-        # See https://docs.stripe.com/stripe-apps/api-authentication/oauth#refresh-access-token
-        expires_in = 3600 * 24 * 365 - 1
-        token["expires_at"] = time.time() + int(expires_in)
-    r._content = json.dumps(token).encode()
-    return r
-
-
-def refresh_token_request_hook(token_url, headers, data) -> Tuple[Any, Any, Any]:
-    # For some reason the `params` and `allow_redirects` requests params are passed
-    # on to the `refresh_token` method. That shouldn't be the case.
-    parsed_data = dict(parse.parse_qsl(data))
-    if "params" in parsed_data:
-        del parsed_data["params"]
-    if "allow_redirects" in parsed_data:
-        del parsed_data["allow_redirects"]
-    new_data = parse.urlencode(parsed_data)
-    # Ensure we authorize with our API key to ensure we can refresh the token
-    return (
-        token_url,
-        {**headers, "Authorization": f"Bearer {get_secret('STRIPE_API_KEY')}"},
-        new_data,
-    )
-
-
 @final
-class Stripe(OAuth2Integration):
-    client_id = get_secret("STRIPE_API_KEY")
-    client_secret = ""
+class Stripe(WebAuthIntegration):
+    """
+    The Stripe OAuth system doesn't require storing the token to query on behalf of the user,
+    as seen in https://docs.stripe.com/stripe-apps/build-backend#using-stripe-apis
+    This means we can simplify the implementation.
+    """
+
+    api_key = get_secret("STRIPE_API_KEY")
+    client_id = get_secret("STRIPE_CLIENT_ID")
     authorization_url = "https://marketplace.stripe.com/oauth/v2/channellink*AY6Z9EIUHwAAAAeD%23EhcKFWFjY3RfMU1RWUdLQUdrWWk4dFF6Rg/authorize"
-    token_url = "https://api.stripe.com/v1/oauth/token"
-    refresh_url = "https://api.stripe.com/v1/oauth/token"
 
     description = "Track daily subscription revenue and customer count."
 
@@ -92,35 +58,51 @@ class Stripe(OAuth2Integration):
         },
     }
 
-    """
-        - tokens received don't have expired_at/in: they must be set manually
-        - refresh_token API calls require passing Bearer (client_id) to /token endpoint.
-          This happens automatically for `self.session.fetch_token` (through the `include_client_id` kwarg)
-          but not for `self.session.refresh_token`. We therefore use a hook to manually set it.
-    """
-    compliance_hooks = {
-        "access_token_response": access_token_hook,
-        "refresh_token_response": refresh_token_hook,
-        "refresh_token_request": refresh_token_request_hook,
-    }
+    def __init__(
+        self,
+        config: Optional[Dict],
+        credentials: Dict,
+        credentials_updater: Callable[[Dict], None],
+    ):
+        super().__init__(config, credentials, credentials_updater)
+        self.stripeAccountId = credentials["stripe_user_id"]
+
+    def __enter__(self):
+        assert (
+            self.stripeAccountId is not None
+        ), "Stripe account ID is required in order to run this integration"
+        self.r = requests.Session()
+        self.r.headers.update({"Stripe-Account": self.stripeAccountId})
+        self.r.auth = HTTPBasicAuth(self.api_key, "")
+        return self
 
     @classmethod
     def get_authorization_uri_and_code_verifier(
         cls, state: str, authorize_callback_uri: str
     ) -> Tuple[str, Optional[str]]:
-        # When issuing the autorization call, the client_id used must the client_id and not the
-        # API key (which is used as client_id for all other token requests)
-        # Also, make sure we force https:// instead of http://.
-        client_id = get_secret("STRIPE_CLIENT_ID")
+        # Make sure we force https:// instead of http://.
         return (
-            f'{cls.authorization_url}?state={state}&client_id={client_id}&redirect_uri={authorize_callback_uri.replace("http://", "https://")}',
+            f'{cls.authorization_url}?state={state}&client_id={cls.client_id}&redirect_uri={authorize_callback_uri.replace("http://", "https://")}',
             None,
         )
+
+    @classmethod
+    def process_callback(
+        cls,
+        uri: str,
+        state: str,
+        authorize_callback_uri: str,
+        code_verifier: Optional[str] = None,
+    ) -> dict:
+        # Parse response
+        params = parse_authorization_code_response(uri, state)
+        assert "stripe_user_id" in params
+        return params
 
     def paginated_request(
         self, url: str, params: Optional[dict] = None
     ) -> Iterator[dict]:
-        r = self.session.get(url, params=params)
+        r = self.r.get(url, params=params)
         r.raise_for_status()
         obj = r.json()
         yield from obj["data"]
@@ -134,7 +116,6 @@ class Stripe(OAuth2Integration):
             year=date.year, month=date.month, day=date.day, tzinfo=None
         )
         end_time = start_time.replace(hour=23, minute=59, second=59)
-        start_time_int = int(start_time.timestamp())
         end_time_int = int(end_time.timestamp())
         return MeasurementTuple(
             date=date,
