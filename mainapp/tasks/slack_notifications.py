@@ -5,6 +5,7 @@ from celery.utils.log import get_task_logger
 from django.http import HttpRequest
 from django.urls import reverse
 from requests_oauthlib import OAuth2Session
+from slack_sdk import WebClient
 
 from config.settings import DEBUG
 from integrations.utils import get_secret
@@ -124,16 +125,11 @@ def notify_channel(credentials: dict, channel_name: str, img_data: bytes, messag
     assert obj["ok"] == True, str(obj)
 
     # Upload image
-    response = session.post(
-        "https://slack.com/api/files.upload",
-        data={
-            "filetype": "png",
-            "filename": "image.png",
-            "channels": channel_name,
-            "initial_comment": message,
-        },
-        files={"file": img_data},
+    client = WebClient(token=credentials["access_token"])
+    response = client.files_upload_v2(
+        channel=channel_id,
+        title="Uploaded file",
+        initial_comment=message,
+        content=img_data,
     )
-    response.raise_for_status()
-    obj = response.json()
-    assert obj["ok"] == True, str(obj)
+    assert response.get("ok", False) == True, str(response)
