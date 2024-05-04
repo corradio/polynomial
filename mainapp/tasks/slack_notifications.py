@@ -61,17 +61,23 @@ def process_authorize_callback(
     return reverse("organization_edit", args=[organization_id])
 
 
-def query_public_channels(credentials: dict):
+def query_public_channels(credentials: dict, cursor=None):
     # `token_type` is set to `bot` and this doesn't fare well with oauthlib
     credentials = {**credentials, "token_type": "bearer"}
     session = OAuth2Session(
         client_id,
         token=credentials,
     )
-    response = session.get("https://slack.com/api/conversations.list")
+    url = "https://slack.com/api/conversations.list"
+    if cursor:
+        url += f"?cursor={cursor}"
+    response = session.get(url)
     response.raise_for_status()
     obj = response.json()
     assert obj["ok"] == True, str(obj)
+    next_cursor = obj["response_metadata"].get("next_cursor")
+    if next_cursor:
+        return obj["channels"] + query_public_channels(credentials, next_cursor)
     return obj["channels"]
 
 
