@@ -3,6 +3,7 @@ import socket
 from datetime import date, datetime, timedelta, timezone
 from email.mime.image import MIMEImage
 from pprint import pformat
+from random import random
 from typing import Optional
 from uuid import UUID
 
@@ -143,9 +144,12 @@ def backfill_task(
             # This will retry the task. Countdown needs to be manually set, but
             # max_retries will follow task configuration
             countdown = 10 * (2 ** (backfill_task.request.retries + 1))
+            # Add some randomness as well to avoid thundering herd problem
+            r = (random() - 0.5) / 5  # [-0.5, 0.5] / 5 = [-0.1, 0.1] = ±10%
+            countdown *= 1 + r
             raise backfill_task.retry(
                 exc=e,
-                countdown=countdown,
+                countdown=int(countdown),
                 kwargs={
                     "requester_user_id": requester_user_id,
                     "metric_id": metric_id,
