@@ -62,11 +62,11 @@ def collect_insights_for_account(
             ), f'Incorrect length of data returned ({len(obj["data"])}). Expected 1'
             values = obj["data"][0]["values"]
             for d in values:
-                processed_data_count += 1
                 dt = date_start + timedelta(days=processed_data_count)
                 # For some reason the API forces us to page to future dates
                 if dt <= date_end:
                     yield MeasurementTuple(date=dt, value=d["value"])
+                processed_data_count += 1
 
             # Only page if we expect more items
             expected_count = (date_end - date_start).days
