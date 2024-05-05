@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Authorization expired</h1>
+<p>
+  It seems like the authorization used for <b>{{ object }}</b> expired.
+  {% if exception.description %}
+  The error message was: <pre>{{ exception.description }}</pre>
+  {% endif %}
+</p>
+<p class="flex mt-2">
+  <a href="{% url 'metric-authorize' object.pk %}?next={{ request.GET.next }}" class="btn cta">Re-authorize</a>
+</p>
+
+{% endblock %}
