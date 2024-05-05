@@ -26,13 +26,11 @@
     {% endfor %}
     {% for field in form.hidden_fields %}{{ field }}{% endfor %}
 
-    {% if dashboard|can_delete:user %}
     <p>
-      <a class="btn btn-delete" href="{% url 'dashboard_delete' object.pk %}?next={{ request.GET.next }}">delete dashboard</a>
-    </p>
-    {% endif %}
-    <p>
-      <input type="submit" value="submit">
+      <input type="submit" value="Save">
+      {% if dashboard|can_delete:user %}
+        <a class="btn btn-delete" href="{% url 'dashboard_delete' object.pk %}?next={{ request.GET.next }}">Delete dashboard</a>
+      {% endif %}
     </p>
 </form>
 
