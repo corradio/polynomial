@@ -32,6 +32,7 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from oauthlib.oauth2 import InvalidGrantError
 
 from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
@@ -425,8 +426,12 @@ class MetricUpdateView(LoginRequiredMixin, UpdateView):
         return instance
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
         metric = self.object
+        try:
+            context = super().get_context_data(**kwargs)
+        except InvalidGrantError as e:
+            self.template_name_suffix = "_invalid_grant"
+            context = {"exception": e, "object": self.object, "metric": metric}
         context["can_web_auth"] = metric.can_web_auth
         return context
 
