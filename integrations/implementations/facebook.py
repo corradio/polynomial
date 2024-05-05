@@ -38,10 +38,9 @@ def collect_insights_for_account(
             # Request
             if not next_url:
                 params = {
-                    # 'access_token': access_token,
                     "period": "day",  # The aggregation period
                     "since": date_start.isoformat(),
-                    "until": date_end.isoformat(),
+                    "until": (date_end + timedelta(days=1)).isoformat(),
                     "metric": metric,
                 }
                 if access_token_override:
