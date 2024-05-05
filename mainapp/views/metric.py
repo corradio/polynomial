@@ -191,7 +191,7 @@ class MetricListView(LoginRequiredMixin, ListView):
         return (
             self.request.user.get_viewable_metrics()
             .filter(integration_id__in=INTEGRATION_IDS)
-            .order_by(F("organization__name").asc(nulls_first=True))
+            .order_by(F("organization__name").asc(nulls_first=True), "name")
         )
 
     def get_context_data(self, *args, **kwargs):
