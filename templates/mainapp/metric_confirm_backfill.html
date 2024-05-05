@@ -2,7 +2,7 @@
 
 {% block content %}
     <form method="post">{% csrf_token %}
-      <p>This metric is able to collect past data, would you like to collect it?</p>
+      <p><b>{{ object }}</b> is able to collect past data, would you like to collect it?</p>
       {{ form }}
       <p>
         <label for="pet-select">How far back to collect old data:</label>
