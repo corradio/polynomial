@@ -16,9 +16,9 @@
       {{ metric.metric_object.name }}
     </span>
   </button>
-  <div class="flex truncate items-center text-xs">
+  <p class="truncate items-center text-xs text-gray-500">
     {% if metric.has_outdated_measurements %}
-    <svg class="text-amber-500" style="height: .9em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 17" fill="currentColor" aria-hidden="true">
+    <svg class="inline text-amber-500" style="height: .9em; margin-bottom: .2em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 17" fill="currentColor" aria-hidden="true">
       <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
     </svg>
     Nothing collected in more than 14 days.
@@ -26,9 +26,9 @@
     Try to re-authorize?
     {% endif %}
     {% else %}
-    &nbsp;
+    {{ metric.metric_object.description|default_if_none:"&nbsp;" }}
     {% endif %}
-  </div>
+  </p>
   {% if dashboard %}
   <!-- menu start -->
   <div

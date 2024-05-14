@@ -31,6 +31,7 @@ class Metric(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=128)
+    description = models.CharField(max_length=256, blank=True, null=True)
     integration_id = models.CharField(
         max_length=128, choices=[(k, k) for k in INTEGRATION_IDS]
     )

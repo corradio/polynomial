@@ -212,6 +212,7 @@ def metric_duplicate(request, pk) -> HttpResponseRedirect:
     # Copy object (except `id`, `user` and some other fields like `created_at`)
     metric_object = {
         "name": f"Copy of {metric.name}",
+        "description": metric.description,
         "integration_id": metric.integration_id,
         "integration_credentials": metric.integration_credentials,
         "organization_id": metric.organization and metric.organization.pk,

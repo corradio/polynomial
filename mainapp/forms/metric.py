@@ -160,6 +160,7 @@ class MetricForm(MetricBaseForm):
         model = Metric
         fields = [
             "name",
+            "description",
             "organization",
             "enable_medals",
             "target",

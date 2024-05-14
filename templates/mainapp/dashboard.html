@@ -96,8 +96,7 @@
 
     {% if dashboard.organization.google_spreadsheet_export_spreadsheet_id %}
     It is part of an export to&nbsp;
-    <a href="https://docs.google.com/spreadsheets/d/{{ dashboard.organization.google_spreadsheet_export_spreadsheet_id }}"><img class="integration-icon" src="{% static 'integrations/icons/google_sheets.png' %}">
-      this Google Sheet</a>.
+    <a href="https://docs.google.com/spreadsheets/d/{{ dashboard.organization.google_spreadsheet_export_spreadsheet_id }}"><img class="integration-icon" src="{% static 'integrations/icons/google_sheets.png' %}">&nbsp;this Google Sheet</a>.
     {% endif %}
 
     </span>
