@@ -83,11 +83,12 @@ class MetricBaseForm(BaseModelForm):
         # Restore hidden passwords if needed
         if "integration_config" in self.fields and self.initial["integration_config"]:
             assert cleaned_data is not None
-            cleaned_data["integration_config"] = deofuscate_protected_fields(
-                cleaned_data["integration_config"],
-                self.unprotected_integration_config,
-                self.schema,
-            )
+            if "integration_config" in cleaned_data:
+                cleaned_data["integration_config"] = deofuscate_protected_fields(
+                    cleaned_data["integration_config"],
+                    self.unprotected_integration_config,
+                    self.schema,
+                )
         return cleaned_data
 
     def save(self, *args, **kwargs) -> Metric:
