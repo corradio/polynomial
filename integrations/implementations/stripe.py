@@ -19,7 +19,7 @@ class Stripe(WebAuthIntegration):
 
     api_key = get_secret("STRIPE_API_KEY")
     client_id = get_secret("STRIPE_CLIENT_ID")
-    authorization_url = "https://marketplace.stripe.com/oauth/v2/channellink*AY6Z9EIUHwAAAAeD%23EhcKFWFjY3RfMU1RWUdLQUdrWWk4dFF6Rg/authorize"
+    authorization_url = "https://marketplace.stripe.com/oauth/v2/authorize"
 
     description = "Track daily subscription revenue and customer count."
 
