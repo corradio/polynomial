@@ -39,9 +39,10 @@ To fix the error, you will have to re-authorize by following the link below:
         # If it's an HTTPError, only handle certain error codes
         # - 401 Unauthorized: client provides no credentials or invalid credentials
         # - 403 Forbidden: has valid credentials but not enough privileges
+        # - 429 Too Many Requests
         if not isinstance(exception, requests.HTTPError) or (
             exception.response is not None
-            and exception.response.status_code in [400, 401, 402, 403]
+            and exception.response.status_code in [400, 401, 402, 403, 429]
         ):
             # Handler for exceptions that can be fixed by the user
             subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
