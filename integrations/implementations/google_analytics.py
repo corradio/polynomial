@@ -30,7 +30,7 @@ class GoogleAnalytics(OAuth2Integration):
             return self.config_schema
         # Get all valid GA ids
         response = self.session.get(
-            "https://analyticsadmin.googleapis.com/v1alpha/accountSummaries"
+            "https://analyticsadmin.googleapis.com/v1beta/accountSummaries"
         )
         try:
             response.raise_for_status()
@@ -51,7 +51,7 @@ class GoogleAnalytics(OAuth2Integration):
                     "value": property["property"].split("/")[-1],
                 }
                 for item in items
-                for property in item["propertySummaries"]
+                for property in item.get("propertySummaries", [])
             ],
             key=lambda d: d["title"],
         )
