@@ -3,7 +3,7 @@ from typing import Iterable, List, Optional, final
 
 import requests
 
-from ..base import Integration, MeasurementTuple
+from ..base import Integration, MeasurementTuple, UserFixableError
 from ..utils import batch_range_by_max_batch, replace_null_with_nan
 
 MAX_DAYS = 500
@@ -108,7 +108,10 @@ class Grafana(Integration):
         frames = data["results"]["A"]["frames"]
         if len(frames) == 0:
             return []
-        assert len(frames) == 1, f"{len(frames)} returned series (expected only one)"
+        if len(frames) > 1:
+            raise UserFixableError(
+                f"Expected only one time series. {len(frames)} were returned."
+            )
         frame = frames[0]
         if not frame["data"]["values"]:
             return []
