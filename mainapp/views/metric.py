@@ -257,9 +257,6 @@ def metric_new(request):
 class MetricCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Metric
     form_class = MetricForm
-    success_message = (
-        "Metric successfully created. New measurements will show up starting tomorrow."
-    )
 
     def dispatch(self, request, *args, **kwargs):
         self.state = kwargs.pop("state")
@@ -356,6 +353,13 @@ class MetricCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
             INTEGRATION_CLASSES[self.integration_id], WebAuthIntegration
         )
         return context
+
+    def get_success_message(self, cleaned_data):
+        assert self.object is not None
+        if not self.object.can_backfill:
+            return "Metric successfully created. This metric can't backfill historical data, meaning you can expect new datapoints to show up starting tomorrow."
+        else:
+            return "Metric successfully created."
 
 
 @login_required

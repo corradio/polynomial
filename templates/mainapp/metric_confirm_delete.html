@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Are you sure?</h1>
   <form method="post">{% csrf_token %}
-    <p>Are you sure you want to delete metric <b>{{ object }}</b> with {{ object.measurement_set.count }} measurements?</p>
+    <p>Are you sure you want to delete metric <b>{{ object }}</b> with {{ object.measurement_set.count }} datapoints?</p>
     {{ form }}
     <p>
       This will remove it from the following dashboards:
