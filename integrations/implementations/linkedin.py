@@ -140,7 +140,6 @@ class LinkedIn(OAuth2Integration):
                     "required": True,
                     "helpText": "Note: sponsored activity is ignored from these statistics.",
                 },
-                "filters": {"type": "array", "items": {"type": "string"}},
             },
         }
 
