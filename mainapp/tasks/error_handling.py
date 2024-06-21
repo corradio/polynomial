@@ -1,6 +1,7 @@
 import json
 
 import requests
+from celery.exceptions import SoftTimeLimitExceeded
 from django.core.mail import send_mail
 from django.forms.models import model_to_dict
 from django.urls import reverse
@@ -24,7 +25,15 @@ def notify_metric_exception(
     subject = None
     message = ""
 
-    if isinstance(exception, oauth2.rfc6749.errors.InvalidGrantError):
+    if isinstance(exception, SoftTimeLimitExceeded):
+        # Handler for task which took too long
+        subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
+        message = f"""Hello {metric.user.first_name} 👋
+
+{friendly_context_message}
+It seems like the task took too long to complete. You're welcome to try again.
+"""
+    elif isinstance(exception, oauth2.rfc6749.errors.InvalidGrantError):
         # Handler for expired OAuth
         subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
         message = f"""Hello {metric.user.first_name} 👋
