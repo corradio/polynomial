@@ -90,7 +90,7 @@ class GoogleSearchConsole(OAuth2Integration):
         )
         response.raise_for_status()
         data = response.json()
-        rows = data["rows"]
+        rows: List = data["rows"]
         if len(rows) < ROW_LIMIT:
             return rows
         else:
@@ -117,10 +117,14 @@ class GoogleSearchConsole(OAuth2Integration):
             ],
         }
 
-        request_url = f"https://www.googleapis.com/webmasters/v3/sites/{urllib.parse.quote(site_url)}/searchAnalytics/query"
+        request_url = f"https://www.googleapis.com/webmasters/v3/sites/{urllib.parse.quote_plus(site_url)}/searchAnalytics/query"
         rows = self._paginated_query(request_url, date_start, date_end, request_data)
 
         return [
-            MeasurementTuple(date=date.fromisoformat(row["keys"][0]), value=row[metric])
+            # return NaN if the position is 0 as it means we don't know
+            MeasurementTuple(
+                date=date.fromisoformat(row["keys"][0]),
+                value=row[metric] or float("nan"),
+            )
             for row in rows
         ]
