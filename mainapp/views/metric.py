@@ -540,7 +540,9 @@ class MetricIntegrationUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         if self.object.can_web_auth and not self.object.integration_credentials:
             return reverse("metric-authorize", args=[self.object.pk])
-        return self.request.GET.get("next") or self.object.get_absolute_url()
+        return self.request.GET.get("next") or reverse(
+            "metric-edit", args=[self.object.pk]
+        )
 
     def get_queryset(self, *args, **kwargs):
         # Only show metric if user can access it
@@ -618,3 +620,15 @@ class MetricEmbedView(DetailView):
     ) -> HttpResponseBase:
         response = super().dispatch(request, *args, **kwargs)
         return response
+
+
+class MetricDetailView(DetailView):
+    template_name = "mainapp/metric_detail.html"
+
+    def get_object(self, queryset=None):
+        metric = get_object_or_404(Metric, pk=self.kwargs["pk"])
+        if not metric.can_view(self.request.user):
+            raise PermissionDenied()
+        end_date = date.today()
+        start_date = end_date - timedelta(days=6 * 30)
+        return get_metric_data(metric, start_date, end_date)

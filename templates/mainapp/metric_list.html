@@ -38,7 +38,7 @@
             <td>{{ metric.dashboard_set.all|join:", " }}</td>
             <td>
               {% if metric|can_edit:user %}
-                <a href="{% url 'metric-details' metric.id %}?next={{ request.get_full_path | urlencode }}">Edit</a>
+                <a href="{% url 'metric-edit' metric.id %}?next={{ request.get_full_path | urlencode }}">Edit</a>
                 <a href="{% url 'metric-duplicate' metric.id %}?next={{ request.get_full_path | urlencode }}">Duplicate</a>
                 <a href="{% url 'metric-import' metric.id %}?next={{ request.get_full_path | urlencode }}">Import CSV</a>
               {% endif %}

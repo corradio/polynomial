@@ -259,7 +259,7 @@ def verify_inactive_task(metric_id: UUID) -> None:
 It seems like your metric "{metric.name}" hasn't collected any new data in the last {reminder_days} days.
 
 To fix this error, you might have to reconfigure your metric by following the link below:
-{BASE_URL}{reverse('metric-details', args=[metric_id])}
+{BASE_URL}{reverse('metric-edit', args=[metric_id])}
     """
                 send_mail(
                     subject=f"Your metric {metric.name} hasn't collected new data in {reminder_days} days",
