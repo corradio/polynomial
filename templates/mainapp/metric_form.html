@@ -8,6 +8,9 @@
 <script src="{% static 'vega.min.js' %}"></script>
 <script src="{% static 'vega-lite.min.js' %}"></script>
 <script src="{% static 'vega-embed.min.js' %}"></script>
+{# D3 libraries are included in vega but must be accessible from metric_mosaic. There are therefore added below. #}
+<script src="{% static 'd3-format.min.js' %}"></script>
+<script src="{% static 'd3-time-format.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}

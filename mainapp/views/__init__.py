@@ -137,7 +137,10 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
                 # This will show an error screen to the user
                 if metric:
                     return redirect(
-                        add_next(metric.get_absolute_url(), next=cache_obj.get("next"))
+                        add_next(
+                            reverse("metric-edit", args=[metric.pk]),
+                            next=cache_obj.get("next"),
+                        )
                     )
                 else:
                     # This is a new metric being created
@@ -155,7 +158,10 @@ class AuthorizeCallbackView(LoginRequiredMixin, TemplateView):
                 # Clean up session as it won't be used anymore
                 del self.request.session[state]
                 return redirect(
-                    add_next(metric.get_absolute_url(), next=cache_obj.get("next"))
+                    add_next(
+                        reverse("metric-edit", args=[metric.pk]),
+                        next=cache_obj.get("next"),
+                    )
                 )
             else:
                 cache_obj["metric"]["integration_credentials"] = integration_credentials

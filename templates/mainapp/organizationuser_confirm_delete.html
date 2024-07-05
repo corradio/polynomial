@@ -29,7 +29,7 @@
         The following metrics will be made unavailable to organization members:
       {% endif %}
         <li>
-          <a href="{% url 'metric-details' metric.id %}?next={{ request.get_full_path | urlencode }}">
+          <a href="{% url 'metric-edit' metric.id %}?next={{ request.get_full_path | urlencode }}">
             {% with "integrations/icons/"|add:metric.integration_id|add:".png" as icon_url %}
               <img class="integration-icon" src="{% static icon_url %}" alt="">
             {% endwith %}

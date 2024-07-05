@@ -74,7 +74,7 @@ The error was: {exception}"""
             message += f"""
 
 To fix this error, you might have to reconfigure your metric by following the link below:
-{BASE_URL}{reverse('metric-details', args=[metric.pk])}
+{BASE_URL}{reverse('metric-edit', args=[metric.pk])}
 """
     if subject and message:
         send_mail(

@@ -30,8 +30,63 @@ urlpatterns = [
                         [
                             path(
                                 "",
-                                views.metric.MetricUpdateView.as_view(),
+                                views.metric.MetricDetailView.as_view(),
                                 name="metric-details",
+                            ),
+                            path(
+                                "edit",
+                                views.metric.MetricUpdateView.as_view(),
+                                name="metric-edit",
+                            ),
+                            path(
+                                "backfill",
+                                views.metric.metric_backfill,
+                                name="metric-backfill",
+                            ),
+                            path(
+                                "delete",
+                                views.metric.MetricDeleteView.as_view(),
+                                name="metric_delete",
+                            ),
+                            path(
+                                "transfer_ownership",
+                                views.metric.MetricTransferOwnershipView.as_view(),
+                                name="metric_transfer_ownership",
+                            ),
+                            path(
+                                "authorize",
+                                views.metric.metric_authorize,
+                                name="metric-authorize",
+                            ),
+                            path(
+                                "select-integration",
+                                views.metric.MetricIntegrationUpdateView.as_view(),
+                                name="metric-select-integration",
+                            ),
+                            path(
+                                "test",
+                                views.metric.metric_test,
+                                name="metric-test",
+                            ),
+                            path(
+                                "duplicate",
+                                views.metric.metric_duplicate,
+                                name="metric-duplicate",
+                            ),
+                            path(
+                                "import",
+                                views.metric.MetricImportView.as_view(),
+                                name="metric-import",
+                            ),
+                            path(
+                                "dashboards/add",
+                                views.metric.MetricDashboardAddView.as_view(),
+                                name="metricdashboard_add",
+                            ),
+                            path(
+                                "embed",
+                                views.metric.MetricEmbedView.as_view(),
+                                name="metric_embed",
                             ),
                             # Markers
                             path(
@@ -49,56 +104,6 @@ urlpatterns = [
                             ),
                         ]
                     ),
-                ),
-                path(
-                    "<uuid:pk>/backfill",
-                    views.metric.metric_backfill,
-                    name="metric-backfill",
-                ),
-                path(
-                    "<uuid:pk>/delete",
-                    views.metric.MetricDeleteView.as_view(),
-                    name="metric_delete",
-                ),
-                path(
-                    "<uuid:pk>/transfer_ownership",
-                    views.metric.MetricTransferOwnershipView.as_view(),
-                    name="metric_transfer_ownership",
-                ),
-                path(
-                    "<uuid:pk>/authorize",
-                    views.metric.metric_authorize,
-                    name="metric-authorize",
-                ),
-                path(
-                    "<uuid:pk>/select-integration",
-                    views.metric.MetricIntegrationUpdateView.as_view(),
-                    name="metric-select-integration",
-                ),
-                path(
-                    "<uuid:pk>/test",
-                    views.metric.metric_test,
-                    name="metric-test",
-                ),
-                path(
-                    "<uuid:pk>/duplicate",
-                    views.metric.metric_duplicate,
-                    name="metric-duplicate",
-                ),
-                path(
-                    "<uuid:pk>/import",
-                    views.metric.MetricImportView.as_view(),
-                    name="metric-import",
-                ),
-                path(
-                    "<uuid:pk>/dashboards/add",
-                    views.metric.MetricDashboardAddView.as_view(),
-                    name="metricdashboard_add",
-                ),
-                path(
-                    "<uuid:pk>/embed",
-                    views.metric.MetricEmbedView.as_view(),
-                    name="metric_embed",
                 ),
                 # These are metric creation routes, which use the cache as backend
                 path(

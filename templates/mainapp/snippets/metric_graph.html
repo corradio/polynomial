@@ -37,11 +37,11 @@
   >
     <ul class="text-gray-700 dark:text-gray-200">
     {% if metric.metric_object|can_edit:user %}
-      <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-details' metric.metric_object.pk %}?next={{ request.get_full_path | urlencode }}">edit</a></li>
+      <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-edit' metric.metric_object.pk %}?next={{ request.get_full_path | urlencode }}">edit</a></li>
       <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-duplicate' metric.metric_object.pk %}?next={{ request.get_full_path | urlencode }}">duplicate</a></li>
       <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-import' metric.metric_object.pk %}?next={{ request.get_full_path | urlencode }}">import CSV</a></li>
     {% else %}
-      <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-details' metric.metric_object.pk %}?next={{ request.get_full_path | urlencode }}">details</a></li>
+      <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-edit' metric.metric_object.pk %}?next={{ request.get_full_path | urlencode }}">details</a></li>
     {% endif %}
     {% if metric.metric_object|can_be_backfilled_by:user %}
       <li><a class="block px-2 py-2 hover:bg-gray-100" href="{% url 'metric-backfill' metric.metric_object.pk %}?next={{ request.get_full_path | urlencode }}">backfill</a></li>

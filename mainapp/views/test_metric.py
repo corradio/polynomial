@@ -19,7 +19,7 @@ class UnitTestCase(TestCase):
         self.client.force_login(self.user)
 
     def test_credential_leak(self):
-        response = self.client.get(reverse("metric-details", args=(self.metric.pk,)))
+        response = self.client.get(reverse("metric-edit", args=(self.metric.pk,)))
         self.assertNotContains(
             response,
             "very_secret_credential",
@@ -28,7 +28,7 @@ class UnitTestCase(TestCase):
         )
 
     def test_password_leak(self):
-        response = self.client.get(reverse("metric-details", args=(self.metric.pk,)))
+        response = self.client.get(reverse("metric-edit", args=(self.metric.pk,)))
         self.assertNotContains(
             response,
             "very_secret_password",
