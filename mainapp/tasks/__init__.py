@@ -234,11 +234,12 @@ def check_notify_metric_changed_task(metric_id: UUID) -> None:
         ):
             # Send slack message
             logger.info(f"Sending slack notification for metric_id={metric_id}")
+            link = f"https://polynomial.so/metrics/{metric_id}/embed"
             slack_notifications.notify_channel(
                 organization.slack_notifications_credentials,
                 organization.slack_notifications_channel,
                 img_data,
-                f"New changes in metric *{metric.name}*",
+                f"New changes in metric <{link}|*{metric.name}*>",
             )
 
 
