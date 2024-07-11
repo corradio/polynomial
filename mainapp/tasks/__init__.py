@@ -45,21 +45,24 @@ def collect_latest_task(metric_id: UUID) -> None:
         last_measurement = (
             Measurement.objects.filter(metric=metric_id).order_by("-date").first()
         )
+        date_end = date.today() - timedelta(days=1)
         if last_measurement:
-            with integration_instance as inst:
-                date_end = date.today() - timedelta(days=1)
-                measurements_iterator = inst.collect_past_range(
-                    date_start=min(last_measurement.date + timedelta(days=1), date_end),
-                    date_end=date_end,
+            date_start = min(last_measurement.date + timedelta(days=1), date_end)
+        else:
+            date_start = date_end
+        with integration_instance as inst:
+            measurements_iterator = inst.collect_past_range(
+                date_start=date_start,
+                date_end=date_end,
+            )
+            for measurement in measurements_iterator:
+                Measurement.objects.update_or_create(
+                    metric=metric,
+                    date=measurement.date,
+                    defaults={
+                        "value": measurement.value,
+                    },
                 )
-                for measurement in measurements_iterator:
-                    Measurement.objects.update_or_create(
-                        metric=metric,
-                        date=measurement.date,
-                        defaults={
-                            "value": measurement.value,
-                        },
-                    )
     else:
         # For integration that can't backfill
         with integration_instance as inst:
