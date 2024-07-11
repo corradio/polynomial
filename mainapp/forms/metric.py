@@ -41,6 +41,17 @@ class MetricBaseForm(BaseModelForm):
                 self.initial["integration_config"], self.schema
             )
 
+        # Only show `should_backfill_daily` option if integration can backfill
+        if "should_backfill_daily" in self.fields:
+            self.fields["should_backfill_daily"].widget = (
+                forms.HiddenInput()
+                if not self.instance.can_backfill
+                else forms.CheckboxInput()
+            )
+            self.fields["should_backfill_daily"].label = (
+                "Re-collect all historical data every day"
+            )
+
     def clean_dashboards(self) -> Iterable[Dashboard]:
         # A metric can't belong to multiple orgs through its dashboards
         dashboards: Iterable[Dashboard] = self.cleaned_data.get("dashboards", [])
@@ -162,9 +173,10 @@ class MetricForm(MetricBaseForm):
             "name",
             "description",
             "organization",
-            "enable_medals",
             "target",
             "higher_is_better",
+            "enable_medals",
+            "should_backfill_daily",
             "integration_config",
             "integration_id",
         ]

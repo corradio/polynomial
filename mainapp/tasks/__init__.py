@@ -39,14 +39,17 @@ def collect_latest_task(metric_id: UUID) -> None:
     metric.save()
 
     integration_instance = metric.integration_instance
-    if integration_instance.can_backfill():
+
+    if metric.can_backfill:
         # Check if we should gather previously missing datapoints
         # by getting last measurement
         last_measurement = (
             Measurement.objects.filter(metric=metric_id).order_by("-date").first()
         )
         date_end = date.today() - timedelta(days=1)
-        if last_measurement:
+        if metric.should_backfill_daily:
+            date_start = integration_instance.earliest_backfill()
+        elif last_measurement:
             date_start = min(last_measurement.date + timedelta(days=1), date_end)
         else:
             date_start = date_end

@@ -219,6 +219,8 @@ def metric_duplicate(request, pk) -> HttpResponseRedirect:
         "dashboards": [d.pk for d in metric.dashboard_set.all()],
         "higher_is_better": metric.higher_is_better,
         "enable_medals": metric.enable_medals,
+        "target": metric.target,
+        "should_backfill_daily": metric.should_backfill_daily,
         "integration_config": metric.integration_config,
     }
 
