@@ -13,9 +13,9 @@ from ..models import Measurement, Metric
 from ..queries import query_measurements_without_gaps, query_topk_dates
 
 TOP3_MEDAL_IMAGE_PATH = [
-    static("images/medal_1st.png"),  # 🥇
-    static("images/medal_2nd.png"),  # 🥈
-    static("images/medal_3rd.png"),  # 🥉
+    "images/medal_1st.png",  # 🥇
+    "images/medal_2nd.png",  # 🥈
+    "images/medal_3rd.png",  # 🥉
 ]
 
 # https://d3js.org/d3-format#locale_format
@@ -358,7 +358,7 @@ def metric_chart_vl_spec(
         imageLabelUrls = dict(
             zip(
                 topk_dates,
-                [f"{root_path}{path}" for path in TOP3_MEDAL_IMAGE_PATH],
+                [f"{root_path}{static(path)}" for path in TOP3_MEDAL_IMAGE_PATH],
             )
         )
 

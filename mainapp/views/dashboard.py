@@ -13,6 +13,7 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.response import TemplateResponse
+from django.templatetags.static import static
 from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date, parse_duration
 from django.views.generic import CreateView, DeleteView, UpdateView
@@ -197,7 +198,7 @@ def get_metric_data(metric: Metric, start_date: date, end_date: date) -> dict:
             imageLabelUrls=dict(
                 zip(
                     query_topk_dates(metric.pk) if metric.enable_medals else [],
-                    TOP3_MEDAL_IMAGE_PATH,
+                    [static(p) for p in TOP3_MEDAL_IMAGE_PATH],
                 )
             ),
             markers={marker.date: marker.text for marker in metric.marker_set.all()},
