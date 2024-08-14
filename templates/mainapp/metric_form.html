@@ -131,7 +131,7 @@
         var data = JSON.stringify({
           integration_config: configElement.value,
         });
-        fetch(location.origin + location.pathname + 'test', {
+        fetch(location.origin + location.pathname + '/../test', {
           method: 'POST', headers: {
             'X-CSRFToken': csrftoken,
             'Accept': 'application/json',
