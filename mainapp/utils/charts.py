@@ -148,7 +148,12 @@ def get_vl_spec(
             # Line of last period
             {
                 "name": "line_prev",
-                "mark": {"type": "line", "strokeDash": [4, 2], "opacity": 0.3},
+                "mark": {
+                    "type": "line",
+                    "stroke": "gray",
+                    "strokeDash": [4, 2],
+                    "opacity": 0.3,
+                },
                 "encoding": {
                     "x": {"field": "date", "type": "temporal"},
                     "y": {"field": "value_prev", "type": "quantitative"},
