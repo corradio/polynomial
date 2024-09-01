@@ -63,6 +63,12 @@ else:
     CSRF_TRUSTED_ORIGINS = ["https://polynomial.so"]
 
 
+# Ensure that Django correctly understands that it's operating under HTTPS
+# if it's behind a proxy
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+
 # Application definition
 
 INSTALLED_APPS = [
