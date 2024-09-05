@@ -293,6 +293,8 @@ class MetricIntegrationForm(BaseModelForm):
                 metric_cache["integration_config"] = None
                 metric_cache["integration_id"] = self.cleaned_data["integration_id"]
                 self.request.session.modified = True
+                # Skip saving into database
+                return
         return super().save(*args, **kwargs)
 
     class Meta:
