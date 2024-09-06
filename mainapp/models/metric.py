@@ -145,7 +145,7 @@ class Metric(models.Model):
             return True
         if not self.organization:
             return False
-        return self.organization.is_admin(user)
+        return self.organization.is_member(user)
 
     def can_view(self, user: Union["User", AnonymousUser]) -> bool:
         if self.can_edit(user):
