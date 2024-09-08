@@ -246,6 +246,9 @@ def check_notify_metric_changed_task(metric_id: UUID) -> None:
                 img_data,
                 f"New changes in metric *{metric.name}*",
             )
+        # Mark as notified
+        metric.last_detected_spike = spike_date
+        metric.save()
 
 
 @shared_task

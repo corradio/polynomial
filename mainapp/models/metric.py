@@ -47,6 +47,7 @@ class Metric(models.Model):
         default=False, help_text="Highlights the top 3 values in the graphs"
     )
     last_collect_attempt = models.DateTimeField(blank=True, null=True)
+    last_detected_spike = models.DateField(blank=True, null=True)
     target = models.FloatField(
         blank=True,
         null=True,

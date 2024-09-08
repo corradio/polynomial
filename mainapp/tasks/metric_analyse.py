@@ -6,6 +6,7 @@ from uuid import UUID
 import pandas as pd
 
 from mainapp.models import Measurement
+from mainapp.models.metric import Metric
 
 from ..queries import query_measurements_without_gaps
 
@@ -57,10 +58,12 @@ def detected_spike(metric_id: UUID) -> Optional[date]:
             .order_by("date")
             .last()
         )
+        metric = Metric.objects.get(pk=metric_id)
         if (
             last_non_nan_measurement
             and last_non_nan_measurement.date == spike_dates[-1]
-            and spike_dates[-1] == date.today() - timedelta(days=1)
+            and spike_dates[-1]
+            > (metric.last_detected_spike or metric.created_at.date())
         ):
             return spike_dates[-1]
     logger.info(f"No spikes detected for metric_id={metric_id}")
