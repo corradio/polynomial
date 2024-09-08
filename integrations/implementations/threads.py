@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import Optional, Tuple, final
 
 import requests
@@ -21,7 +21,7 @@ class Threads(OAuth2Integration):
     # Only the last two years of insights data is available.
     def earliest_backfill(self) -> date:
         # 1712991600 according to https://developers.facebook.com/docs/threads/insights
-        return date.today() - timedelta(days=365 * 2)
+        return date.fromtimestamp(1712991600)
 
     def can_backfill(self):
         return self.config.get("metric") != "followers_count"

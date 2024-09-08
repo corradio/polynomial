@@ -4,10 +4,11 @@ from typing import Any, Dict, Iterable, List, final
 
 import requests
 
-from ..base import MeasurementTuple, OAuth2Integration
+from ..base import MeasurementTuple, OAuth2Integration, UserFixableError
 from ..utils import batch_range_by_max_batch, get_secret
 
 ELEMENTS_PER_CALL = 10000
+LINKEDIN_VERSION_HEADER = "202408"
 
 METRICS: List[Dict[str, Any]] = [
     # Share statistics
@@ -46,27 +47,6 @@ METRICS: List[Dict[str, Any]] = [
         "title": "Post comments",
         "value": "commentCount",
         "endpoint": "organizationalEntityShareStatistics",
-    },
-    # For some reason these two endpoints only have lifetime statistics
-    # I believe it is because these are only available for a given time period
-    # if a specific post is selected
-    {
-        "title": "Lifetime company mentions (in shares)",
-        "endpoint": "organizationalEntityShareStatistics",
-        "value": "shareMentionsCount",
-        "can_backfill": False,  # Set to False to ensure lifetime stats
-        "value_getter": lambda element: element["totalShareStatistics"][
-            "shareMentionsCount"
-        ],
-    },
-    {
-        "title": "Lifetime company mentions (in comments)",
-        "endpoint": "organizationalEntityShareStatistics",
-        "value": "commentMentionsCount",
-        "can_backfill": False,  # Set to False to ensure lifetime stats
-        "value_getter": lambda element: element["totalShareStatistics"][
-            "commentMentionsCount"
-        ],
     },
     # Follower statistics
     # See https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/organizations/follower-statistics?view=li-lms-2022-12&tabs=http
@@ -146,7 +126,10 @@ class LinkedIn(OAuth2Integration):
     def _get_metric_config_for_key(self, metric_key):
         metric_key = self.config["metric"]
         metric_matches = [m for m in METRICS if m["value"] == metric_key]
-        assert metric_matches, f"Couldn't find metric {metric_key}"
+        if not metric_matches:
+            raise UserFixableError(
+                f"Metric {metric_key} is invalid. Please pick another one."
+            )
         return metric_matches[0]
 
     def can_backfill(self):
@@ -166,6 +149,7 @@ class LinkedIn(OAuth2Integration):
             # Make request
             r = self.session.get(
                 url,
+                headers={"LinkedIn-Version": LINKEDIN_VERSION_HEADER},
                 params={**request_params, "start": start, "count": ELEMENTS_PER_CALL},
             )
             try:
@@ -206,7 +190,7 @@ class LinkedIn(OAuth2Integration):
         org_id = self.config["org_id"]
         metric = self.config["metric"]
         metric_config = self._get_metric_config_for_key(metric)
-        url = f"https://api.linkedin.com/v2/{metric_config['endpoint']}"
+        url = f"https://api.linkedin.com/rest/{metric_config['endpoint']}"
 
         time_start = int(time.mktime(date_start.timetuple()) * 1000)
         time_end = int(time.mktime((date_end + timedelta(days=1)).timetuple()) * 1000)
@@ -266,7 +250,7 @@ class LinkedIn(OAuth2Integration):
             # This metric requires a particular endpoint.
             # We hardcode it here.
             response = self.session.get(
-                f"https://api.linkedin.com/v2/networkSizes/urn:li:organization:{org_id}?edgeType=CompanyFollowedByMember"
+                f"https://api.linkedin.com/rest/networkSizes/urn:li:organization:{org_id}?edgeType=COMPANY_FOLLOWED_BY_MEMBER"
             )
             response.raise_for_status()
             data = response.json()
