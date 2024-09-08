@@ -5,14 +5,16 @@
   <form method="post">{% csrf_token %}
     <p>Are you sure you want to delete metric <b>{{ object }}</b> with {{ object.measurement_set.count }} datapoints?</p>
     {{ form }}
+    {% if object.dashboard_set.all %}
     <p>
       This will remove it from the following dashboards:
       <ul class="list-disc list-inside">
-        {% for dashboard in object.dashboards.all %}
+        {% for dashboard in object.dashboard_set.all %}
           <li>{{ dashboard }}</li>
         {% endfor %}
       </ul>
     </p>
+    {% endif %}
     <p>
       <input type="submit" value="Confirm">
     </p>
