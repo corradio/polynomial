@@ -56,7 +56,10 @@ class Threads(OAuth2Integration):
                 raise
         data = response.json()
         account_id_choices = [
-            {"title": data["name"] + f' (@{data["username"]})', "value": data["id"]}
+            {
+                "title": f'{data.get("name", "<unnamed>")} (@{data["username"]})',
+                "value": data["id"],
+            }
         ]
 
         return {
