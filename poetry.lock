@@ -1064,13 +1064,13 @@ Django = ">=3.2"
 
 [[package]]
 name = "django-jsonform"
-version = "2.22.0"
+version = "2.23.0"
 description = "A user-friendly JSON editing form for Django admin."
 optional = false
 python-versions = ">=3.4"
 files = [
-    {file = "django-jsonform-2.22.0.tar.gz", hash = "sha256:0c9d50fb371938e7262a7fef7c5a60835dd288f872f87b952d5e2ea84c825221"},
-    {file = "django_jsonform-2.22.0-py3-none-any.whl", hash = "sha256:c4dd1ba2b0152bd3164aacf326a83c35355c70d12de81908b5ced5f94c8263d6"},
+    {file = "django_jsonform-2.23.0-py3-none-any.whl", hash = "sha256:92078022f0d5bd8ffec215131f2d9826dfa83f08cc910090447f8b6028242e21"},
+    {file = "django_jsonform-2.23.0.tar.gz", hash = "sha256:21d64555679b51606b1774e642f7ec36f78a5d439ee0dfa3508e7b4faecb0d5d"},
 ]
 
 [package.dependencies]
@@ -3964,4 +3964,4 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.12"
-content-hash = "977baf9e4dcc73ec044ffd138f90d5852311b925b825edb3f05281aaec9d6db3"
+content-hash = "e23f21440ee61cee48e359b873e0d7d34af3859fa35970b3d0604aa42e2bff66"
