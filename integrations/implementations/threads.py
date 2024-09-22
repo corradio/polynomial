@@ -108,5 +108,6 @@ class Threads(OAuth2Integration):
         response = self.session.get(
             f'https://graph.threads.net/v1.0/{self.config["account_id"]}/threads_insights?metric={self.config["metric"]}&since={since}&until={until}'
         )
+        response.raise_for_status()
         data = response.json()["data"]
         return MeasurementTuple(date=date, value=data[0]["total_value"]["value"])
