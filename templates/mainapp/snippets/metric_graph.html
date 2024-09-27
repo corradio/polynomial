@@ -177,7 +177,8 @@
     var tooltipOptions = {
       formatTooltip: (value, sanitize) => {
         var content = '<table>';
-        content += `<tr><td class="key">${sanitize(formatTime(value.date))}</td><td class="value">${sanitize(formatNumber(value.value))}`;
+        content += `<tr><td class="key"><span style="color: #4c78a8">&#9679;</span> ${sanitize(formatTime(value.date))}</td>`;
+        content += `<td class="value">${sanitize(formatNumber(value.value))}`;
         if (value.value_prev) {
           pct_change = Math.round((value.value / value.value_prev - 1) * 100);
           if (isFinite(pct_change)) {
@@ -198,7 +199,8 @@
         }
         content += "</td></tr>";
         if (value.value_prev) {
-          content += `<tr><td class="key">${sanitize(formatTime(value.date_prev))}<td class="value">${sanitize(formatNumber(value.value_prev))}</td></tr>`;
+          content += `<tr><td class="key"><span style="color: gray">&#9679;</span> ${sanitize(formatTime(value.date_prev))}`;
+          content += `<td class="value" style="color: gray">${sanitize(formatNumber(value.value_prev))}</td></tr>`;
         }
         content += "</table>";
         return content;

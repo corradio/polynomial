@@ -44,10 +44,19 @@ class Metric(models.Model):
         help_text="Whether or not high values are considered a good outcome",
     )
     enable_medals = models.BooleanField(
-        default=False, help_text="Highlight the top 3 values"
+        default=False, help_text="Highlights the top 3 values in the graphs"
     )
     last_collect_attempt = models.DateTimeField(blank=True, null=True)
-    target = models.FloatField(blank=True, null=True, help_text="Target value")
+    last_detected_spike = models.DateField(blank=True, null=True)
+    target = models.FloatField(
+        blank=True,
+        null=True,
+        help_text="Displays a horizontal line on the graphs, representing the goal or target",
+    )
+    should_backfill_daily = models.BooleanField(
+        default=False,
+        help_text="Does a full backfill during each daily update (experimental)",
+    )
 
     # The credentials can be saved either in db, or in cache, while the object
     # is temporarily being built. We therefore allow this to be changed later.
@@ -137,7 +146,7 @@ class Metric(models.Model):
             return True
         if not self.organization:
             return False
-        return self.organization.is_admin(user)
+        return self.organization.is_member(user)
 
     def can_view(self, user: Union["User", AnonymousUser]) -> bool:
         if self.can_edit(user):

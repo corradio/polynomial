@@ -40,8 +40,8 @@
   form > div label, form > p label, .rjf-form-group-title {
     @apply block mb-2 text-sm font-medium text-gray-900;
   }
-  form span.helptext, .rjf-help-text {
-    @apply mt-2 text-sm text-gray-500 font-light;
+  form .helptext, .rjf-help-text {
+    @apply text-sm text-gray-500 font-light;
   }
   form ul.errorlist {
     @apply text-red-700 text-sm;
@@ -170,7 +170,9 @@ table.table tbody td {
   @apply px-6;
 }
 
-/* react-jsonform style */
+/* react-jsonform style
+   https://github.com/bhch/django-jsonform/blob/812888c59deba513c82ba4741e65c9064d472e27/django_jsonform/static/django_jsonform/style.css
+*/
 .rjf-form-row:not(:last-child),
 .rjf-form-group:not(:last-child),
 .rjf-form-group-wrapper:not(:last-child) {
@@ -198,4 +200,7 @@ table.table tbody td {
 }
 .rjf-remove-button {
   @apply text-red-700;
+}
+.rjf-collapsed, .rjf-collapsed-indicator {
+    display: none;
 }

@@ -219,6 +219,8 @@ def metric_duplicate(request, pk) -> HttpResponseRedirect:
         "dashboards": [d.pk for d in metric.dashboard_set.all()],
         "higher_is_better": metric.higher_is_better,
         "enable_medals": metric.enable_medals,
+        "target": metric.target,
+        "should_backfill_daily": metric.should_backfill_daily,
         "integration_config": metric.integration_config,
     }
 
@@ -273,9 +275,10 @@ class MetricCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         integration_class = INTEGRATION_CLASSES[self.integration_id]
         can_web_auth = issubclass(integration_class, WebAuthIntegration)
         if can_web_auth and not self.integration_credentials:
-            return redirect(
-                reverse("metric-new-with-state-authorize", args=[self.state])
-            )
+            url = reverse("metric-new-with-state-authorize", args=[self.state])
+            if self.request.GET.get("next"):
+                url += "?next=" + self.request.GET["next"]
+            return redirect(url)
         else:
             return super().get(request, *args, **kwargs)
 

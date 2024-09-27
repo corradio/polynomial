@@ -18,11 +18,18 @@
     {% csrf_token %}
     {% for field in form.visible_fields %}
         <p>
-            {{ field.label_tag }}
-            {{ field.errors }}
-            {{ field }}
+            {% if field.widget_type == 'checkbox' %}
+              <span class="inline-flex">
+              {{ field }}&nbsp;{{ field.label_tag }}
+              </span>
+              {{ field.errors }}
+            {% else %}
+              {{ field.label_tag }}
+              {{ field.errors }}
+              {{ field }}
+            {% endif %}
             {% if field.help_text %}
-              <span class="helptext">{{ field.help_text|safe }}</span>
+              <div class="helptext">{{ field.help_text|safe }}</div>
             {% endif %}
         </p>
     {% endfor %}
@@ -30,7 +37,7 @@
 
     {% if metric %}
     <p>
-      <p class="text-sm font-medium leading-6 text-gray-900">Metadata</p>
+      <p><label>Metadata</label></p>
       <div class="border border-dashed rounded-lg border-gray-300 px-4 py-2">
         <dl class="divide-y divide-gray-100">
           <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
@@ -124,7 +131,7 @@
         var data = JSON.stringify({
           integration_config: configElement.value,
         });
-        fetch(location.origin + location.pathname + 'test', {
+        fetch(location.origin + location.pathname + '/../test', {
           method: 'POST', headers: {
             'X-CSRFToken': csrftoken,
             'Accept': 'application/json',

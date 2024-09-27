@@ -39,27 +39,33 @@ def collect_latest_task(metric_id: UUID) -> None:
     metric.save()
 
     integration_instance = metric.integration_instance
-    if integration_instance.can_backfill():
+
+    if metric.can_backfill:
         # Check if we should gather previously missing datapoints
         # by getting last measurement
         last_measurement = (
             Measurement.objects.filter(metric=metric_id).order_by("-date").first()
         )
-        if last_measurement:
-            with integration_instance as inst:
-                date_end = date.today() - timedelta(days=1)
-                measurements_iterator = inst.collect_past_range(
-                    date_start=min(last_measurement.date + timedelta(days=1), date_end),
-                    date_end=date_end,
+        date_end = date.today() - timedelta(days=1)
+        if metric.should_backfill_daily:
+            date_start = integration_instance.earliest_backfill()
+        elif last_measurement:
+            date_start = min(last_measurement.date + timedelta(days=1), date_end)
+        else:
+            date_start = date_end
+        with integration_instance as inst:
+            measurements_iterator = inst.collect_past_range(
+                date_start=date_start,
+                date_end=date_end,
+            )
+            for measurement in measurements_iterator:
+                Measurement.objects.update_or_create(
+                    metric=metric,
+                    date=measurement.date,
+                    defaults={
+                        "value": measurement.value,
+                    },
                 )
-                for measurement in measurements_iterator:
-                    Measurement.objects.update_or_create(
-                        metric=metric,
-                        date=measurement.date,
-                        defaults={
-                            "value": measurement.value,
-                        },
-                    )
     else:
         # For integration that can't backfill
         with integration_instance as inst:
@@ -241,6 +247,9 @@ def check_notify_metric_changed_task(metric_id: UUID) -> None:
                 img_data,
                 f"New changes in metric <{link}|*{metric.name}*>",
             )
+        # Mark as notified
+        metric.last_detected_spike = spike_date
+        metric.save()
 
 
 @shared_task
