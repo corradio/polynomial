@@ -1,7 +1,7 @@
 MANAGE = poetry run python manage.py
 
 seed:
-	DJANGO_SUPERUSER_USERNAME=admin \
+	DJANGO_SUPERUSER_USERNAME=john \
 	DJANGO_SUPERUSER_PASSWORD=test \
 	DJANGO_SUPERUSER_EMAIL="admin@admin.com" \
 	$(MANAGE) createsuperuser --noinput || true
