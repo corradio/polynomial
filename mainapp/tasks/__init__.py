@@ -112,7 +112,7 @@ def backfill_task(
             interval = parse_duration(since)  # e.g. "3 days"
             if not interval:
                 raise ValueError(
-                    f"Invalid argument `since`: should be a date or a duration."
+                    "Invalid argument `since`: should be a date or a duration."
                 )
             start_date = date.today() - interval
     assert start_date is not None
@@ -204,7 +204,7 @@ def check_notify_metric_changed_task(metric_id: UUID) -> None:
         # Send email
         message = EmailMultiAlternatives(
             subject=f'New changes in metric "{metric.name}" 📈',
-            body=f"Go check it out. Unfortunately can't link here as we're not sure there's a dashboard.",
+            body="Go check it out. Unfortunately can't link here as we're not sure there's a dashboard.",
             # {BASE_URL}{metric.dashboards.first?.get_absolute_url()}
             from_email="Polynomial <olivier@polynomial.so>",
             # to=[metric.user.email],
@@ -240,11 +240,12 @@ def check_notify_metric_changed_task(metric_id: UUID) -> None:
         ):
             # Send slack message
             logger.info(f"Sending slack notification for metric_id={metric_id}")
+            link = f"{BASE_URL}{reverse('metric-details', args=[metric_id])}"
             slack_notifications.notify_channel(
                 organization.slack_notifications_credentials,
                 organization.slack_notifications_channel,
                 img_data,
-                f"New changes in metric *{metric.name}*",
+                f"New changes in metric <{link}|*{metric.name}*>",
             )
         # Mark as notified
         metric.last_detected_spike = spike_date

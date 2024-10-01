@@ -46,6 +46,8 @@ make resetdb
 make rundev
 ```
 
+Now you can login with `admin@admin.com` and `test` as password. Afterwards, go into the database and set the account in `account_emailaddress` to "verified" true.
+
 ## Run all the tests
 ```sh
 make test
