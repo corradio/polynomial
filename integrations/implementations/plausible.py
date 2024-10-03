@@ -32,6 +32,16 @@ class Plausible(Integration):
                 "default": "visitors",
                 "required": True,
             },
+            "aggregation_period": {
+                "type": "string",
+                "choices": [
+                    {"title": "1 day", "value": "day"},
+                    {"title": "last 7 days", "value": "7d"},
+                    {"title": "last 30 days", "value": "30d"},
+                ],
+                "default": "day",
+                "required": True,
+            },
             "filters": {"type": "array", "items": {"type": "string"}},
         },
     }
@@ -53,14 +63,14 @@ class Plausible(Integration):
 
     def collect_past(self, date: date) -> MeasurementTuple:
         site_id = self.config["site_id"]
-        period = "day"
+        period = self.config.get("aggregation_period", "day")
         # See https://plausible.io/docs/metrics-definitions
         metric = self.config["metric"]
         filters: List[str] = self.config["filters"]
 
         url = f"https://plausible.io/api/v1/stats/aggregate"
         url += f"?site_id={site_id}"
-        url += "&period=day&with_imported=true"
+        url += f"&period={period}&with_imported=true"
         # Plausible uses timezones defined in the plausible site config
         url += f"&date={date.strftime('%Y-%m-%d')}"
         url += f"&metrics={metric}"
