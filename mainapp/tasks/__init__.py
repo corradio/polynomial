@@ -124,11 +124,18 @@ def backfill_task(
     )
     last_measurement_date = last_measurement.date if last_measurement else date.max
     with metric.integration_instance as inst:
+        # Clear existing data for this range
+        date_start = max(
+            min(last_measurement_date, start_date), inst.earliest_backfill()
+        )
+        date_end = date.today() - timedelta(days=1)
+        Measurement.objects.filter(
+            metric=metric.id, date__gte=date_start, date__lte=date_end
+        ).delete()
+
         measurements_iterator = inst.collect_past_range(
-            date_start=max(
-                min(last_measurement_date, start_date), inst.earliest_backfill()
-            ),
-            date_end=date.today() - timedelta(days=1),
+            date_start=date_start,
+            date_end=date_end,
         )
         # Save
         retry_since = since
