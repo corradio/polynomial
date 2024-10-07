@@ -2,6 +2,7 @@ from datetime import date, datetime
 from typing import Optional, Tuple, final
 
 import requests
+from oauthlib.oauth2 import InvalidGrantError
 
 from integrations.base import MeasurementTuple, OAuth2Integration
 from integrations.utils import get_secret
@@ -87,13 +88,23 @@ class Threads(OAuth2Integration):
             },
         }
 
+    def _call_endpoint(self, url: str) -> dict:
+        response = self.session.get(url)
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 401:
+                data = e.response.json()
+                if data["error"]["type"] == "OAuthException":
+                    raise InvalidGrantError(data["error"]["message"]) from None
+            raise
+        return response.json()["data"]
+
     def collect_latest(self) -> MeasurementTuple:
         assert self.config["metric"] == "followers_count"
-        response = self.session.get(
+        data = self._call_endpoint(
             f'https://graph.threads.net/v1.0/{self.config["account_id"]}/threads_insights?metric={self.config["metric"]}'
         )
-        response.raise_for_status()
-        data = response.json()["data"]
         return MeasurementTuple(
             date=date.today(), value=data[0]["total_value"]["value"]
         )
@@ -105,9 +116,7 @@ class Threads(OAuth2Integration):
         end_time = start_time.replace(hour=23, minute=59, second=59)
         since = int(start_time.timestamp())
         until = int(end_time.timestamp())
-        response = self.session.get(
+        data = self._call_endpoint(
             f'https://graph.threads.net/v1.0/{self.config["account_id"]}/threads_insights?metric={self.config["metric"]}&since={since}&until={until}'
         )
-        response.raise_for_status()
-        data = response.json()["data"]
         return MeasurementTuple(date=date, value=data[0]["total_value"]["value"])
