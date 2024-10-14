@@ -64,7 +64,7 @@
     {% endif %}
 
     {% if not metric or metric|can_edit:user or metric|can_alter_credentials_by:user %}
-    
+
     {% if can_web_auth %}
     <input type="button" id="button-authorize" value="Re-authorize">
     {% endif %}
@@ -85,7 +85,7 @@
       if (authorizeButton) {
         authorizeButton.onclick = function(e) {
           // Note: this will lose all unsaved settings
-          location.pathname += 'authorize';
+          location.pathname = location.pathname.replace('/edit', '/authorize');
         }
       }
       // Test
