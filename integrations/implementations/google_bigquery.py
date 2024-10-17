@@ -1,5 +1,4 @@
 from datetime import date, datetime, timedelta
-from decimal import Decimal
 from typing import List, Optional, final
 
 import requests
@@ -164,20 +163,13 @@ def _date_getter(row: dict) -> date:
 
 def _value_getter(row: dict) -> float:
     try:
-        value = row["value"]
-        # Attempt conversions
-        if (
-            isinstance(value, int)
-            or isinstance(value, Decimal)
-            or (isinstance(value, str) and value.isnumeric())
-        ):
-            value = float(value)
+        value = float(row["value"])
     except KeyError as e:
         raise UserFixableError(
             f"Value column {e} is missing from results. Did you rename it correctly using SELECT <yourfield> AS value?"
         )
-    if not isinstance(value, float):
+    except ValueError as e:
         raise UserFixableError(
-            f"Expected data from column 'value' to be a number. Received {type(value).__name__} instead."
+            f"Expected value '{row['value']}' from column 'value' to be number-like."
         )
     return value
