@@ -43,7 +43,7 @@
   form .helptext, .rjf-help-text {
     @apply text-sm text-gray-500 font-light;
   }
-  form ul.errorlist {
+  form ul.errorlist, .rjf-error-text {
     @apply text-red-700 text-sm;
   }
   form > p:not(:first-child) {
