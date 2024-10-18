@@ -27,7 +27,7 @@ class Pipedrive(OAuth2Integration):
         data = response.json()["data"]
         pipeline_choices = sorted(
             [
-                {"title": item["name"], "value": item["id"]}
+                {"title": item["name"], "value": str(item["id"])}
                 for item in data
                 if item["active"] is True
             ],
@@ -87,7 +87,7 @@ class Pipedrive(OAuth2Integration):
                         "won",
                         "lost",
                     ],
-                    "default": "<any>",
+                    "default": "all_not_deleted",
                 },
             },
         }
