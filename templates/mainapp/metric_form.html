@@ -173,7 +173,7 @@
               formInstance.update(newConfig);
             }
             if (data.measurements.length == 0) {
-              document.querySelector('#integration-test-container pre').innerText = 'No results returned';
+              document.querySelector('#integration-test-container pre').innerText = 'No results returned for yesterday or days before';
             }
             else if (data.measurements.length <= 1) {
               document.querySelector('#integration-test-container pre').innerText = JSON.stringify(data.measurements[0]);
