@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Aw snap 😟</h1>
+<p>
+  It seems like an error happened for the metric{% if object %} <b>{{ object }}</b>{% endif %}.
+  {% if exception %}
+  The error message was: <pre>{{ exception }}</pre>
+  {% endif %}
+</p>
+{% if object.pk %}
+<p class="flex mt-2">
+  <a href="{% url 'metric-authorize' object.pk %}?next={{ request.GET.next }}" class="btn cta">Re-authorize</a>
+</p>
+{% endif %}
+<p class="mt-2 text-sm text-gray-500">
+  As this project is open source, you may contribute by fixing this <a href="https://github.com/corradio/polynomial/tree/master/integrations">integration</a>.
+</p>
+
+{% endblock %}

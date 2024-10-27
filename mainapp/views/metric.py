@@ -36,7 +36,7 @@ from oauthlib.oauth2 import InvalidGrantError
 
 from config.settings import DEBUG
 from integrations import INTEGRATION_CLASSES, INTEGRATION_IDS
-from integrations.base import Integration, WebAuthIntegration
+from integrations.base import Integration, UserFixableError, WebAuthIntegration
 from integrations.utils import deofuscate_protected_fields
 from mainapp.views.dashboard import get_metric_data
 
@@ -351,7 +351,14 @@ class MetricCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        try:
+            context = super().get_context_data(**kwargs)
+        except InvalidGrantError as e:
+            self.template_name_suffix = "_invalid_grant"
+            context = {"exception": e, "object": self.object}
+        except UserFixableError as e:
+            self.template_name_suffix = "_error"
+            context = {"exception": e, "object": self.object}
         context["can_web_auth"] = issubclass(
             INTEGRATION_CLASSES[self.integration_id], WebAuthIntegration
         )
@@ -439,6 +446,9 @@ class MetricUpdateView(LoginRequiredMixin, UpdateView):
             context = super().get_context_data(**kwargs)
         except InvalidGrantError as e:
             self.template_name_suffix = "_invalid_grant"
+            context = {"exception": e, "object": self.object, "metric": metric}
+        except UserFixableError as e:
+            self.template_name_suffix = "_error"
             context = {"exception": e, "object": self.object, "metric": metric}
         context["can_web_auth"] = metric.can_web_auth
         return context
