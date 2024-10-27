@@ -26,13 +26,12 @@ class GoogleBigQuery(OAuth2Integration):
         try:
             response.raise_for_status()
         except requests.HTTPError as e:
-            if e.response.status_code in [400, 403]:
-                # Try to explain to the user
+            if e.response.status_code in [400]:
                 data = e.response.json()
                 raise requests.HTTPError(
                     data["error"]["message"], response=e.response
                 ) from None
-            elif e.response.status_code == 404:
+            elif e.response.status_code in [403, 404]:
                 # Try to explain to the user
                 data = e.response.json()
                 raise UserFixableError(data["error"]["message"]) from None
