@@ -118,7 +118,6 @@ def get_vl_spec(
                     # https://github.com/d3/d3-time-format#locale_format
                     "labelExpr": '[timeFormat(datum.value, "%b"), timeFormat(datum.value, "%m") == "01" ? timeFormat(datum.value, "%Y") : ""]',
                     "labelColor": "gray",
-                    "domainColor": "black",
                     "tickCount": "month",
                     "tickSize": 3,
                     "gridDash": [2, 2],

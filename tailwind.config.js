@@ -18,4 +18,5 @@ module.exports = {
     'errorlist', // used by django form utils
     'text-green-500', // used in metric_mosaic
   ],
+  darkMode: 'media',
 }

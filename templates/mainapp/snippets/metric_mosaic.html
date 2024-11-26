@@ -5,7 +5,7 @@
   </div>
 {% endfor %}
 {% if can_edit %}
-  <div class="flex items-center justify-evenly bg-slate-50" style="border: thin dotted lightgray; border-radius: 5px; min-height: 250px">
+  <div class="flex items-center justify-evenly bg-slate-50 dark:bg-zinc-900" style="border: thin dotted lightgray; border-radius: 5px; min-height: 250px">
     <a href="{% url 'integrations' %}?action={% url 'dashboardmetric_add' dashboard.pk %}&next={{ dashboard.get_absolute_url }}" class="btn cta">Add metric</a>
   </div>
 {% endif %}

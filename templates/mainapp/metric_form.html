@@ -41,15 +41,15 @@
       <div class="border border-dashed rounded-lg border-gray-300 px-4 py-2">
         <dl class="divide-y divide-gray-100">
           <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-            <dt class="text-sm font-medium leading-6 text-gray-900">Owner</dt>
+            <dt class="text-sm font-medium leading-6">Owner</dt>
             <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ metric.user.name }} ({{ metric.user.email }})</dd>
           </div>
           <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-            <dt class="text-sm font-medium leading-6 text-gray-900">Created</dt>
+            <dt class="text-sm font-medium leading-6">Created</dt>
             <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ metric.created_at|timesince }} ago</dd>
           </div>
           <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-            <dt class="text-sm font-medium leading-6 text-gray-900">Last measurement</dt>
+            <dt class="text-sm font-medium leading-6">Last measurement</dt>
             <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
               {% if not metric.last_non_nan_measurement %}
               None

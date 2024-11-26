@@ -7,7 +7,7 @@
     data-dropdown-toggle="menu-{{ metric.metric_object.pk }}"
     data-dropdown-offset-distance="5"
     data-dropdown-placement="right-start"
-    class="focus:outline-none text-black inline-grid"
+    class="focus:outline-none inline-grid"
   >
     <span class="truncate{% if dashboard %} chevron-after{% endif %}">
       {% with "integrations/icons/"|add:metric.metric_object.integration_id|add:".png" as icon_url %}
@@ -207,10 +207,22 @@
       }
     };
 
+    var options = { "actions": false, "tooltip": tooltipOptions };
+    var isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (isDarkMode) {
+      options['config'] = {
+        background: 'transparent',
+        axis: {
+          domainColor: 'darkgray',
+          gridColor: 'darkgray',
+          tickColor: 'darkgray',
+        },
+      };
+    }
     vegaEmbed(
       '#chart-{{ metric.metric_object.pk }}',
       vlSpec,
-      { "actions": false, "tooltip": tooltipOptions }
+      options
     ).then(result => {
       {% if metric.metric_object|can_edit:user %}
       result.view.addEventListener('click', function(event, item) {
