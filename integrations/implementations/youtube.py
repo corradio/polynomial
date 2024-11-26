@@ -115,8 +115,12 @@ class Youtube(OAuth2Integration):
         if len(rows) < MAX_ROWS:
             return rows
         else:
+            new_start_index = len(rows) + start_index
+            assert (
+                new_start_index > start_index
+            ), f"New start index ({new_start_index}) is smaller or equal to old ({start_index})"
             return rows + self._paginated_query(
-                url, date_start, date_end, request_data, start_index=len(rows) + 1
+                url, date_start, date_end, request_data, start_index=new_start_index
             )
 
     def collect_past_range(
