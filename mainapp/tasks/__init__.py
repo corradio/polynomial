@@ -300,6 +300,7 @@ def celery_task_failure_email(sender, *args, **kwargs) -> None:
             friendly_context_message=f"Unfortunately, something went wrong last night when attempting to collect the latest data for the {metric.name} metric.",
             exception=exception,
             recipient_email=metric.user.email,
+            inlude_debug_info=metric.user.is_staff,
         ):
             return
     elif sender == backfill_task:
@@ -310,11 +311,13 @@ def celery_task_failure_email(sender, *args, **kwargs) -> None:
             metric_pk = kwargs["kwargs"]["metric_id"]
         metric = Metric.objects.get(pk=metric_pk)
         requester_user = User.objects.get(pk=requester_user_id)
+        num_retries = sender.request.retries
         if notify_metric_exception(
             metric=metric,
-            friendly_context_message=f"Unfortunately, something went wrong when attempting to backfill the {metric.name} metric.",
+            friendly_context_message=f"Unfortunately, something went wrong when attempting to backfill the {metric.name} metric after {num_retries} retries.",
             exception=exception,
             recipient_email=requester_user.email,
+            inlude_debug_info=requester_user.is_staff,
         ):
             return
 

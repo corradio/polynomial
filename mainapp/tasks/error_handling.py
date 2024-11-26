@@ -20,6 +20,7 @@ def notify_metric_exception(
     friendly_context_message: str,
     exception: Exception,
     recipient_email: str,
+    inlude_debug_info: bool = False,
 ) -> bool:
     extras = {"metric": model_to_dict(metric)}
     subject = None
