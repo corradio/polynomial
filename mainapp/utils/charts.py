@@ -45,7 +45,7 @@ def get_vl_spec(
     imageLabelUrls: Optional[Dict[date, str]] = None,
     markers: Optional[Dict[date, str]] = None,
     target: Optional[float] = None,
-):
+) -> dict:
     if not measurements:
         return {}
     if measurements_other_period:
@@ -193,34 +193,6 @@ def get_vl_spec(
                     "url": {"field": "imageLabelUrl", "type": "nominal"},
                 },
             },
-            # Rules
-            {
-                "name": "markers",
-                "mark": "rule",
-                "encoding": {
-                    "x": {"field": "markerDate", "type": "temporal"},
-                    "y": None,
-                    "color": {"value": "gray"},
-                },
-            },
-            {
-                "name": "commentLabels",
-                "mark": {
-                    "type": "text",
-                    "align": "right",
-                    "baseline": "top",
-                    "dx": 0,
-                    "dy": 2,
-                    "fontSize": 11,
-                    "angle": -90,
-                    "color": "gray",
-                },
-                "encoding": {
-                    "x": {"field": "markerDate"},
-                    "y": {"value": 0},
-                    "text": {"field": "marker"},
-                },
-            },
         ],
     }
     # The x-ticks above are made for months. Move to days if the span is days
@@ -260,77 +232,81 @@ def get_vl_spec(
         # Style
         vl_spec["layer"][0]["mark"]["opacity"] = 0.5
         vl_spec["layer"][0]["mark"]["strokeWidth"] = 1.5
-    elif day_span > 200:
-        # Year graph
-        pass
+
+    # Add tooltips
+    vl_spec["layer"].append(
+        {
+            "name": "points",
+            "mark": {
+                "type": "circle",
+                "tooltip": {"content": "data"},  # Pass all data to tooltip plugin
+                # The following doesn't work as it formats `value_prev` nulls as 0
+                # "tooltip": {"expr": f"datum.datum && {{'Day': timeFormat(datum.datum.date, '%b %d, %Y'), 'Value': format(datum.datum.value, '{VALUE_FORMAT}'), 'Value {str_ago}': format(datum.datum.value_prev, '{VALUE_FORMAT}')}}"}
+            },
+            "encoding": {
+                "x": {"field": "date", "type": "temporal"},
+                "y": {"field": "value", "type": "quantitative"},
+            },
+        }
+    )
+    default_value = 20
+    highlight_value = 200
+    if day_span >= 365:
+        default_value = int(default_value / 2)
+        highlight_value = int(highlight_value / 2)
+    if day_span > 365:
+        default_value = 0
+    if highlight_date:
+        vl_spec["layer"][-1]["encoding"]["size"] = {
+            "condition": {
+                "test": {
+                    "field": "date",
+                    "oneOf": [date_to_js_timestamp(highlight_date)],
+                },
+                "value": highlight_value,
+            },
+            "value": default_value,  # default value
+        }
     else:
-        # < Quarter/month graph
+        # Highlight points based on mouseover
+        vl_spec["layer"][-1]["encoding"]["size"] = {
+            "condition": {
+                "param": "highlight",
+                "empty": False,
+                "value": highlight_value,
+            },
+            "value": default_value,  # default value
+        }
         vl_spec["layer"].append(
             {
-                "name": "points",
-                "mark": {
-                    "type": "circle",
-                    "tooltip": {"content": "data"},  # Pass all data to tooltip plugin
-                    # The following doesn't work as it formats `value_prev` nulls as 0
-                    # "tooltip": {"expr": f"datum.datum && {{'Day': timeFormat(datum.datum.date, '%b %d, %Y'), 'Value': format(datum.datum.value, '{VALUE_FORMAT}'), 'Value {str_ago}': format(datum.datum.value_prev, '{VALUE_FORMAT}')}}"}
-                },
+                "name": "points_prev",
+                "mark": {"type": "circle", "opacity": 0.3},
                 "encoding": {
                     "x": {"field": "date", "type": "temporal"},
-                    "y": {"field": "value", "type": "quantitative"},
-                },
-            }
-        )
-        if highlight_date:
-            vl_spec["layer"][-1]["encoding"]["size"] = {
-                "condition": {
-                    "test": {
-                        "field": "date",
-                        "oneOf": [date_to_js_timestamp(highlight_date)],
-                    },
-                    "value": 200,
-                },
-                "value": 20,  # default value
-            }
-        else:
-            # Highlight points based on mouseover
-            vl_spec["layer"][-1]["encoding"]["size"] = {
-                "condition": {
-                    "param": "highlight",
-                    "empty": False,
-                    "value": 200,
-                },
-                "value": 20,  # default value
-            }
-            vl_spec["layer"].append(
-                {
-                    "name": "points_prev",
-                    "mark": {"type": "circle", "opacity": 0.3},
-                    "encoding": {
-                        "x": {"field": "date", "type": "temporal"},
-                        "y": {"field": "value_prev", "type": "quantitative"},
-                        "size": {
-                            "condition": {
-                                "param": "highlight",
-                                "empty": False,
-                                "value": 50,
-                            },
-                            "value": 0,  # default value
-                        },
-                    },
-                }
-            )
-            # Highlight markers based on mouseover
-            for layer in vl_spec["layer"]:
-                if layer["name"] == "commentLabels":
-                    layer["encoding"]["color"] = {
+                    "y": {"field": "value_prev", "type": "quantitative"},
+                    "size": {
                         "condition": {
                             "param": "highlight",
                             "empty": False,
-                            "value": "black",
+                            "value": 50,
                         },
-                        "value": "gray",  # default value,
-                    }
-                    break
+                        "value": 0,  # default value
+                    },
+                },
+            }
+        )
+        # Highlight markers based on mouseover
+        for layer in vl_spec["layer"]:
+            if layer["name"] == "commentLabels":
+                layer["encoding"]["color"] = {
+                    "condition": {
+                        "param": "highlight",
+                        "empty": False,
+                        "value": "black",
+                    },
+                    "value": "gray",  # default value,
+                }
+                break
 
     if target is not None:
         vl_spec["layer"].append(
@@ -340,6 +316,40 @@ def get_vl_spec(
                 "data": {"values": [{}]},
                 "encoding": {"y": {"datum": target, "type": "quantitative"}},
             }
+        )
+
+    if day_span < 365:
+        # Show rulers
+        vl_spec["layer"].append(
+            {
+                "name": "markers",
+                "mark": "rule",
+                "encoding": {
+                    "x": {"field": "markerDate", "type": "temporal"},
+                    "y": None,
+                    "color": {"value": "gray"},
+                },
+            }
+        )
+        vl_spec["layer"].append(
+            {
+                "name": "commentLabels",
+                "mark": {
+                    "type": "text",
+                    "align": "right",
+                    "baseline": "top",
+                    "dx": 0,
+                    "dy": 2,
+                    "fontSize": 11,
+                    "angle": -90,
+                    "color": "gray",
+                },
+                "encoding": {
+                    "x": {"field": "markerDate"},
+                    "y": {"value": 0},
+                    "text": {"field": "marker"},
+                },
+            },
         )
 
     return vl_spec
