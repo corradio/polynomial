@@ -250,7 +250,8 @@ class LinkedIn(OAuth2Integration):
             # This metric requires a particular endpoint.
             # We hardcode it here.
             response = self.session.get(
-                f"https://api.linkedin.com/rest/networkSizes/urn:li:organization:{org_id}?edgeType=COMPANY_FOLLOWED_BY_MEMBER"
+                f"https://api.linkedin.com/rest/networkSizes/urn:li:organization:{org_id}?edgeType=COMPANY_FOLLOWED_BY_MEMBER",
+                headers={"LinkedIn-Version": LINKEDIN_VERSION_HEADER},
             )
             response.raise_for_status()
             data = response.json()
