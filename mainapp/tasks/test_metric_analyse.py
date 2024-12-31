@@ -32,9 +32,32 @@ class UnitTestCase(TestCase):
             metric=self.metric,
         )
         spike_date = detected_spike(self.metric.pk)
-        self.assertIsNotNone(spike_date)
+        self.assertEqual(spike_date, start_date + timedelta(days=LOOKBACK_DAYS - 5))
 
         self.metric.last_detected_spike = spike_date
         self.metric.save()
 
+        self.assertIsNone(detected_spike(self.metric.pk))
+
+    def test_detected_spike_with_equal_values(self):
+        end_date = date.today()
+        start_date = end_date - timedelta(days=100)
+        for i in range(99):
+            Measurement.objects.create(
+                date=end_date - timedelta(days=i + 1),
+                value=10 if i == 0 else 0,
+                metric=self.metric,
+            )
+
+        spike_date = detected_spike(self.metric.pk)
+        self.assertEqual(spike_date, end_date - timedelta(days=1))
+        self.metric.last_detected_spike = spike_date
+        self.metric.save()
+
+        # Check that we don't re-detect the same spike
+        Measurement.objects.create(
+            date=end_date,
+            value=10,
+            metric=self.metric,
+        )
         self.assertIsNone(detected_spike(self.metric.pk))

@@ -49,8 +49,14 @@ def detected_spike(metric_id: UUID) -> Optional[date]:
     measurements = query_measurements_without_gaps(start_date, end_date, metric_id)
     # Get all outliers
     spike_dates = extract_spikes(measurements)
+    # Filter out spikes that have already been detected
+    metric = Metric.objects.get(pk=metric_id)
+    spike_dates = [
+        d for d in spike_dates if d > (metric.last_detected_spike or date.min)
+    ]
     if spike_dates:
-        logger.info(f"Detected spikes at {spike_dates} for metric_id={metric_id}")
+        spike_date = spike_dates[0]
+        logger.info(f"Detected spike at {spike_date} for metric_id={metric_id}")
         # Verify this is indeed the last point
         last_non_nan_measurement = (
             Measurement.objects.exclude(value=float("nan"))
@@ -58,13 +64,23 @@ def detected_spike(metric_id: UUID) -> Optional[date]:
             .order_by("date")
             .last()
         )
-        metric = Metric.objects.get(pk=metric_id)
+        if not last_non_nan_measurement or last_non_nan_measurement.date != spike_date:
+            return None
+        # If a spike was just detected, abort if its value did not change
         if (
-            last_non_nan_measurement
-            and last_non_nan_measurement.date == spike_dates[-1]
-            and spike_dates[-1]
-            > (metric.last_detected_spike or metric.created_at.date())
+            metric.last_detected_spike
+            and metric.last_detected_spike + timedelta(days=1)
+            == last_non_nan_measurement.date
         ):
-            return spike_dates[-1]
+            last_spike = Measurement.objects.filter(
+                metric=metric_id, date=metric.last_detected_spike
+            ).first()
+            if last_spike and last_spike.value == last_non_nan_measurement.value:
+                logger.info(
+                    f"Last spike is equal to the previous one for metric_id={metric_id}"
+                )
+                return None
+        # Return
+        return spike_date
     logger.info(f"No spikes detected for metric_id={metric_id}")
     return None
