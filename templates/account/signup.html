@@ -1,6 +1,7 @@
 {% extends "account/base.html" %}
 
 {% load i18n %}
+{% load account socialaccount %}
 
 {% block head_title %}{% trans "Create account" %}{% endblock %}
 
@@ -10,6 +11,26 @@
 <div class="w-full mx-auto sm:max-w-lg xl:p-0 shadow mb-4">
   <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
     <h1>{% trans "Create account" %}</h1>
+
+    {% get_providers as socialaccount_providers %}
+
+    {% if socialaccount_providers %}
+
+    <div class="socialaccount_ballot">
+
+      <ul class="flex items-center gap-4 socialaccount_providers">
+        {% include "socialaccount/snippets/provider_list.html" with process="signup" %}
+      </ul>
+
+      <div class="flex my-2 items-center">
+        <div class="bg-gray-200 w-full h-0.5"></div>
+        <div class="px-5 text-gray-500 signup-or">{% trans 'or' %}</div>
+        <div class="bg-gray-200 w-full h-0.5"></div>
+      </div>
+
+    </div>
+
+    {% endif %}
 
     <form class="space-y-4 md:space-y-6 signup" id="signup_form" method="POST">
       {% csrf_token %}

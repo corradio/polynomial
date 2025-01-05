@@ -64,7 +64,7 @@
       <a class="button secondaryAction" href="{% url 'account_reset_password' %}"></a>
       <button class="btn cta w-full" type="submit">{% trans "Login" %}</button>
       <p class="text-sm font-light text-gray-500 mt-6">
-          Don’t have an account yet? <a href="https://docs.google.com/forms/d/e/1FAIpQLSerYLHahqXc32Kt5a8tS0sta4uFHEY-CbisvxnyCXKFD2cMOA/viewform" class="font-medium text-primary-600 hover:underline dark:text-primary-500">Request invite</a>
+          Don’t have an account yet? <a href="{{ signup_url }}" class="font-medium text-primary-600 hover:underline dark:text-primary-500">Sign up</a>.
       </p>
     </form>
 
