@@ -5,6 +5,31 @@ from typing import List, Optional, final
 from ..base import MeasurementTuple, OAuth2Integration
 from ..utils import get_secret
 
+METRICS = sorted(
+    [
+        # These are list-activity, can be collected historically
+        # See https://mailchimp.com/developer/marketing/api/list-activity/
+        {"value": "unique_opens", "title": "Unique opens", "endpoint": "list-activity"},
+        {
+            "value": "recipient_clicks",
+            "title": "Recipient clicks",
+            "endpoint": "list-activity",
+        },
+        {"value": "subs", "title": "New subscriptions", "endpoint": "list-activity"},
+        {
+            "value": "unsubs",
+            "title": "New unsubscriptions",
+            "endpoint": "list-activity",
+        },
+        # These are list stats, only live
+        # See https://mailchimp.com/developer/marketing/api/lists/
+        {"value": "member_count", "title": "Member count", "endpoint": "list-info"},
+        {"value": "open_rate", "title": "Open rate", "endpoint": "list-info"},
+        {"value": "click_rate", "title": "Click rate", "endpoint": "list-info"},
+    ],
+    key=lambda o: o["title"],
+)
+
 
 @final
 class Mailchimp(OAuth2Integration):
@@ -65,26 +90,19 @@ class Mailchimp(OAuth2Integration):
                 },
                 "statistic": {
                     "type": "string",
-                    "choices": sorted(
-                        [
-                            "emails_sent",
-                            "unique_opens",
-                            "recipient_clicks",
-                            "hard_bounce",
-                            "soft_bounce",
-                            "subs",
-                            "unsubs",
-                            "other_adds",
-                            "other_removes",
-                        ]
-                    ),
+                    "choices": METRICS,
                     "required": True,
                 },
             },
         }
 
     def can_backfill(self):
-        return True
+        list_id = self.config["list"]
+        metric_key = self.config["statistic"]
+        metric = next(m for m in METRICS if m["value"] == metric_key)
+        if not metric:
+            return True
+        return metric["endpoint"] == "list-activity"
 
     def earliest_backfill(self) -> date:
         # 180 days according to the /activity endpoint
@@ -94,18 +112,52 @@ class Mailchimp(OAuth2Integration):
         s = date_str.split("-")
         return date(int(s[0]), int(s[1]), int(s[2]))
 
+    def collect_latest(self) -> MeasurementTuple:
+        list_id = self.config["list"]
+        metric_key = self.config["statistic"]
+        metric = next(m for m in METRICS if m["value"] == metric_key)
+        assert metric["endpoint"] == "list-info"
+        response = self.session.get(
+            f"{self.api_endpoint}/3.0/lists/{list_id}?fields=stats"
+        )
+        response.raise_for_status()
+        obj = response.json()
+        print(obj["stats"])
+        return MeasurementTuple(date=date.today(), value=obj["stats"][metric_key])
+
     def collect_past_range(
         self, date_start: date, date_end: date
     ) -> List[MeasurementTuple]:
         list_id = self.config["list"]
-        statistic = self.config["statistic"]
-        response = self.session.get(
-            f"{self.api_endpoint}/3.0/lists/{list_id}/activity?count=1000"
-        )
-        response.raise_for_status()
-        obj = response.json()
-        measurements = (
-            MeasurementTuple(date=self._parse_date(o["day"]), value=o[statistic])
-            for o in obj["activity"]
-        )
+        metric_key = self.config["statistic"]
+        metric = next(m for m in METRICS if m["value"] == metric_key)
+        assert metric["endpoint"] == "list-activity"
+        # Note: the endpoint doesn't support query by date. It can
+        # paginate through the last 180 days though.
+        batch_size = 100
+        offset = 0
+        measurements: List[MeasurementTuple] = []
+        while True:
+            response = self.session.get(
+                f"{self.api_endpoint}/3.0/lists/{list_id}/activity?count={batch_size}&offset={offset}"
+            )
+            response.raise_for_status()
+            obj = response.json()
+            measurements += sorted(
+                [
+                    MeasurementTuple(
+                        date=self._parse_date(o["day"]), value=o[metric_key]
+                    )
+                    for o in obj["activity"]
+                ],
+                key=lambda m: m.date,
+                reverse=True,
+            )
+            # Check if we need to go back further
+            if obj["activity"] and measurements[-1].date > date_start:
+                # We must go further
+                offset += len(obj["activity"])
+            else:
+                break
+
         return [m for m in measurements if m.date >= date_start and m.date <= date_end]
