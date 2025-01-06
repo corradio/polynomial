@@ -70,17 +70,31 @@ def format_exception(e: Exception) -> str:
 
 
 def process_metric_test(
-    config,
+    config_submitted_obfuscated,
+    config_original,
     integration_credentials,
     integration_class: Type[Integration],
     credentials_updater,
 ) -> HttpResponse:
     try:
         with integration_class(
+            config_submitted_obfuscated,
+            credentials=integration_credentials,
+            credentials_updater=credentials_updater,
+        ) as inst:
+            # Deobfuscate
+            assert config_submitted_obfuscated and config_original
+            schema = inst.callable_config_schema()
+            config = deofuscate_protected_fields(
+                config_submitted_obfuscated, config_original, schema
+            )
+        # Now use the updated config
+        with integration_class(
             config,
             credentials=integration_credentials,
             credentials_updater=credentials_updater,
         ) as inst:
+
             if inst.can_backfill():
                 date_end = date.today() - timedelta(days=1)
                 date_start = date_end - timedelta(days=10)
@@ -160,24 +174,12 @@ def metric_new_test(request, state):
         metric_cache["integration_credentials"] = arg
         request.session.modified = True
 
-    # Deobfuscate
-    if config and metric_cache.get("integration_config"):
-        schema = integration_class(
-            config,
-            credentials=integration_credentials,
-            credentials_updater=credentials_updater,
-        ).callable_config_schema()
-        config = deofuscate_protected_fields(
-            config, metric_cache.get("integration_config"), schema
-        )
-
-    # Save the config in the cache so a page reload keeps it
-    metric_cache["integration_config"] = config
-    metric_cache["name"] = data.get("name")
-    request.session.modified = True
-
     return process_metric_test(
-        config, integration_credentials, integration_class, credentials_updater
+        config,
+        metric_cache.get("integration_config"),
+        integration_credentials,
+        integration_class,
+        credentials_updater,
     )
 
 
@@ -517,17 +519,16 @@ def metric_test(request, pk):
     integration_credentials = metric.integration_credentials
     integration_class = INTEGRATION_CLASSES[integration_id]
 
-    # Deobfuscate
-    if config and metric.integration_config:
-        schema = metric.callable_config_schema()
-        config = deofuscate_protected_fields(config, metric.integration_config, schema)
-
     def credentials_updater(arg):
         metric.integration_credentials = arg
         metric.save()
 
     return process_metric_test(
-        config, integration_credentials, integration_class, credentials_updater
+        config,
+        metric.integration_config,
+        integration_credentials,
+        integration_class,
+        credentials_updater,
     )
 
 
