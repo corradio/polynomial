@@ -70,8 +70,8 @@ def format_exception(e: Exception) -> str:
 
 
 def process_metric_test(
-    config_submitted_obfuscated,
-    config_original,
+    config_submitted_obfuscated: dict,
+    config_original: Optional[dict],
     integration_credentials,
     integration_class: Type[Integration],
     credentials_updater,
@@ -82,12 +82,16 @@ def process_metric_test(
             credentials=integration_credentials,
             credentials_updater=credentials_updater,
         ) as inst:
-            # Deobfuscate
-            assert config_submitted_obfuscated and config_original
-            schema = inst.callable_config_schema()
-            config = deofuscate_protected_fields(
-                config_submitted_obfuscated, config_original, schema
-            )
+            # Deobfuscate, but only if the original is provided.
+            # If it's not, then it's a sign that we're submitting a new form
+            # and that there's nothing to deobfuscate
+            if config_submitted_obfuscated and config_original:
+                schema = inst.callable_config_schema()
+                config = deofuscate_protected_fields(
+                    config_submitted_obfuscated, config_original, schema
+                )
+            else:
+                config = config_submitted_obfuscated
         # Now use the updated config
         with integration_class(
             config,
