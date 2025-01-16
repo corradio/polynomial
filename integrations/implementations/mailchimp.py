@@ -2,6 +2,8 @@ import time
 from datetime import date, timedelta
 from typing import List, Optional, final
 
+from oauthlib.oauth2 import InvalidGrantError
+
 from ..base import MeasurementTuple, OAuth2Integration
 from ..utils import get_secret
 
@@ -68,6 +70,10 @@ class Mailchimp(OAuth2Integration):
         response = self.session.get("https://login.mailchimp.com/oauth2/metadata")
         response.raise_for_status()
         obj = response.json()
+        if obj.get("error", "") == "invalid_token":
+            raise InvalidGrantError(
+                obj.get("error_description"), "Unknown error"
+            ) from None
         self.api_endpoint = obj["api_endpoint"]
         return self
 
@@ -97,6 +103,10 @@ class Mailchimp(OAuth2Integration):
         }
 
     def can_backfill(self):
+        if not "list" in self.config:
+            return True
+        if not "statistic" in self.config:
+            return True
         list_id = self.config["list"]
         metric_key = self.config["statistic"]
         metric = next(m for m in METRICS if m["value"] == metric_key)
