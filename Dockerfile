@@ -11,7 +11,7 @@ WORKDIR /code
 
 # Install poetry
 RUN set -ex && \
-    pip install --upgrade pip poetry && \
+    pip install --upgrade pip poetry==2.0.1 && \
     rm -rf /root/.cache/
 
 # Install node+yarn
@@ -28,7 +28,7 @@ RUN apt update && apt install -y ca-certificates curl gnupg && \
 # Install poetry packages
 COPY poetry.lock pyproject.toml ./
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-root --no-dev && \
+    poetry install --no-interaction --no-root --without=dev && \
     rm -rf ~/.cache/pypoetry && \
     rm -rf ~/.config/pypoetry
 
