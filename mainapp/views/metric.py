@@ -545,9 +545,13 @@ class MetricImportView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     def get_success_url(self):
         return self.request.GET.get("next") or reverse_lazy("index")
 
-    def get_queryset(self, *args, **kwargs):
-        # Only show metric if user can access it
-        return super().get_queryset(*args, **kwargs).filter(user=self.request.user)
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset=queryset)
+        if not obj.can_edit(self.request.user):
+            raise PermissionDenied(
+                "Only the metric owner or the organization admin can delete a metric"
+            )
+        return obj
 
 
 class MetricIntegrationUpdateView(LoginRequiredMixin, UpdateView):
@@ -562,9 +566,13 @@ class MetricIntegrationUpdateView(LoginRequiredMixin, UpdateView):
             "metric-edit", args=[self.object.pk]
         )
 
-    def get_queryset(self, *args, **kwargs):
-        # Only show metric if user can access it
-        return super().get_queryset(*args, **kwargs).filter(user=self.request.user)
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset=queryset)
+        if not obj.can_edit(self.request.user):
+            raise PermissionDenied(
+                "Only the metric owner or the organization admin can delete a metric"
+            )
+        return obj
 
 
 class NewMetricIntegrationCreateView(LoginRequiredMixin, CreateView):
