@@ -78,7 +78,8 @@ def fill_mesurement_range(
     date_end: date,
     fill_value: float = 0,
 ):
-    df = pd.DataFrame(measurements)
+    assert date_start <= date_end
+    df = pd.DataFrame(measurements, columns=["date", "value"])
     # Convert 'date' object column into DatetimeIndex
     series: pd.Series[float] = df.set_index(pd.DatetimeIndex(df.date)).value
     # Reindex to set missing dates

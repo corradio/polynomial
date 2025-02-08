@@ -75,7 +75,10 @@ class Github(OAuth2Integration):
         assert metric_matches, f"Couldn't find metric {metric_key}"
         return metric_matches[0]
 
-    def collect_past_range(self, date_start, date_end) -> List[MeasurementTuple]:
+    def collect_past_range(
+        self, date_start: date, date_end: date
+    ) -> List[MeasurementTuple]:
+        assert date_start <= date_end
         metric_key = self.config["metric"]
         metric_config = self._get_metric_config_for_key(metric_key)
         backfill_days = int(metric_config.get("backfill_days", 0))
