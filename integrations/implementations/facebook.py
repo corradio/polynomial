@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 from typing import Iterable, final
 
+import requests
+from oauthlib.oauth2 import InvalidGrantError
 from requests_oauthlib import OAuth2Session
 
 from integrations.base import MeasurementTuple, OAuth2Integration
@@ -52,7 +54,14 @@ def collect_insights_for_account(
             else:
                 # Paging
                 response = session.get(next_url)
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if e.response is not None and e.response.status_code == 401:
+                    data = e.response.json()
+                    if data["error"]["type"] == "OAuthException":
+                        raise InvalidGrantError(data["error"]["message"]) from None
+                raise
             obj = response.json()
             if not obj["data"]:
                 return
@@ -106,17 +115,27 @@ class Facebook(OAuth2Integration):
     def can_backfill(self):
         return True
 
+    def _call_endpoint(self, url: str) -> dict:
+        response = self.session.get(url)
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 401:
+                data = e.response.json()
+                if data["error"]["type"] == "OAuthException":
+                    raise InvalidGrantError(data["error"]["message"]) from None
+            raise
+        return response.json()["data"]
+
     def callable_config_schema(self):
         if not self.is_authorized:
             return self.config_schema
         # Returns all pages
         # See https://developers.facebook.com/docs/graph-api/reference/user/accounts/
         # See https://developers.facebook.com/docs/graph-api/reference/page/
-        response = self.session.get(
+        data = self._call_endpoint(
             f"https://graph.facebook.com/v19.0/me/accounts?fields=id%2Cname%2Cusername"
         )
-        response.raise_for_status()
-        data = response.json()["data"]
         account_id_choices = sorted(
             [
                 {
@@ -168,7 +187,14 @@ class Facebook(OAuth2Integration):
         response = self.session.get(
             f'https://graph.facebook.com/v19.0/{self.config["account_id"]}?fields=access_token'
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 401:
+                data = e.response.json()
+                if data["error"]["type"] == "OAuthException":
+                    raise InvalidGrantError(data["error"]["message"]) from None
+            raise
         access_token = response.json()["access_token"]
 
         yield from collect_insights_for_account(

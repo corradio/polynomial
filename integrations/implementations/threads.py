@@ -52,7 +52,7 @@ class Threads(OAuth2Integration):
         # Once we've got a token, it must be exchanged to a long-lived token
         # see https://developers.facebook.com/docs/threads/get-started/long-lived-tokens
         # TODO: It's not impossible we need to pass grant_type=th_refresh_token for refresh tokens
-        r = requests.get(
+        response = requests.get(
             "https://graph.threads.net/access_token",  # Note: different from `cls.token_url`
             params={
                 "client_secret": cls.client_secret,
@@ -60,8 +60,15 @@ class Threads(OAuth2Integration):
                 "access_token": credentials["access_token"],
             },
         )
-        r.raise_for_status()
-        return r.json()
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 401:
+                data = e.response.json()
+                if data["error"]["type"] == "OAuthException":
+                    raise InvalidGrantError(data["error"]["message"]) from None
+            raise
+        return response.json()
 
     def callable_config_schema(self):
         if not self.is_authorized:

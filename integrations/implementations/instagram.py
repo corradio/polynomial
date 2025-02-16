@@ -1,6 +1,9 @@
 from datetime import date, timedelta
 from typing import Iterable, final
 
+import requests
+from oauthlib.oauth2 import InvalidGrantError
+
 from integrations.base import MeasurementTuple, OAuth2Integration
 from integrations.utils import get_secret
 
@@ -32,17 +35,27 @@ class Instagram(OAuth2Integration):
     def can_backfill(self):
         return self.config["metric"] != "followers_count"
 
+    def _call_endpoint(self, url: str) -> dict:
+        response = self.session.get(url)
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 401:
+                data = e.response.json()
+                if data["error"]["type"] == "OAuthException":
+                    raise InvalidGrantError(data["error"]["message"]) from None
+            raise
+        return response.json()["data"]
+
     def callable_config_schema(self):
         if not self.is_authorized:
             return self.config_schema
         # Returns all pages
         # See https://developers.facebook.com/docs/graph-api/reference/user/accounts/
         # See https://developers.facebook.com/docs/graph-api/reference/page/
-        response = self.session.get(
+        data = self._call_endpoint(
             f"https://graph.facebook.com/v19.0/me/accounts?fields=name%2Cusername%2Caccess_token%2Cinstagram_business_account"
         )
-        response.raise_for_status()
-        data = response.json()["data"]
         account_id_choices = sorted(
             [
                 {
@@ -90,7 +103,14 @@ class Instagram(OAuth2Integration):
         response = self.session.get(
             f'https://graph.facebook.com/v19.0/{self.config["account_id"]}?fields=followers_count'
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 401:
+                data = e.response.json()
+                if data["error"]["type"] == "OAuthException":
+                    raise InvalidGrantError(data["error"]["message"]) from None
+            raise
         return MeasurementTuple(
             date=date.today(), value=response.json()["followers_count"]
         )
