@@ -215,7 +215,7 @@ def get_vl_spec(
         vl_spec["layer"].append(
             {
                 "name": "moving_average",
-                "mark": {"type": "line", "color": "red", "opacity": 0.5},
+                "mark": {"type": "line", "color": "#f03b20", "opacity": 0.7},
                 "encoding": {
                     "x": {"field": "date", "type": "temporal"},
                     "y": {"field": "rolling_mean", "title": "Value"},

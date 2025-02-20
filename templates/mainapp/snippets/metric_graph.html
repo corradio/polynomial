@@ -16,7 +16,7 @@
       {{ metric.metric_object.name }}
     </span>
   </button>
-  <p class="truncate items-center text-xs text-gray-500">
+  <p class="truncate items-center text-xs text-gray-500 dark:text-gray-400">
     {% if metric.has_outdated_measurements %}
     <svg class="inline text-amber-500" style="height: .9em; margin-bottom: .2em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 17" fill="currentColor" aria-hidden="true">
       <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
@@ -216,6 +216,9 @@
           domainColor: 'darkgray',
           gridColor: 'darkgray',
           tickColor: 'darkgray',
+        },
+        mark: {
+          color: "#1f77b4"
         },
       };
     }
