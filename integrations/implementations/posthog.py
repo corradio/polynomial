@@ -32,6 +32,7 @@ class PostHog(Integration):
     }
 
     description = "Use HogQL to query your PostHog database."
+    protected_field_paths = [["api_key"]]
 
     def execute(
         self, query, query_date: Optional[date] = None

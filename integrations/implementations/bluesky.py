@@ -24,6 +24,7 @@ def validate_http_response(response: requests.models.Response):
 @final
 class Bluesky(Integration):
     description = "Mentions on Bluesky."
+    protected_field_paths = [["password"]]
 
     def callable_config_schema(self):
         # Use https://bhch.github.io/react-json-form/playground

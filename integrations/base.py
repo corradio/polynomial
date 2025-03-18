@@ -39,6 +39,7 @@ class Integration:
 
     # Use https://bhch.github.io/react-json-form/playground
     config_schema: ClassVar[Dict] = EMPTY_CONFIG_SCHEMA
+    protected_field_paths: ClassVar[List[List[str]]] = []
 
     description: Optional[str] = None
 

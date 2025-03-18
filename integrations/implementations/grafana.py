@@ -41,6 +41,7 @@ class Grafana(Integration):
     }
 
     description = "Extract data from a Grafana dashboard."
+    protected_field_paths = [["api_key"]]
 
     def __enter__(self):
         assert (

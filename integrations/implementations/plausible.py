@@ -49,6 +49,7 @@ class Plausible(Integration):
     description = (
         "Daily visitors, pageviews, visits or events for your Plausible website."
     )
+    protected_field_paths = [["api_key"]]
 
     def __enter__(self):
         assert (

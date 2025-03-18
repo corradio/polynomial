@@ -39,6 +39,7 @@ class Postgresql(Integration):
     }
 
     description = "Use SQL to query your PostgreSQL database."
+    protected_field_paths = [["database_connection", "password"]]
 
     def __enter__(self):
         assert (

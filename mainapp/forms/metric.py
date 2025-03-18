@@ -1,7 +1,7 @@
 import csv
 from datetime import date, datetime
 from io import TextIOWrapper
-from typing import Any, Dict, Iterable, List
+from typing import Any, Iterable, List
 
 from django import forms
 from django.core.validators import FileExtensionValidator
@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils.datastructures import MultiValueDict
 
+from integrations import INTEGRATION_CLASSES
 from integrations.utils import deofuscate_protected_fields, obfuscate_protected_fields
 from mainapp.models import Dashboard, Measurement, Metric, Organization
 
@@ -34,11 +35,11 @@ class MetricBaseForm(BaseModelForm):
 
         # Remove any sensitive password data
         if "integration_config" in self.fields and self.initial["integration_config"]:
-            self.schema: Dict = self.instance.callable_config_schema()
             self.unprotected_integration_config = self.initial["integration_config"]
             assert isinstance(self.initial, dict)
+            integration_id = self.initial["integration_id"]
             self.initial["integration_config"] = obfuscate_protected_fields(
-                self.initial["integration_config"], self.schema
+                self.initial["integration_config"], INTEGRATION_CLASSES[integration_id]
             )
 
         # Only show `should_backfill_daily` option if integration can backfill
@@ -98,7 +99,7 @@ class MetricBaseForm(BaseModelForm):
                 cleaned_data["integration_config"] = deofuscate_protected_fields(
                     cleaned_data["integration_config"],
                     self.unprotected_integration_config,
-                    self.schema,
+                    INTEGRATION_CLASSES[cleaned_data["integration_id"]],
                 )
         return cleaned_data
 

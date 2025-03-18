@@ -1,11 +1,11 @@
 import copy
 from datetime import date
-from typing import Any, Dict, Iterable, List, Optional, Protocol, TypeVar, cast
+from typing import Any, Dict, Iterable, List, Optional, Protocol, Type, TypeVar, cast
 
 import pandas as pd
 from environs import Env
 
-from .base import MeasurementTuple
+from .base import Integration, MeasurementTuple
 
 env = Env()
 env.read_env()  # read .env file, if it exists
@@ -97,30 +97,11 @@ def fill_mesurement_range(
     ]
 
 
-def get_protected_fields_paths(
-    schema: Dict[str, Any], path_prefix: Optional[List[str]] = None
-) -> List[List[str]]:
-    if not path_prefix:
-        path_prefix = []
-    paths: List[List[str]] = []
-    for schema_k, schema_v in schema.items():
-        if isinstance(schema_v, dict):
-            if schema_k == "keys":
-                # Go deeper but keep path_prefix intact as the JSON won't have the `keys` entry
-                paths += get_protected_fields_paths(schema_v, path_prefix)
-            elif schema_v.get("format") == "password":
-                # Found one
-                paths += [path_prefix + [schema_k]]
-            else:
-                # Go deeper
-                paths += get_protected_fields_paths(schema_v, path_prefix + [schema_k])
-    return paths
-
-
 def obfuscate_protected_fields(
-    config: Dict[str, Any], schema: Dict[str, Any]
+    config: Dict[str, Any],
+    integration_class: Type[Integration],
 ) -> Dict[str, Any]:
-    paths = get_protected_fields_paths(schema)
+    paths = integration_class.protected_field_paths
     config_copy = copy.deepcopy(config)
     for path in paths:
         obj = config_copy
@@ -131,11 +112,17 @@ def obfuscate_protected_fields(
 
 
 def deofuscate_protected_fields(
-    config: Dict[str, Any], unprotected_config: Dict[str, Any], schema: Dict[str, Any]
+    config: Dict[str, Any],
+    unprotected_config: Dict[str, Any],
+    integration_class: Type[Integration],
 ) -> Dict[str, Any]:
     # Replaces values of `config` with `unprotected_config` for the protected paths
     # if the value is still the obfuscated value
-    paths = get_protected_fields_paths(schema)
+
+    # Note that getting the schema might require deobfuscated fields (e.g. a DB password)
+    # if e.g. the schema is dynamic and requires __enter__ into a DB connection.
+    # Therefore, we can't rely on the schema to identify protected fields.
+    paths = integration_class.protected_field_paths
     config_copy = copy.deepcopy(config)
     for path in paths:
         obj_w = config_copy
