@@ -178,6 +178,7 @@ class MetricForm(MetricBaseForm):
             "higher_is_better",
             "enable_medals",
             "should_backfill_daily",
+            "enable_spike_notifications",
             "integration_config",
             "integration_id",
         ]

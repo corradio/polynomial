@@ -207,7 +207,16 @@ def spreadsheet_export_all() -> None:
 def check_notify_metric_changed_task(metric_id: UUID) -> None:
     metric = Metric.objects.get(pk=metric_id)
     spike_date = metric_analyse.detected_spike(metric.pk)
+
     if spike_date:
+        # Mark as spike evaluated
+        metric.last_detected_spike = spike_date
+        metric.save()
+
+        if not metric.enable_spike_notifications:
+            logger.info(f"Spike notification for metric_id={metric_id} disabled, skipping notification")
+            return
+
         # Send email
         message = EmailMultiAlternatives(
             subject=f'New changes in metric "{metric.name}" 📈',
@@ -254,9 +263,6 @@ def check_notify_metric_changed_task(metric_id: UUID) -> None:
                 img_data,
                 f"New changes in metric <{link}|*{metric.name}*>",
             )
-        # Mark as notified
-        metric.last_detected_spike = spike_date
-        metric.save()
 
 
 @shared_task
