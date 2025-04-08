@@ -57,6 +57,9 @@ class Metric(models.Model):
         default=False,
         help_text="Does a full backfill during each daily update (experimental)",
     )
+    enable_spike_notifications = models.BooleanField(
+        default=True, help_text="Whether or not to send notifications about spikes"
+    )
 
     # The credentials can be saved either in db, or in cache, while the object
     # is temporarily being built. We therefore allow this to be changed later.
