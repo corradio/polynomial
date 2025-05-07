@@ -303,11 +303,12 @@ COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = not DEBUG
 
 # Posthog
-from posthog import Posthog
-from posthog.exception_capture import Integrations
+if not DEBUG:
+    from posthog import Posthog
+    from posthog.exception_capture import Integrations
 
-Posthog(
-    env.str("POSTHOG_API_KEY", default=""),
-    enable_exception_autocapture=True,
-    exception_autocapture_integrations=[Integrations.Django],
-)
+    Posthog(
+        env.str("POSTHOG_API_KEY", default=""),
+        enable_exception_autocapture=True,
+        exception_autocapture_integrations=[Integrations.Django],
+    )
