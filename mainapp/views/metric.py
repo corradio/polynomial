@@ -280,7 +280,31 @@ class MetricCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
                 url += "?next=" + self.request.GET["next"]
             return redirect(url)
         else:
-            return super().get(request, *args, **kwargs)
+            # Render template, but catch errors in case the form's widget
+            # rendering causes an error (e.g. while loading the schema and doing work)
+            try:
+                response = super().get(request, *args, **kwargs)
+                response.render()  # Force evaluation of template (widget render)
+                return response
+            except InvalidGrantError as e:
+                self.template_name_suffix = "_invalid_grant"
+                templates = self.get_template_names()
+                return render(
+                    self.request,
+                    templates[0],
+                    {"exception": e, "object": self.object},
+                    status=500,
+                )
+            except UserFixableError as e:
+                # Render an alternative error page
+                self.template_name_suffix = "_error"
+                templates = self.get_template_names()
+                return render(
+                    self.request,
+                    templates[0],
+                    {"exception": e, "object": self.object},
+                    status=500,
+                )
 
     def get_initial(self):
         data = self.request.session.get(self.state)
