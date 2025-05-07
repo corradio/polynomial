@@ -53,8 +53,8 @@ class User(AbstractUser):
         return None
 
     def get_viewable_metrics(self) -> models.QuerySet[Metric]:
-        return Metric.objects.all().filter(
-            Q(user=self) | Q(organization__in=self.organization_set.all())
+        return Metric.objects.filter(
+            Q(user=self) | Q(organization__in=self.organization_users.all())
         )
 
     def __str__(self):
