@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     "compressor",
     "widget_tweaks",
     "django_extensions",
+    "django_recaptcha",
     "mainapp",
 ]
 
@@ -238,6 +239,7 @@ ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Polynomial] "
 ACCOUNT_PREVENT_ENUMERATION = False  # Required due to https://github.com/corradio/polynomial/issues/106#issuecomment-1484779724
 ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_FORMS = {"signup": "mainapp.forms.signup.ReCaptchaSignupForm"}
 
 if not DEBUG:
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
@@ -291,6 +293,10 @@ ADMINS = [("Olivier", "admin@polynomial.so")]
 DEFAULT_FROM_EMAIL = "admin@polynomial.so"
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# RECAPTCHA
+RECAPTCHA_PRIVATE_KEY = env.str("GOOGLE_RECAPTCHA_PRIVATE_KEY", default="")
+RECAPTCHA_PUBLIC_KEY = env.str("GOOGLE_RECAPTCHA_PUBLIC_KEY", default="")
 
 # Compressor
 COMPRESS_ENABLED = True
