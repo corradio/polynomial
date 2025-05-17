@@ -293,7 +293,6 @@ class MetricCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
                     self.request,
                     templates[0],
                     {"exception": e, "object": self.object},
-                    status=500,
                 )
             except UserFixableError as e:
                 # Render an alternative error page
@@ -303,7 +302,6 @@ class MetricCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
                     self.request,
                     templates[0],
                     {"exception": e, "object": self.object},
-                    status=500,
                 )
 
     def get_initial(self):
