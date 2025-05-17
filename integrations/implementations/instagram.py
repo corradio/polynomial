@@ -83,8 +83,6 @@ class Instagram(OAuth2Integration):
                     # https://developers.facebook.com/docs/instagram-api/reference/ig-user/insights#metrics-and-periods
                     "choices": sorted(
                         [
-                            # Total number of times the IG User's IG Media have been viewed. Includes ad activity generated through the API, Facebook ads interfaces, and the Promote feature. Does not include profile views.
-                            {"title": "Impressions", "value": "impressions"},
                             # Total number of unique users who have viewed at least one of the IG User's IG Media. Repeat views and views across different IG Media owned by the IG User by the same user are only counted as a single view. Includes ad activity generated through the API, Facebook ads interfaces, and the Promote feature.
                             {"title": "Reached users", "value": "reach"},
                             # Total number of new followers each day within the specified range (only when 100+ followers).
