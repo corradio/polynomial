@@ -17,8 +17,8 @@
   <div class="text-sm font-medium text-center border-b border-gray-200 mb-1">
     <ul class="flex items-stretch overflow-x-auto scrollbar-hide -mb-px container mx-auto px-4">
       {% for d in dashboards %}
-      <li class="flex items-center whitespace-nowrap mr-3 border-b-2 rounded-t-lg {% if d == dashboard %}border-blue-600{% else %}border-transparent hover:border-gray-300{% endif %}">
-        <a href="{{ d.get_absolute_url }}?{{ request.META.QUERY_STRING }}" class="inline-block px-1 py-2 hover:no-underline {% if d == dashboard %}text-blue-600{% else %}text-gray-600 dark:text-gray-200{% endif %}">
+      <li class="flex items-center whitespace-nowrap mr-3 border-b-2 rounded-t-lg {% if d == dashboard %}border-blue-600 dark:border-blue-300{% else %}border-transparent hover:border-gray-300{% endif %}">
+        <a href="{{ d.get_absolute_url }}?{{ request.META.QUERY_STRING }}" class="inline-block px-1 py-2 hover:no-underline {% if d == dashboard %}text-blue-600 dark:text-blue-300{% else %}text-gray-600 dark:text-gray-200{% endif %}">
           {{ d }}
           {% if d.organization %}
           <div class="text-xs font-light">{{ d.organization }}</div>

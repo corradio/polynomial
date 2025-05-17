@@ -13,7 +13,7 @@
     @apply text-lg mb-1 mt-4;
   }
   a:not(:has(input)) {
-    @apply text-blue-600 no-underline hover:underline;
+    @apply text-blue-600 dark:text-blue-300 no-underline hover:underline;
   }
   /* forms */
   input[type='submit'],
