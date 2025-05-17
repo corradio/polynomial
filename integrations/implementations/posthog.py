@@ -19,8 +19,9 @@ class PostHog(Integration):
                     "https://us.posthog.com",
                     "https://eu.posthog.com",
                 ],
+                "required": True,
             },
-            "project_id": {"type": "string"},
+            "project_id": {"type": "string", "required": True},
             "query": {
                 "type": "string",
                 "widget": "textarea",
