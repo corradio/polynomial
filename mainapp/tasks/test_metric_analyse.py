@@ -61,3 +61,136 @@ class UnitTestCase(TestCase):
             metric=self.metric,
         )
         self.assertIsNone(detected_spike(self.metric.pk))
+
+    def test_signal_with_low_std(self):
+        Measurement.objects.create(
+            date=date(2025, 3, 26), value=165, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 3, 27), value=165, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 3, 28), value=165, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 3, 29), value=165, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 3, 30), value=165, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 3, 31), value=351, metric=self.metric
+        )
+        Measurement.objects.create(date=date(2025, 4, 1), value=351, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 4, 2), value=351, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 4, 3), value=351, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 4, 4), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 4, 5), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 4, 6), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 4, 7), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 4, 8), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 4, 9), value=353, metric=self.metric)
+        Measurement.objects.create(
+            date=date(2025, 4, 10), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 11), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 12), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 13), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 14), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 15), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 16), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 17), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 18), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 19), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 20), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 21), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 22), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 23), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 24), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 25), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 26), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 27), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 28), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 29), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 4, 30), value=353, metric=self.metric
+        )
+        Measurement.objects.create(date=date(2025, 5, 1), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 5, 2), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 5, 3), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 5, 4), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 5, 5), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 5, 6), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 5, 7), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 5, 8), value=353, metric=self.metric)
+        Measurement.objects.create(date=date(2025, 5, 9), value=353, metric=self.metric)
+        Measurement.objects.create(
+            date=date(2025, 5, 10), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 5, 11), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 5, 12), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 5, 13), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 5, 14), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 5, 15), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 5, 16), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 5, 17), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 5, 18), value=353, metric=self.metric
+        )
+        Measurement.objects.create(
+            date=date(2025, 5, 19), value=354, metric=self.metric
+        )
+        spike_date = detected_spike(self.metric.pk)
+        self.assertEqual(spike_date, None)

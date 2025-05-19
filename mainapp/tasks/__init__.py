@@ -214,7 +214,9 @@ def check_notify_metric_changed_task(metric_id: UUID) -> None:
         metric.save()
 
         if not metric.enable_spike_notifications:
-            logger.info(f"Spike notification for metric_id={metric_id} disabled, skipping notification")
+            logger.info(
+                f"Spike notification for metric_id={metric_id} disabled, skipping notification"
+            )
             return
 
         # Send email

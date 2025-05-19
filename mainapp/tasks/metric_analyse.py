@@ -14,6 +14,7 @@ LOOKBACK_DAYS = 40
 MIN_POINTS_PERCENTAGE = 0.5
 STD_MULTIPLIER = 7  # Noise level tolerance
 TREND_ROLLING_DAYS = 5
+MIN_CHANGE_PERCENTAGE = 10  # Min percentage of change (even if above noise level)
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +36,13 @@ def extract_spikes(measurements: List[Measurement]) -> List[date]:
     std = df["trend"].std()
     # detect points
     is_outside_noise_level = (df["trend"] - df["value"]).abs() > std * STD_MULTIPLIER
+    # being outside noise level is not sufficient - you also need to be x% above the signal
+    is_large_deviation = (df["trend"] - df["value"]).abs() / df[
+        "trend"
+    ] * 100 > MIN_CHANGE_PERCENTAGE
+
     is_not_na = ~df["value"].isna()
-    df["is_spike"] = is_not_na & is_outside_noise_level
+    df["is_spike"] = is_not_na & is_outside_noise_level & is_large_deviation
     spike_index: pd.DatetimeIndex = df.index[df["is_spike"]]
     return list(spike_index.date)
 
