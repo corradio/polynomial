@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import requests
 from celery.exceptions import SoftTimeLimitExceeded
@@ -20,6 +21,7 @@ def notify_metric_exception(
     friendly_context_message: str,
     exception: Exception,
     recipient_email: str,
+    recipient_friendly_name: Optional[str] = None,
     inlude_debug_info: bool = False,
 ) -> bool:
     extras = {"metric": model_to_dict(metric)}
@@ -29,7 +31,7 @@ def notify_metric_exception(
     if isinstance(exception, SoftTimeLimitExceeded):
         # Handler for task which took too long
         subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
-        message = f"""Hello {metric.user.first_name} 👋
+        message = f"""Hello {recipient_friendly_name or metric.user.first_name} 👋
 
 {friendly_context_message}
 It seems like the task took too long to complete. You're welcome to try again.
@@ -37,7 +39,7 @@ It seems like the task took too long to complete. You're welcome to try again.
     elif isinstance(exception, oauth2.rfc6749.errors.InvalidGrantError):
         # Handler for expired OAuth
         subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
-        message = f"""Hello {metric.user.first_name} 👋
+        message = f"""Hello {recipient_friendly_name or metric.user.first_name} 👋
 
 {friendly_context_message}
 It seems like the authorization expired.
@@ -65,7 +67,7 @@ To fix the error, you will have to re-authorize by following the link below:
                     more_detail = exception.response.json()
                 except json.decoder.JSONDecodeError:
                     pass
-            message = f"""Hello {metric.user.first_name} 👋
+            message = f"""Hello {recipient_friendly_name or metric.user.first_name} 👋
 
 {friendly_context_message}
 The error was: {exception}"""

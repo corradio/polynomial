@@ -325,6 +325,7 @@ def celery_task_failure_email(sender, *args, **kwargs) -> None:
             friendly_context_message=f"Unfortunately, something went wrong when attempting to backfill the {metric.name} metric after {num_retries} retries.",
             exception=exception,
             recipient_email=requester_user.email,
+            recipient_friendly_name=requester_user.first_name,
             inlude_debug_info=requester_user.is_staff,
         ):
             return
