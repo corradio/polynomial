@@ -8,7 +8,7 @@ from ..base import MeasurementTuple, OAuth2Integration, UserFixableError
 from ..utils import batch_range_by_max_batch, get_secret
 
 ELEMENTS_PER_CALL = 10000
-LINKEDIN_VERSION_HEADER = "202408"
+LINKEDIN_VERSION_HEADER = "202509"
 
 METRICS: List[Dict[str, Any]] = [
     # Share statistics

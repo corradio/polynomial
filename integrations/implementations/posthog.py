@@ -43,7 +43,6 @@ class PostHog(Integration):
                 "%(date)s", f"toStartOfDay(toDateTime('{query_date.isoformat()}'))"
             )
 
-        print(query)
         r = requests.post(
             f"{self.config['endpoint']}/api/projects/{self.config['project_id']}/query",
             headers={
@@ -56,7 +55,6 @@ class PostHog(Integration):
         data = r.json()
         columns = data["columns"]
         results = data["results"]
-        print(results)
 
         # Note: HogQL doesn't seem to support emitting a date (only a datetime)
         # so we don't allow making range queries (which require returning a date)
