@@ -167,8 +167,8 @@ def _value_getter(row: dict) -> float:
         raise UserFixableError(
             f"Value column {e} is missing from results. Did you rename it correctly using SELECT <yourfield> AS value?"
         )
-    except ValueError as e:
+    except (ValueError, TypeError) as e:
         raise UserFixableError(
-            f"Expected value '{row['value']}' from column 'value' to be number-like."
+            f"Expected value '{row['value']}' from column 'value' at date '{row.get('date')}' to be number-like."
         )
     return value
