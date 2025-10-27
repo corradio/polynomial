@@ -456,6 +456,31 @@ class MetricUpdateView(LoginRequiredMixin, UpdateView):
             )
         return next_destination
 
+    def get(self, request, *args, **kwargs):
+        # Render template, but catch errors in case the form's widget
+        # rendering causes an error (e.g. while loading the schema and doing work)
+        try:
+            response = super().get(request, *args, **kwargs)
+            response.render()  # Force evaluation of template (widget render)
+            return response
+        except InvalidGrantError as e:
+            self.template_name_suffix = "_invalid_grant"
+            templates = self.get_template_names()
+            return render(
+                self.request,
+                templates[0],
+                {"exception": e, "object": self.object},
+            )
+        except UserFixableError as e:
+            # Render an alternative error page
+            self.template_name_suffix = "_error"
+            templates = self.get_template_names()
+            return render(
+                self.request,
+                templates[0],
+                {"exception": e, "object": self.object},
+            )
+
     def get_object(self, queryset=None):
         instance = super().get_object(queryset)
         if not instance.can_view(self.request.user):
