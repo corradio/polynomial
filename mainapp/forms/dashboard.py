@@ -27,6 +27,12 @@ class DashboardForm(BaseModelForm):
             for metric in dashboard.metrics.all():
                 metric.organization = dashboard.organization
                 metric.save()
+        # TODO: there are some cases where updating a dashboard
+        # (e.g. changing owner or removing from an org)
+        # causes metrics to remain in a dashboard that won't
+        # be within the `dashboards_field.queryset` of the metric form.
+        # This will cause a validation error in the metric form.
+        # We should probably write a test and ensure that this never happens.
         return dashboard
 
     class Meta:

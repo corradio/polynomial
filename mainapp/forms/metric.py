@@ -30,7 +30,10 @@ class MetricBaseForm(BaseModelForm):
             )
             dashboards_field.help_text = "Note: adding a metric to a dashboard will also add it to its organization"
             self.fields["dashboards"].initial = [
-                d.pk for d in self.instance.dashboard_set.all()
+                d.pk
+                for d in self.instance.dashboard_set.all()
+                if d
+                in dashboards_field.queryset  # Ensure we don't return dashboards that won't pass validation when saved
             ]
 
         # Remove any sensitive password data

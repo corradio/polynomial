@@ -33,7 +33,7 @@
             {% endif %}
         </p>
     {% endfor %}
-    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+    {% for field in form.hidden_fields %}{{ field.errors }}{{ field }}{% endfor %}
 
     {% if metric %}
     <p>
@@ -79,7 +79,6 @@
     <script>
       var testButton = document.getElementById("button-test");
       var authorizeButton = document.getElementById("button-authorize");
-      var submitButton = document.getElementById("button-submit");
 
       // Authorization
       if (authorizeButton) {
