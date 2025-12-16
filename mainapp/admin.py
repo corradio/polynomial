@@ -17,7 +17,7 @@ class MetricAdminForm(forms.ModelForm):
         fields = "__all__"
         # The following can be enabled in order to make the field editable as
         # normal JSON
-        widgets = {"integration_config": forms.Textarea()}
+        # widgets = {"integration_config": forms.Textarea()}
 
 
 class MetricAdmin(admin.ModelAdmin):
