@@ -55,73 +55,73 @@
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='password'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='email'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='number'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='url'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='date'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='datetime-local'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='month'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='week'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='time'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='search'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='tel'] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   input[type='checkbox'] {
     @apply rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50
@@ -135,19 +135,19 @@
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   select[multiple] {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
   textarea {
     @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
       focus:invalid:border-pink-500 focus:invalid:ring-pink-500;
     /* dark-mode */
-    @apply dark:text-gray-200 bg-gray-600 border-gray-500;
+    @apply dark:text-gray-200 dark:bg-gray-600 dark:border-gray-500;
   }
 
   /* disabled states */
