@@ -114,14 +114,20 @@ class GoogleSheets(OAuth2Integration):
                     f"Column '{column_name}' wasn't found in the header (should be one of {header})."
                 )
             try:
-                return row[header.index(column_name)]
+                # Cast to str is required dict value can be float, str...
+                # This ensures we always return the same type.
+                return str(row[header.index(column_name)])
             except IndexError:
                 # This can happen if a row only has the first column but rest is empty values:
                 # the row vector will be shorter. We simply mark this as empty.
                 return ""
 
         def try_convert_cell_to_float(cell_value: str) -> float:
-            return float("nan") if cell_value == "" else float(cell_value)
+            if cell_value == "":
+                return float("nan")
+            if cell_value.startswith("#N/A"):
+                return float("nan")
+            return float(cell_value)
 
         # Parse data
         for row_index, row in enumerate(data):

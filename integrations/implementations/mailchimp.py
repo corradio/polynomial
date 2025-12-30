@@ -132,7 +132,6 @@ class Mailchimp(OAuth2Integration):
         )
         response.raise_for_status()
         obj = response.json()
-        print(obj["stats"])
         return MeasurementTuple(date=date.today(), value=obj["stats"][metric_key])
 
     def collect_past_range(

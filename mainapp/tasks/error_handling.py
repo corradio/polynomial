@@ -6,7 +6,7 @@ from celery.exceptions import SoftTimeLimitExceeded
 from django.core.mail import send_mail
 from django.forms.models import model_to_dict
 from django.urls import reverse
-from oauthlib import oauth2
+from oauthlib.oauth2 import InvalidGrantError
 
 from config.settings import CSRF_TRUSTED_ORIGINS
 from integrations.base import UserFixableError
@@ -36,7 +36,7 @@ def notify_metric_exception(
 {friendly_context_message}
 It seems like the task took too long to complete. You're welcome to try again.
 """
-    elif isinstance(exception, oauth2.rfc6749.errors.InvalidGrantError):
+    elif isinstance(exception, InvalidGrantError):
         # Handler for expired OAuth
         subject = f"Aw snap, collecting data for the {metric.name} metric failed 😟"
         message = f"""Hello {recipient_friendly_name or metric.user.first_name} 👋
