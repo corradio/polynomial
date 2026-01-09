@@ -338,3 +338,37 @@ class MetricDashboardAddForm(MetricBaseForm):
     class Meta:
         fields: List[str] = []
         model = Metric
+
+
+class BackfillForm(forms.Form):
+    # Preset options (like `dashboards` field in MetricDashboardAddForm)
+    since = forms.ChoiceField(
+        choices=[
+            ("7 days", "A week"),
+            ("31 days", "A month"),
+            ("365 days", "A year"),
+            ("", "As far back as possible"),
+        ],
+        required=False,
+        widget=forms.RadioSelect(),
+        label="How far back to collect old data",
+    )
+
+    # Custom date input (like `dashboard_new` field in MetricDashboardAddForm)
+    since_custom = forms.DateField(
+        required=False,
+        label="Or choose a custom start date",
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # Validation: at least one must be provided (mirrors dashboard pattern)
+        if not cleaned_data.get("since") and not cleaned_data.get("since_custom"):
+            raise forms.ValidationError(
+                "Please select a date range or enter a custom date"
+            )
+        # Custom date takes precedence if provided
+        if cleaned_data.get("since_custom"):
+            cleaned_data["since"] = cleaned_data["since_custom"].isoformat()
+        return cleaned_data

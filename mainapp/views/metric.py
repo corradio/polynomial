@@ -41,7 +41,7 @@ from integrations.utils import deofuscate_protected_fields
 from mainapp.views.dashboard import get_metric_data
 
 from .. import forms
-from ..forms import MetricForm, MetricTransferOwnershipForm
+from ..forms import BackfillForm, MetricForm, MetricTransferOwnershipForm
 from ..models import Measurement, Metric, Organization, User
 from ..tasks import backfill_task
 from ..utils.charts import get_vl_spec
@@ -138,21 +138,27 @@ def metric_backfill(request, pk):
         raise BadRequest("This metric can't be backfilled")
     if not metric.can_be_backfilled_by(request.user):
         raise PermissionDenied()
+
     if request.method == "POST":
-        since = request.POST.get("since")
-        backfill_task.delay(
-            requester_user_id=request.user.pk, metric_id=pk, since=since
-        )
-        messages.success(
-            request,
-            f"Backfill initiated. You'll receive an email when the task has been completed.",
-        )
-        return redirect(request.GET.get("next") or reverse("index"))
-    elif request.method == "GET":
-        return render(
-            request, "mainapp/metric_confirm_backfill.html", {"object": metric}
-        )
-    return HttpResponseNotAllowed(["POST", "GET"])
+        form = BackfillForm(request.POST)
+        if form.is_valid():
+            since = form.cleaned_data["since"]
+            backfill_task.delay(
+                requester_user_id=request.user.pk, metric_id=pk, since=since
+            )
+            messages.success(
+                request,
+                "Backfill initiated. You'll receive an email when the task has been completed.",
+            )
+            return redirect(request.GET.get("next") or reverse("index"))
+    else:
+        form = BackfillForm(initial={"since": "31 days"})  # Default to 1 month
+
+    return render(
+        request,
+        "mainapp/metric_confirm_backfill.html",
+        {"object": metric, "form": form},
+    )
 
 
 @login_required
