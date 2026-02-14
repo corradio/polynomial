@@ -53,6 +53,10 @@ ALLOWED_HOSTS: List[str] = (
     ]
 )
 
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
 # The following needs to be set to None in order to make sure
 # the `opener` property keeps being filled during OAuth popups
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
@@ -88,12 +92,14 @@ INSTALLED_APPS = [
     "widget_tweaks",
     "django_extensions",
     "django_recaptcha",
+    "debug_toolbar",
     "mainapp",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
