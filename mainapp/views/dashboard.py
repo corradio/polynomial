@@ -220,7 +220,12 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
         id_query = Q(organization=organization, slug=dashboard_slug)  # owned by org
 
     # Get dashboard, will raise 404 if it does not exist
-    dashboard = get_object_or_404(Dashboard, id_query)
+    dashboard = get_object_or_404(
+        Dashboard.objects.select_related("organization", "user").prefetch_related(
+            "organization__users"
+        ),
+        id_query,
+    )
     # Check access
     if not dashboard.can_view(request.user):
         return render(
@@ -232,7 +237,11 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
     # Query other accessible dashboards
     # if logged in: show all dashboards of one's org + user
     # if anonymous: show all public dashboards of same `username_or_org_slug` prefix
-    dashboards = Dashboard.get_all_viewable_by(request.user).order_by("name")
+    dashboards = (
+        Dashboard.get_all_viewable_by(request.user)
+        .select_related("organization")
+        .order_by("name")
+    )
     if isinstance(request.user, User):
         # User is not anonymous, record activity
         request.user.last_dashboard_visit = datetime.now(timezone.utc)
@@ -296,7 +305,10 @@ def dashboard_view(request: HttpRequest, username_or_org_slug, dashboard_slug):
 
     measurements_by_metric = [
         get_metric_data(metric, start_date, end_date)
-        for metric in Metric.objects.filter(dashboard=dashboard).order_by("name")
+        for metric in Metric.objects.filter(dashboard=dashboard)
+        .select_related("organization", "user")
+        .prefetch_related("organization__users")
+        .order_by("name")
     ]
 
     since_options = [
