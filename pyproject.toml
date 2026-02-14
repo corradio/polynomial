@@ -28,6 +28,7 @@ slack-sdk = "^3.27.1"
 posthog = "^3.19.0"
 django-recaptcha = "^4.1.0"
 dj-database-url = "^3.0.1"
+django-debug-toolbar = "^6.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
@@ -45,7 +46,6 @@ django-stubs = "^4.2.7"
 mypy = "^1.8.0"
 celery-types = "^0.22.0"
 setuptools = "^74.1.2"
-django-debug-toolbar = "^6.2.0"
 
 [tool.isort]
 profile = "black"
