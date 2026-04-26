@@ -47,4 +47,4 @@ RUN yarn build && \
 EXPOSE 8000
 ENV NEW_RELIC_CONFIG_FILE=newrelic.ini
 
-CMD ["poetry", "run", "newrelic-admin", "run-program", "gunicorn", "--bind", ":8000", "--workers", "2", "config.wsgi"]
+CMD ["poetry", "run", "newrelic-admin", "run-program", "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "config.wsgi"]
