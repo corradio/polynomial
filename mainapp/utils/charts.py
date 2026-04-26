@@ -318,7 +318,7 @@ def get_vl_spec(
             }
         )
 
-    if day_span < 365:
+    if day_span < 5 * 365:
         # Show rulers
         vl_spec["layer"].append(
             {
