@@ -2,9 +2,7 @@
 
 ## Installing dependencies
 ```sh
-poetry install
-yarn
-pre-commit install
+make install
 ```
 
 

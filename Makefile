@@ -1,5 +1,10 @@
 MANAGE = poetry run python manage.py
 
+install:
+	poetry install
+	yarn
+	pre-commit install
+
 seed:
 	DJANGO_SUPERUSER_USERNAME=john \
 	DJANGO_SUPERUSER_PASSWORD=test \
