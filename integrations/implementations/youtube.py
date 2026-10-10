@@ -111,7 +111,7 @@ class Youtube(OAuth2Integration):
         response = self.session.get(url, params=request_data)
         response.raise_for_status()
         data = response.json()
-        rows = data["rows"]
+        rows = data.get("rows", [])
         if len(rows) < MAX_ROWS:
             return rows
         else:

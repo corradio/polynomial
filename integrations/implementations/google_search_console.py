@@ -90,7 +90,7 @@ class GoogleSearchConsole(OAuth2Integration):
         )
         response.raise_for_status()
         data = response.json()
-        rows: List = data["rows"]
+        rows: List = data.get("rows", [])
         if len(rows) < ROW_LIMIT:
             return rows
         else:
