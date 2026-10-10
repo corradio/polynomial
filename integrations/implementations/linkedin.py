@@ -8,7 +8,7 @@ from ..base import MeasurementTuple, OAuth2Integration, UserFixableError
 from ..utils import batch_range_by_max_batch, get_secret
 
 ELEMENTS_PER_CALL = 10000
-LINKEDIN_VERSION_HEADER = "202509"
+LINKEDIN_VERSION_HEADER = "202609"
 
 METRICS: List[Dict[str, Any]] = [
     # Share statistics
@@ -139,7 +139,7 @@ class LinkedIn(OAuth2Integration):
     def __enter__(self):
         super().__enter__()
         self.session.headers = {
-            "LinkedIn-Version": "202312",
+            "LinkedIn-Version": LINKEDIN_VERSION_HEADER,
         }
         return self
 
